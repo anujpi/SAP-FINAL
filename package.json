@@ -1,0 +1,68 @@
+{
+  "name": "frontline-shift",
+  "version": "1.0.0",
+  "description": "AI career mobility for frontline workers, on SAP BTP",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "cds-serve",
+    "watch": "cds watch",
+    "test": "node --test",
+    "journey": "node scripts/journey.js"
+  },
+  "dependencies": {
+    "@cap-js/hana": "^3",
+    "@sap-ai-sdk/orchestration": "^2",
+    "@sap/cds": "^10",
+    "@sap/xssec": "^4"
+  },
+  "devDependencies": {
+    "@cap-js/sqlite": "^3",
+    "@sap/cds-dk": "^10"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sql"
+      },
+      "[development]": {
+        "auth": {
+          "kind": "mocked",
+          "users": {
+            "ravi": {
+              "password": "ravi",
+              "roles": [
+                "Worker"
+              ],
+              "attr": {
+                "workerId": "00000000-0000-4000-8000-000000000001"
+              }
+            },
+            "sunil": {
+              "password": "sunil",
+              "roles": [
+                "Supervisor"
+              ]
+            },
+            "meera": {
+              "password": "meera",
+              "roles": [
+                "Manager",
+                "Supervisor",
+                "HRAdmin"
+              ]
+            }
+          }
+        }
+      },
+      "[production]": {
+        "auth": "xsuaa",
+        "db": {
+          "kind": "hana"
+        }
+      }
+    }
+  }
+}

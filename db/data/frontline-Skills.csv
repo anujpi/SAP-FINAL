@@ -1,0 +1,9 @@
+ID;name;keywords
+CYCLE-COUNT;Cycle counting;recount,cycle count,count the bin,stock count
+STOCK-DISC;Stock discrepancy resolution;discrepancy,mismatch,adjustment,stock gap
+DISPATCH;Dispatch coordination;dispatch,loading,shipment,truck
+INV-TRANS;Inventory system transactions;system entry,transaction,goods movement,scanner
+DIGI-REPORT;Digital stock reporting;report,spreadsheet,dashboard
+PICKING;Order picking;pick list,picking
+SAFETY;Warehouse safety;safety,ppe,forklift
+TEAM-LEAD;Shift team coordination;shift lead,team,handover

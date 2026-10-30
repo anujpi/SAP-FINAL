@@ -1,0 +1,5 @@
+ID;skill_ID;title;durationMin;url;practiceQuestion;answerKey;proficiency
+M-TRANS;INV-TRANS;Inventory system basics;8;https://learning.sap.com;A pallet moves from bin A-14 to B-02. Which transaction type records it: stock transfer or goods issue?;stock transfer;2
+M-REPORT;DIGI-REPORT;Digital stock reporting;10;https://learning.sap.com;;;
+M-DISPATCH;DISPATCH;Dispatch planning in the system;12;https://learning.sap.com;;;
+M-CYCLE;CYCLE-COUNT;Supply-chain data accuracy;12;https://learning.sap.com;;;

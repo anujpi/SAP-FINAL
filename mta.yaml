@@ -1,0 +1,101 @@
+_schema-version: 3.3.0
+ID: frontline-shift
+version: 1.0.0
+description: "AI career mobility for frontline workers, on SAP BTP"
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm ci
+        - npx cds build --production
+modules:
+  - name: frontline-shift-srv
+    type: nodejs
+    path: gen/srv
+    parameters:
+      instances: 1
+      buildpack: nodejs_buildpack
+    build-parameters:
+      builder: npm-ci
+    provides:
+      - name: srv-api # required by consumers of CAP services (e.g. approuter)
+        properties:
+          srv-url: ${default-url}
+    requires:
+      - name: frontline-shift-auth
+      - name: frontline-shift-db
+
+  - name: frontline-shift-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: frontline-shift-db
+  - name: frontline-shift
+    type: approuter.nodejs
+    path: .deploy/app-router
+    parameters:
+      keep-existing-routes: true
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv-api # must be used in xs-app.json as well
+          url: ~{srv-url}
+          forwardAuthToken: true
+      - name: frontline-shift-auth
+    provides:
+      - name: app-api
+        properties:
+          app-protocol: ${protocol}
+          app-uri: ${default-uri}
+
+resources:
+  - name: frontline-shift-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+      config:
+        xsappname: frontline-shift-${org}-${space}
+        tenant-mode: dedicated
+        oauth2-configuration:
+          credential-types:
+            - "binding-secret"
+            - "x509"
+          redirect-uris:
+            - https://*~{app-api/app-uri}/**
+        role-collections:
+          - name: 'Manager (frontline-shift ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.Manager'
+          - name: 'Supervisor (frontline-shift ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.Supervisor'
+          - name: 'HRAdmin (frontline-shift ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.HRAdmin'
+          - name: 'Worker (frontline-shift ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.Worker'
+          - name: 'userattributes (frontline-shift ${org}-${space})'
+            description: 'generated'
+            role-template-references:
+              - '$XSAPPNAME.userattributes'
+    requires:
+      - name: app-api
+  - name: frontline-shift-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared

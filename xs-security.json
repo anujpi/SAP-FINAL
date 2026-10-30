@@ -1,0 +1,71 @@
+{
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Manager",
+      "description": "Manager"
+    },
+    {
+      "name": "$XSAPPNAME.Supervisor",
+      "description": "Supervisor"
+    },
+    {
+      "name": "$XSAPPNAME.HRAdmin",
+      "description": "HRAdmin"
+    },
+    {
+      "name": "$XSAPPNAME.Worker",
+      "description": "Worker"
+    }
+  ],
+  "attributes": [
+    {
+      "name": "workerId",
+      "description": "workerId",
+      "valueType": "s",
+      "valueRequired": false
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Manager",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.Manager"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "Supervisor",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.Supervisor"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "HRAdmin",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.HRAdmin"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "Worker",
+      "description": "generated",
+      "scope-references": [
+        "$XSAPPNAME.Worker"
+      ],
+      "attribute-references": []
+    },
+    {
+      "name": "userattributes",
+      "description": "generated",
+      "default-role-name": "Attributes of a User",
+      "scope-references": [],
+      "attribute-references": [
+        "workerId"
+      ]
+    }
+  ]
+}

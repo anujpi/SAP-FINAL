@@ -1,0 +1,5 @@
+ID;role_ID;site;isExternal;employer;source
+REQ-1001;DSC-COORD;Bengaluru Hub;false;Internal;mock
+EXT-2001;INV-CTRL;Hosur;true;Sample Logistics A;sample
+EXT-2002;DSC-COORD;Chennai;true;Sample Retail B;sample
+EXT-2003;DISP-LEAD;Mysuru;true;Sample Foods C;sample
