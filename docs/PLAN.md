@@ -55,7 +55,7 @@ Everything else depends on this.
 
 1. If `extended` appears in your entitlements, run the AI Core booster, create a service key, create the orchestration deployment and bind it to the app.
 2. If not, register for SAP's separate 30-day Generative AI Hub trial and see whether it gives you a service key your app can use. It may only give you a login and a workbook.
-3. If neither works by tomorrow noon, call an LLM directly from `srv/lib/llm.js` and **say so on the live vs. mocked slide**. Show the Generative AI Hub trial in AI Launchpad separately.
+3. If neither works by noon on Sat 31 Oct, use the direct backup already in `srv/lib/llm.js`: set `ANTHROPIC_API_KEY` in `.env` locally and with `cf set-env` on BTP. **Say so on the live vs. mocked slide**, and show the Generative AI Hub trial in AI Launchpad separately. The direct route hides emails and phone numbers but not names, so a real deployment must use the Hub.
 
 **Check:** the deployed URL opens on a phone and asks for login, the journey data sits in HANA, and one real LLM reply comes back.
 
@@ -193,7 +193,7 @@ If voice fails, type. If anything else fails, switch to the video without apolog
 | Component | Status on stage |
 |---|---|
 | BTP, CAP, HANA Cloud, XSUAA | Live, if deployed |
-| Generative AI Hub | Live, or state the replacement |
+| Generative AI Hub | Live, or say the app uses the direct Anthropic backup and show the Hub separately |
 | SAP API call | Sandbox with SAP's sample data, if built |
 | Ravi's HR and warehouse records, outside jobs | Mocked or sample, in SAP's format |
 | Fairness figures | Fictional |

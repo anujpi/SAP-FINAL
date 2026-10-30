@@ -36,7 +36,9 @@ const step = name => console.log('ok  ', name)
   const heard = parsed(await send('input_submitted', { text: 'I recount the bin, check the pick list, then raise an adjustment for the discrepancy with my supervisor. I also help with dispatch.' }))
   assert.equal(heard.stage, 'AWAITING_READBACK')
   assert.ok(heard.tasks.length > 0)
-  step(`Agent A returned tasks (degraded: ${heard.degraded})`)
+  const route = (await call('/worker/aiStatus()', { user: 'ravi' })).value
+  assert.ok(['generative-ai-hub', 'direct-anthropic', 'offline'].includes(route))
+  step(`Agent A returned tasks (LLM route: ${route}, degraded: ${heard.degraded})`)
 
   parsed(await send('readback_confirmed'))
   const skills = parsed(await call('/worker/MySkills', { user: 'ravi' }))

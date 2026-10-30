@@ -7,6 +7,9 @@ const verify = require('../srv/agents/verify')
 const discover = require('../srv/agents/discover')
 const { nextStage, WORKER_EVENTS } = require('../srv/orchestrator')
 
+// Keep these tests offline even if a real key is set on this machine.
+for (const key of ['ANTHROPIC_API_KEY', 'AICORE_SERVICE_KEY', 'VCAP_SERVICES']) delete process.env[key]
+
 const ROLE = [
   { skill_ID: 'CYCLE', weight: 36, requiredLevel: 2 },
   { skill_ID: 'STOCK', weight: 32, requiredLevel: 2 },

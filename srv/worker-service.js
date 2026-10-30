@@ -1,6 +1,7 @@
 const cds = require('@sap/cds')
 const { handle, WORKER_EVENTS } = require('./orchestrator')
 const market = require('./agents/market')
+const askJson = require('./lib/llm')
 
 function parsePayload(req, payload) {
   if (!payload) return {}
@@ -19,6 +20,8 @@ module.exports = cds.service.impl(function () {
     if (!workerId) return req.reject(403, 'This login is not linked to a worker')
     return JSON.stringify(await handle(workerId, type, parsePayload(req, payload), req.user.id))
   })
+
+  this.on('aiStatus', () => askJson.provider())
 
   this.on('marketSignal', async () => {
     const { Vacancies, RoleSkills } = cds.entities('frontline')

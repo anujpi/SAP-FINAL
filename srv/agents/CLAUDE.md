@@ -29,7 +29,19 @@ Say this openly to the jury: only A and B use the LLM. The rest are code on purp
 - Never let the LLM output a score, ranking or verdict about a person, or infer protected attributes.
 - `LLM_MODEL` comes from the environment. Don't hardcode it. Pick a model available in your AI Launchpad.
 
-**Not yet tested against real Generative AI Hub.** Locally the agents run on fallbacks. The first real call is today's checkpoint, and you may need to adjust `complete()` in `llm.js` for your account.
+## LLM routes
+
+`srv/lib/llm.js` picks the first route available:
+
+| Route | Needs | Masking |
+|---|---|---|
+| `generative-ai-hub` | AI Core binding or `AICORE_SERVICE_KEY`, plus `LLM_MODEL` | SAP data masking |
+| `direct-anthropic` | `ANTHROPIC_API_KEY`. Uses `claude-opus-5-5` unless `LLM_MODEL` is set. Server-side refusal fallback is on. | Emails and phone numbers only, not names |
+| `offline` | Nothing | Nothing leaves the app, and results are marked `degraded` |
+
+Keys go in `.env` locally (see `.env.example`) and `cf set-env` on BTP. Never commit them.
+
+**Neither live route has been called for real yet.** `test/llm.test.js` runs the real Anthropic SDK against a local stand-in server. The Hub route is untested, so you may need to adjust `completeHub()` for your account.
 
 ## Testing
 

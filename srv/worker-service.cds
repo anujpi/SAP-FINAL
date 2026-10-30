@@ -26,4 +26,7 @@ service WorkerService @(path: '/worker', requires: 'Worker') {
 
   /** Which skills the sample outside jobs ask for. */
   function marketSignal() returns LargeString;
+
+  /** Which LLM route is active, so the UI never claims more than is live. */
+  function aiStatus() returns String;
 }

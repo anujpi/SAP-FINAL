@@ -15,7 +15,7 @@ Architecture page: https://claude.ai/artifact/DfqnwXcHN89kbnJkotfNiK
 | Worker and manager apps | React, TypeScript, Tailwind (`app/`), not built yet |
 | Login | SAP Approuter + XSUAA. Mocked users locally. |
 | Backend | CAP Node.js on BTP Cloud Foundry (`srv/`) |
-| LLM | Generative AI Hub on SAP AI Core, through `srv/lib/llm.js` only |
+| LLM | `srv/lib/llm.js` only. Generative AI Hub on SAP AI Core if bound, otherwise a direct Anthropic API backup, otherwise a marked offline fallback |
 | Database | HANA Cloud in production, in-memory SQLite locally (`db/`) |
 | SAP systems | Mock data in SAP's shape. No live SAP system is connected. |
 | Process lifecycle | SAP Signavio: optional, about half a day, never ahead of the app |
@@ -99,7 +99,7 @@ Keep one owner per area so two people never edit the same files. Each folder has
 
 ## Fallbacks
 
-- Generative AI Hub not working: agents already return a marked `degraded` fallback. If you call another LLM instead, say so on the slide.
+- Generative AI Hub not available: set `ANTHROPIC_API_KEY` in `.env` to use the direct backup, and say so on the slide. `/worker/aiStatus()` reports the active route, and the UI must show it. With neither set, agents return a marked `degraded` fallback.
 - XSUAA still failing by noon on 31 Oct: use mocked users with a role switcher. Acceptable only because all data is fictional.
 - Live voice fails on stage: use text input, then the backup video.
 
