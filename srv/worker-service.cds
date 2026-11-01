@@ -17,6 +17,13 @@ service WorkerService @(path: '/worker', requires: 'Worker') {
   @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
   entity MyPlan as projection on db.LearningPlans;
 
+  @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
+  entity MyDecisions as projection on db.ReviewDecisions;
+
+  @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
+  entity MyAuditEvents as projection on db.AuditEvents;
+
+  @readonly entity Roles as projection on db.Roles;
   @readonly entity Skills as projection on db.Skills excluding { keywords };
   @readonly entity LearningModules as projection on db.LearningModules excluding { answerKey };
   @readonly entity Vacancies as projection on db.Vacancies;

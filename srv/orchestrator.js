@@ -26,6 +26,8 @@ const WORKER_EVENTS = new Set([
   'assessment_submitted', 'module_completed', 'outside_opt_in', 'review_requested'
 ])
 
+const ACTOR_ROLE = type => (WORKER_EVENTS.has(type) ? 'worker' : type === 'manager_decided' ? 'manager' : 'supervisor')
+
 function fail(status, message) {
   throw Object.assign(new Error(message), { status, code: String(status) })
 }
@@ -125,7 +127,8 @@ const HANDLERS = {
   async assessment_submitted(worker, { module, answer }) {
     const m = await SELECT.one.from(db().LearningModules).where({ ID: module })
     if (!m?.answerKey) fail(400, `Module ${module} has no practice task`)
-    const passed = String(answer).trim().toLowerCase() === m.answerKey.toLowerCase()
+    // answerKey lists accepted answers separated by |, one per language.
+    const passed = m.answerKey.toLowerCase().split('|').includes(String(answer).trim().toLowerCase())
     if (passed) await addEvidence(worker, m.skill_ID, 'assessment', m.proficiency, 'system')
     return { contract: 'EvidenceItem', passed }
   },
@@ -175,7 +178,8 @@ async function handle(workerId, type, payload = {}, actor) {
   const { stage = planned, contract, degraded = false, ...result } = await HANDLERS[type](worker, payload, actor)
 
   await UPDATE(Workers, workerId).with({ stage })
-  await INSERT.into(AuditEvents).entries({ worker_ID: workerId, type, stage, actor, contract, degraded })
+  // The trail records the role, not the login, so it holds no personal content.
+  await INSERT.into(AuditEvents).entries({ worker_ID: workerId, type, stage, actor: ACTOR_ROLE(type), contract, degraded })
   return { stage, contract, degraded, ...result }
 }
 

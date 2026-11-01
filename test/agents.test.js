@@ -5,6 +5,7 @@ const audit = require('../srv/agents/audit')
 const pathway = require('../srv/agents/pathway')
 const verify = require('../srv/agents/verify')
 const discover = require('../srv/agents/discover')
+const workerIdOf = require('../srv/lib/worker-id')
 const { nextStage, WORKER_EVENTS } = require('../srv/orchestrator')
 
 // Keep these tests offline even if a real key is set on this machine.
@@ -77,6 +78,12 @@ test('discover: long answers are clipped to fit the database', async () => {
   const { tasks, degraded } = await discover('x'.repeat(4000))
   assert.equal(degraded, true)
   assert.equal(tasks[0].task.length, 500)
+})
+
+test('worker id: reads both XSUAA lists and mocked plain values', () => {
+  assert.equal(workerIdOf({ user: { attr: { workerId: ['abc'] } } }), 'abc')
+  assert.equal(workerIdOf({ user: { attr: { workerId: 'abc' } } }), 'abc')
+  assert.equal(workerIdOf({ user: { attr: {} } }), undefined)
 })
 
 test('orchestrator: invalid events are rejected with 409', () => {

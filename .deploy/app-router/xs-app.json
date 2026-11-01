@@ -1,10 +1,38 @@
 {
+  "welcomeFile": "/index.html",
+  "authenticationMethod": "route",
   "routes": [
     {
-      "source": "^/(.*)$",
+      "source": "^/(passport/check\\(.*)$",
       "target": "$1",
       "destination": "srv-api",
+      "authenticationType": "none",
+      "csrfProtection": false
+    },
+    {
+      "source": "^/(worker|manager|passport)(.*)$",
+      "target": "$1$2",
+      "destination": "srv-api",
+      "authenticationType": "xsuaa",
       "csrfProtection": true
+    },
+    {
+      "source": "^/check\\.html$",
+      "target": "check.html",
+      "localDir": "resources",
+      "authenticationType": "none"
+    },
+    {
+      "source": "^/assets/(.*)$",
+      "target": "assets/$1",
+      "localDir": "resources",
+      "authenticationType": "none"
+    },
+    {
+      "source": "^/index\\.html$",
+      "target": "index.html",
+      "localDir": "resources",
+      "authenticationType": "xsuaa"
     }
   ]
 }

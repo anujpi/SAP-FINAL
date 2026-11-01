@@ -1,5 +1,5 @@
 ID;skill_ID;title;durationMin;url;practiceQuestion;answerKey;proficiency
-M-TRANS;INV-TRANS;Inventory system basics;8;https://learning.sap.com;A pallet moves from bin A-14 to B-02. Which transaction type records it: stock transfer or goods issue?;stock transfer;2
-M-REPORT;DIGI-REPORT;Digital stock reporting;10;https://learning.sap.com;;;
-M-DISPATCH;DISPATCH;Dispatch planning in the system;12;https://learning.sap.com;;;
-M-CYCLE;CYCLE-COUNT;Supply-chain data accuracy;12;https://learning.sap.com;;;
+M-TRANS;INV-TRANS;Stock transfers between storage locations;8;https://learning.sap.com/courses/inventory-management-and-physical-inventory-in-sap-s-4hana/performing-stock-transfers-between-storage-locations;A pallet moves from bin A-14 to B-02. Which transaction type records it: stock transfer or goods issue?;stock transfer|स्टॉक ट्रांसफर;2
+M-REPORT;DIGI-REPORT;Warehouse processes in SAP S/4HANA EWM;10;https://learning.sap.com/courses/processes-in-sap-s-4hana-ewm;;;
+M-DISPATCH;DISPATCH;Shipping and goods issue;12;https://learning.sap.com/courses/implementing-sap-s-4hana-cloud-public-edition-sales-fundamental-business-processes/understanding-shipping-functions_b61d6a11-be4e-43ef-8a67-7d0c1738fb5c;;;
+M-CYCLE;CYCLE-COUNT;Physical inventory and cycle counting;12;https://learning.sap.com/courses/basic-customizing-in-sap-s-4hana-ewm/setting-up-the-procedures-for-physical-inventory;;;

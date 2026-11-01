@@ -1,5 +1,6 @@
 const cds = require('@sap/cds')
 const { randomBytes, createHmac, timingSafeEqual } = require('node:crypto')
+const workerIdOf = require('./lib/worker-id')
 
 function secret() {
   const s = process.env.PASSPORT_SECRET
@@ -23,7 +24,7 @@ function isGenuine(c) {
 module.exports = cds.service.impl(function () {
   this.on('createLink', async req => {
     const { SkillClaims, SkillCredentials, ShareLinks } = cds.entities('frontline')
-    const worker_ID = req.user.attr.workerId
+    const worker_ID = workerIdOf(req)
     const skills = [...new Set(req.data.skills ?? [])]
     if (!worker_ID) return req.reject(403, 'This login is not linked to a worker')
     if (!skills.length) return req.reject(400, 'Choose at least one skill to share')
@@ -48,7 +49,7 @@ module.exports = cds.service.impl(function () {
     const { ShareLinks } = cds.entities('frontline')
     const changed = await UPDATE(ShareLinks)
       .set({ revokedAt: new Date().toISOString() })
-      .where({ token: req.data.token, worker_ID: req.user.attr.workerId })
+      .where({ token: req.data.token, worker_ID: workerIdOf(req) })
     return changed > 0
   })
 

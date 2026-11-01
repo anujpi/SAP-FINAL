@@ -5,14 +5,14 @@ Ravi, a warehouse operator, talks about his work. The app turns that into verifi
 
 Build closes **Tue 3 Nov**. Finale is **Wed 4 Nov**: 10 minutes of presentation, 5 of Q&A. Every member attends. Keep the demo on one laptop, with a backup video.
 
-Full plan, from now to a real product: `docs/PLAN.md`. Follow it, and tick its boxes as work finishes.
+Current status and next steps: `docs/HANDOFF.md`. Read it first. Demo steps: `docs/DEMO.md`. Full plan: `docs/PLAN.md`, and tick its boxes as work finishes.
 Architecture page: https://claude.ai/artifact/DfqnwXcHN89kbnJkotfNiK
 
 ## Stack
 
 | Layer | Tech |
 |---|---|
-| Worker and manager apps | React, TypeScript, Tailwind (`app/`), not built yet |
+| Web app | React, TypeScript, plain CSS (`app/web`). Worker, manager and public check screens, tested locally |
 | Login | SAP Approuter + XSUAA. Mocked users locally. |
 | Backend | CAP Node.js on BTP Cloud Foundry (`srv/`) |
 | LLM | `srv/lib/llm.js` only. Generative AI Hub on SAP AI Core if bound, otherwise a direct Anthropic API backup, otherwise a marked offline fallback |
@@ -49,13 +49,12 @@ mbt build
 cf deploy mta_archives/frontline-shift_1.0.0.mtar
 ```
 
-Before the first deploy, set `PASSPORT_SECRET`, and `LLM_MODEL` and the AI Core binding for the LLM. HANA trial instances stop every night, so restart yours each morning and before the demo.
+`PASSPORT_SECRET` is already set on BTP. For real AI, set `ANTHROPIC_API_KEY` there too. HANA free tier stops by itself, even the same day: start it with `cf update-service frontline-db -c scripts/hana-start.json` before any deploy or demo.
 
 ## Layout
 
 ```
-app/worker/    Worker PWA (Swastik)
-app/manager/   Manager app and public check page (Guneesh)
+app/web/       React app: worker, manager and public check screens
 srv/           CAP services and orchestrator (Anuj)
 srv/agents/    Seven agents, one file each (Ujjwal: discover, verify. Vikas: match, market, audit. Guneesh: review)
 srv/lib/llm.js The only door to Generative AI Hub (Ujjwal)

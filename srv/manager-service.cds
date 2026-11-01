@@ -3,6 +3,8 @@ using { frontline as db } from '../db/schema';
 service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', 'HRAdmin']) {
 
   @readonly entity ReviewQueue as select from db.Workers { ID, name, site, stage } where stage = 'AWAITING_MANAGER';
+  @readonly entity Team as select from db.Workers { ID, name, site, stage };
+  @readonly entity Skills as projection on db.Skills excluding { keywords };
 
   @requires: ['Manager', 'HRAdmin']
   @readonly entity AuditEvents as projection on db.AuditEvents;

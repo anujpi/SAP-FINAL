@@ -7,3 +7,5 @@ mta_archives/
 .env
 default-env.json
 .cdsrc-private.json
+.deploy/app-router/resources/
+app/web/node_modules/

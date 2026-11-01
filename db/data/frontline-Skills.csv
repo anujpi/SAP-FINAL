@@ -1,9 +1,9 @@
 ID;name;keywords
-CYCLE-COUNT;Cycle counting;recount,cycle count,count the bin,stock count
-STOCK-DISC;Stock discrepancy resolution;discrepancy,mismatch,adjustment,stock gap
-DISPATCH;Dispatch coordination;dispatch,loading,shipment,truck
-INV-TRANS;Inventory system transactions;system entry,transaction,goods movement,scanner
-DIGI-REPORT;Digital stock reporting;report,spreadsheet,dashboard
-PICKING;Order picking;pick list,picking
-SAFETY;Warehouse safety;safety,ppe,forklift
-TEAM-LEAD;Shift team coordination;shift lead,team,handover
+CYCLE-COUNT;Cycle counting;recount,cycle count,count the bin,stock count,गिनती,गिनता
+STOCK-DISC;Stock discrepancy resolution;discrepancy,mismatch,adjustment,stock gap,अंतर,गड़बड़ी,एडजस्टमेंट,फर्क
+DISPATCH;Dispatch coordination;dispatch,loading,shipment,truck,डिस्पैच,लोडिंग,शिपमेंट,ट्रक
+INV-TRANS;Inventory system transactions;system entry,transaction,goods movement,scanner,सिस्टम,स्कैनर
+DIGI-REPORT;Digital stock reporting;report,spreadsheet,dashboard,रिपोर्ट
+PICKING;Order picking;pick list,picking,पिक लिस्ट,पिकिंग
+SAFETY;Warehouse safety;safety,ppe,forklift,सुरक्षा,फोर्कलिफ्ट
+TEAM-LEAD;Shift team coordination;shift lead,team,handover,टीम,शिफ्ट

@@ -7,12 +7,12 @@ Written Fri 30 Oct 2026. Tick boxes as you go. Costs and prices are planning est
 
 | Area | Status |
 |---|---|
-| Backend, seven agents, Skill Passport, seed data | Built. 11 unit tests and Ravi's journey pass locally. |
-| LLM through Generative AI Hub | Written, never called. Agents A and B run on marked fallbacks. |
-| HANA Cloud, XSUAA, BTP deployment | Config generated, never deployed. |
-| Worker app, manager app, public check page | Not started. |
-| Stakeholder validation | **Not done. Scored by the jury.** |
-| Demo script, slides, Signavio models | Not started. Content is in this file. |
+| Backend, seven agents, Skill Passport, seed data | Built. Unit tests and Ravi's journey pass locally. |
+| LLM | SAP AI Core isn't offered on this trial. The direct Anthropic backup is written and tested against a stand-in, but needs a real key. Agents A and B run on marked fallbacks until then. |
+| HANA Cloud, XSUAA, BTP deployment | Deployed. Public routes tested. Logged-in screens not yet tested on BTP. |
+| Worker app, manager app, public check page | Built in `app/web`. The full journey works in the browser locally, in English and Hindi. |
+| Stakeholder validation | Team decision: no interviews. Use published reports and say so. |
+| Demo runbook | `docs/DEMO.md`. Slides and Signavio models not started. |
 
 ## 2. How the jury scores you
 
@@ -22,7 +22,7 @@ From the participant guide. Build and rehearse against this table.
 |---|---|---|---|
 | **Problem** | Specificity: precisely scoped? | Warehouse operators moving into a Digital Supply Chain Coordinator role, at SAP-using sites | Ready |
 | | Root cause: why does it exist? | Skills are learned on the floor and never recorded. Career systems trust CVs and credentials, and employers find external hiring easier to see. | Ready |
-| | Stakeholder validation: evidence, not assumptions? | OECD, ILO and ETF reports exist, but **you need real conversations** | **Gap: section 4** |
+| | Stakeholder validation: evidence, not assumptions? | OECD, ILO and ETF reports. No interviews were done, so say that plainly if asked. | Section 4 |
 | **Systems thinking** | Process links: upstream and downstream mapped? | Signavio models, plus SuccessFactors, EWM and Learning connections | Models to draw |
 | | Second-order consequences? | Section 7 | Ready |
 | | Change management? | Section 8 | Ready |
@@ -43,12 +43,12 @@ Everything else depends on this.
 
 - [ ] Run `npm run watch`, then `npm run journey` in a second terminal. It must pass.
 - [ ] Commit and push the current code.
-- [ ] Create the BTP trial account at `account.hanatrial.ondemand.com`.
-- [ ] Open the trial subaccount, then check Entitlements for `aicore` (plan `extended`), `hana-cloud`, `hana` (`hdi-shared`) and `xsuaa`.
-- [ ] Create a HANA Cloud instance in HANA Cloud Central, and allow all IP addresses, since BTP needs to reach it.
-- [ ] Install the tools: the `cf` CLI version 8 or newer, then `cf install-plugin multiapps`, then `npm i -g mbt`. On Windows, `mbt` may also need GNU Make.
-- [ ] Run `cf login`, `mbt build`, then `cf deploy mta_archives/frontline-shift_1.0.0.mtar`. A failed DB deployer task is sometimes fixed by running it again.
-- [ ] Set the secret: `cf set-env frontline-shift-srv PASSPORT_SECRET <long random value>`, then `cf restage frontline-shift-srv`.
+- [x] Create the BTP trial account at `account.hanatrial.ondemand.com`. Region: Singapore (Azure). API endpoint: `https://api.cf.ap21.hana.ondemand.com`. Use Chrome for the cockpit, because entitlements returned 403 errors in the Claude app's built-in browser.
+- [x] Open the trial subaccount, then check Entitlements. `hana-cloud`, `hana-cloud-tools` and `hana` (`hdi-shared`) are there. **SAP AI Core isn't offered on this account**, so follow steps 2 and 3 of the LLM decision below. `xsuaa` and Cloud Foundry `MEMORY` aren't confirmed yet.
+- [x] Create a HANA Cloud instance: `frontline-db`, free tier, Cloud Foundry `dev` space, Cloud Foundry IP addresses only.
+- [x] Install the tools: `cf` CLI, `multiapps` plugin, `mbt` and GNU Make.
+- [x] Run `cf login`, `mbt build`, then `cf deploy mta_archives/frontline-shift_1.0.0.mtar`. Live at https://eb72796ftrial-dev-frontline-shift.cfapps.ap21.hana.ondemand.com
+- [x] Set the secret with `cf set-env frontline-shift-srv PASSPORT_SECRET <long random value>`, then restart the app.
 - [ ] **Generative AI Hub:** follow the decision below, and set `LLM_MODEL`.
 
 **LLM decision.** Generative AI Hub needs the AI Core `extended` plan, and I couldn't confirm a normal trial account offers it.
@@ -61,13 +61,12 @@ Everything else depends on this.
 
 ### Sat 31 Oct: worker app and validation
 
-- [ ] **Talk to 2–3 warehouse workers or supervisors** (section 4).
-- [ ] Set up React, TypeScript and Tailwind in `app/worker`.
-- [ ] Screen 1: language and consent.
-- [ ] Screen 2: voice or typing, then read-back with edit.
-- [ ] Screen 3: skills with status chips.
-- [ ] Screen 4: match with strengths, gaps, rule trace and market signal.
-- [ ] Hindi and English text for those screens.
+- [x] Set up the React app in `app/web` (one app, plain CSS).
+- [x] Screen 1: language and consent.
+- [x] Screen 2: voice or typing, then read-back with edit. Voice not yet tried on a real phone.
+- [x] Screen 3: skills with status chips.
+- [x] Screen 4: match with strengths, gaps, rule trace and market signal.
+- [x] Hindi and English text for those screens. Skill names are still English.
 - [ ] Tune agent A and B prompts on real answers in English and Hindi, including short answers, mixed language and an attempt to inject instructions.
 - [ ] Draw the two Signavio models if access works (about 2 hours).
 
@@ -75,12 +74,12 @@ Everything else depends on this.
 
 ### Sun 1 Nov: the rest of the journey
 
-- [ ] Screen 5: pathway with real Learning Hub links, and the practice task.
-- [ ] Screen 6: Skill Passport with QR code and cancel.
-- [ ] Set up `app/manager`: review queue, review packet, decision, attestation.
-- [ ] Audit log timeline, fairness view and "Reset demo".
-- [ ] Public check page with no login.
-- [ ] **SAP trace panel:** a slim side panel showing each hand-off live, such as "Agent A → Generative AI Hub · names masked".
+- [x] Screen 5: pathway and the practice task. Learning Hub links still need replacing.
+- [x] Screen 6: Skill Passport with QR code and cancel.
+- [x] Manager screens: review queue, review packet, decision, attestation.
+- [x] Audit log, fairness view and "Reset demo".
+- [x] Public check page with no login.
+- [x] **System trace panel:** shows each hand-off and the active AI route live.
 - [ ] Replace placeholder `learning.sap.com` links in the seed with real course pages.
 - [ ] Take at least one Learning Hub course each, and screenshot completion.
 
@@ -122,28 +121,18 @@ Everything else depends on this.
 
 **Never cut:** voice or text to read-back, verified vs. self-reported, the 68 match with its rule trace, the practice task raising the score, the manager decision with its reason, the audit log.
 
-## 4. Stakeholder validation (do this on Sat 31 Oct)
+## 4. Evidence for the problem
 
-The jury asks for "valid evidence vs. pure assumptions". Your deck's Ravi is fictional, and that's fine only if real conversations back it up.
+The team chose not to run interviews before the finale. Use the published research from the selection deck: OECD (2026) on skills-first hiring, ILO (2026) on recognition of prior learning, and ETF and partners (2026) on AI and skills.
 
-**Who:** 2–3 people, 15 minutes each. Warehouse or logistics workers, a supervisor, an HR person. Try family contacts, local warehouses, kirana distributors, delivery hubs and college placement contacts.
+Ravi is a fictional composite, so say that. Don't imply anyone was interviewed, and never invent quotes. If the jury asks about validation, say: "We used published research for this round. Interviews are the first step of the pilot."
 
-**Ask:**
-1. What did you learn on the job that no document shows?
-2. Have you ever applied for a better role at your company? What happened?
-3. How do people get promoted here?
-4. Do you record counts on paper or a scanner? Who enters them in the system?
-5. Would you talk to an app about your work for 10 minutes? When? On whose phone?
-6. What would make you not trust it?
-7. (Supervisors) Would you confirm a worker's skills if it took 2 minutes a week?
-
-**Use it honestly:** note the number of people and their roles, get permission, and quote one or two lines. Say "we spoke to 3 people, so this is early". Never invent quotes or numbers. If you can't reach anyone, say so and rely on the published reports.
+Expect a lower score on this one criterion.
 
 ## 5. Deployment work still to do
 
-- **Frontends:** build with Vite into `.deploy/app-router/resources/worker` and `/manager`, then add `localDir` routes in `.deploy/app-router/xs-app.json`. This avoids setting up an HTML5 repository.
-- **API routes:** keep the catch-all to `srv-api` last. Add `/passport/check` and the check page with `"authenticationType": "none"`, and leave everything else authenticated.
-- **CSRF:** the Approuter requires a token on POST. Fetch it with an `x-csrf-token: fetch` header, then send it back.
+Done: frontends build into `.deploy/app-router/resources` and deploy with the Approuter, and only `/passport/check(...)`, `check.html` and `/assets` are public. The CSRF token handling in `app/web/src/api.ts` is written but not yet tested on BTP. For current status, see `docs/HANDOFF.md`.
+
 - **Worker login:** assign role collections and the `workerId` attribute to your test user in the BTP cockpit. `$user.workerId` must come from there.
 - **AI Core:** add the binding to `mta.yaml`, and set `LLM_MODEL`.
 - **Secret:** set `PASSPORT_SECRET`, or passport signing refuses to work in production.
@@ -315,7 +304,7 @@ If voice fails, type. If anything else fails, switch to the video without apolog
 | Live voice fails in a noisy hall | Medium | Typed fallback, then video |
 | HANA instance stopped on the morning | Medium | Morning checklist |
 | Venue network fails | Medium | Hotspot and video |
-| No real validation | Medium | Section 4, tomorrow |
+| Jury questions the lack of interviews | High | Answer plainly, using section 4 |
 | Running out of time | High | Cut order in section 3 |
 
 ## 13. Things still to confirm
