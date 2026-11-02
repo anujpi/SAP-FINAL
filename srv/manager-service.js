@@ -6,7 +6,7 @@ const askJson = require('./lib/llm')
 const sapContext = require('./lib/sap-context')
 const { ewmSupport, parseExtract } = require('./lib/ewm')
 const { checkShare } = require('./lib/credential')
-const { staffLogin } = require('./lib/demo-worker')
+const { staffLogin, personaOf, personaHeader } = require('./lib/demo-worker')
 
 // A worker's interest in outside jobs is private: managers never see those matches, and they stay out of the audit.
 async function internalMatches(where) {
@@ -19,7 +19,7 @@ async function internalMatches(where) {
 // Who is asking, and for which company. Every read and action below is limited to that company.
 async function staffOf(req) {
   const { Staff } = cds.entities('frontline')
-  const staff = await SELECT.one.from(Staff).where({ login: staffLogin(req.user.id) })
+  const staff = await SELECT.one.from(Staff).where({ login: staffLogin(req.user.id, process.env, personaOf(req.user, personaHeader(req))) })
   return staff ?? req.reject(403, "This login isn't linked to a company. An admin needs to add it.")
 }
 
@@ -56,11 +56,47 @@ module.exports = cds.service.impl(function () {
       ID: w.ID,
       name: w.name,
       site: w.site,
+      jobTitle: w.jobTitle,
       stage: w.stage,
       skills: claims.get(w.ID) ?? [],
       pending: (pending.get(w.ID) ?? []).map(r => r.skill_ID),
       ewm: ewmSupport(records.get(w.ID) ?? [])
     })))
+  })
+
+  this.on('employeeProfile', async req => {
+    const { SkillClaims, SuccessFactorsSkills, EvidenceItems, VerificationRequests, EwmTaskRecords, TaskExperiences, Companies, Roles } = cds.entities('frontline')
+    const worker_ID = req.data.worker
+    const { worker } = await ownWorker(req, worker_ID)
+    const company = await SELECT.one.from(Companies).where({ ID: worker.company_ID })
+    const role = await SELECT.one.from(Roles).where({ ID: worker.targetRole_ID })
+    const synced = await SELECT.from(SuccessFactorsSkills).where({ worker_ID })
+    const evidence = await SELECT.from(EvidenceItems).where({ worker_ID }).orderBy('createdAt desc')
+    const requests = await SELECT.from(VerificationRequests).where({ worker_ID }).orderBy('createdAt desc')
+    const records = await SELECT.from(EwmTaskRecords).where({ worker_ID }).orderBy('workDate desc')
+    const support = ewmSupport(records)
+    const scores = (await internalMatches({ worker_ID })).map(m => m.score)
+    return JSON.stringify({
+      worker: {
+        ID: worker.ID, name: worker.name, site: worker.site, stage: worker.stage, employmentType: worker.employmentType,
+        employeeCode: worker.employeeCode, jobTitle: worker.jobTitle, department: worker.department,
+        workShift: worker.workShift, managerName: worker.managerName, joinedOn: worker.joinedOn, company: company?.name
+      },
+      targetRole: role?.title,
+      bestScore: scores.length ? Math.max(...scores) : null,
+      skills: (await SELECT.from(SkillClaims).where({ worker_ID })).map(c => {
+        const proof = evidence.find(e => e.skill_ID === c.skill_ID)
+        const sf = synced.find(s => s.skill_ID === c.skill_ID)
+        const request = requests.find(r => r.skill_ID === c.skill_ID)
+        return {
+          skill_ID: c.skill_ID, status: c.status, proficiency: c.proficiency, ewm: support[c.skill_ID] ?? null,
+          verifiedBy: sf?.verifiedBy, verifiedOn: sf?.syncedAt, proofType: proof?.proofType, proofRef: proof?.proofRef,
+          request: request?.status, requestNote: request?.note
+        }
+      }),
+      tasks: (await SELECT.from(TaskExperiences).where({ worker_ID, confirmed: true })).map(t => ({ ID: t.ID, task: t.task, tool: t.tool, frequency: t.frequency })),
+      ewmRecords: records.slice(0, 8).map(r => ({ ID: r.ID, workDate: r.workDate, taskType: r.taskType, confirmedTasks: r.confirmedTasks }))
+    })
   })
 
   this.on('verificationRequests', async req => {

@@ -9,6 +9,7 @@ import '@ui5/webcomponents-icons/dist/ai.js'
 import { AI_ROUTE, list, parseJson, sendEvent, value } from './api'
 import { Lang, speechLang, texts, Texts } from './i18n'
 import { Certificates, Jobs, Learn, Resume, Skills } from './WorkerTabs'
+import { ProfileCard } from './ui'
 import type { User } from './main'
 
 export type Run = (action: () => Promise<unknown>) => Promise<void>
@@ -89,16 +90,20 @@ export function WorkerApp({ showTrace, user }: { showTrace: boolean; user: User 
   return (
     <div className={showTrace ? 'worker with-trace' : 'worker'}>
       <main className="worker-main">
-        <header className="worker-head">
-          <div>
-            <Title level="H1" size="H3">{me?.name ?? t.working}</Title>
-            {me && <Text>{[user.company, me.site].filter(Boolean).join(' · ')}</Text>}
-          </div>
-          <Select accessibleName={t.chooseLanguage} value={lang} onChange={e => setLang(e.target.value as Lang)}>
-            <Option value="en">English</Option>
-            <Option value="hi">हिन्दी</Option>
-          </Select>
-        </header>
+        {!me && <Text>{t.working}</Text>}
+        {me && (
+          <ProfileCard
+            person={me}
+            company={user.company}
+            labels={t.profile}
+            action={(
+              <Select accessibleName={t.chooseLanguage} value={lang} onChange={e => setLang(e.target.value as Lang)}>
+                <Option value="en">English</Option>
+                <Option value="hi">हिन्दी</Option>
+              </Select>
+            )}
+          />
+        )}
         {stage && <Steps stage={stage} t={t} />}
         {error && <MessageStrip design="Negative" hideCloseButton>{error}</MessageStrip>}
         {degraded && <MessageStrip design="Critical" hideCloseButton>{t.degraded}</MessageStrip>}

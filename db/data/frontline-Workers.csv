@@ -1,25 +1,25 @@
-ID;name;site;employmentType;lang;stage;targetRole_ID;company_ID
-00000000-0000-4000-8000-000000000001;Ravi K.;Bengaluru Hub;permanent;hi;NOT_STARTED;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000101;Asha M.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000102;Imran S.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000103;Lakshmi R.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000104;Deepak V.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000105;Fatima N.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000106;Suresh P.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000107;Kavya T.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000108;Manoj D.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000109;Priya G.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000110;Rahul B.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000111;Nandini H.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000112;Arif K.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000113;Geeta L.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000114;Vijay C.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000115;Sneha J.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000116;Tarun A.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000117;Meena Y.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000118;Harish O.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000119;Divya U.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000120;Karthik E.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO
-00000000-0000-4000-8000-000000000201;Farhan Q.;Hosur;permanent;en;ACTIVE;INV-CTRL;MERIDIAN
-00000000-0000-4000-8000-000000000202;Rekha W.;Chennai;contract;hi;ACTIVE;INV-CTRL;MERIDIAN
-00000000-0000-4000-8000-000000000203;Ajay Z.;Chennai;permanent;en;ACTIVE;INV-CTRL;MERIDIAN
+ID;name;site;employmentType;lang;stage;targetRole_ID;company_ID;employeeCode;jobTitle;department;workShift;managerName;joinedOn
+00000000-0000-4000-8000-000000000001;Ravi K.;Bengaluru Hub;permanent;hi;NOT_STARTED;DSC-COORD;INDIGO;IH-1001;Warehouse Operator;Inbound and Inventory;Morning;Meera S.;2023-06-12
+00000000-0000-4000-8000-000000000101;Asha M.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO;IH-1002;Picker Packer;Outbound and Dispatch;Evening;Meera S.;2022-02-15
+00000000-0000-4000-8000-000000000102;Imran S.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO;IH-1003;Inventory Associate;Picking;Night;Meera S.;2023-03-15
+00000000-0000-4000-8000-000000000103;Lakshmi R.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO;IH-1004;Dispatch Associate;Returns;Morning;Meera S.;2024-04-15
+00000000-0000-4000-8000-000000000104;Deepak V.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO;IH-1005;Forklift Operator;Inbound and Inventory;Evening;Meera S.;2025-05-15
+00000000-0000-4000-8000-000000000105;Fatima N.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO;IH-1006;Warehouse Operator;Outbound and Dispatch;Night;Meera S.;2021-06-15
+00000000-0000-4000-8000-000000000106;Suresh P.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO;IH-1007;Picker Packer;Picking;Morning;Meera S.;2022-07-15
+00000000-0000-4000-8000-000000000107;Kavya T.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO;IH-1008;Inventory Associate;Returns;Evening;Meera S.;2023-08-15
+00000000-0000-4000-8000-000000000108;Manoj D.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO;IH-1009;Dispatch Associate;Inbound and Inventory;Night;Meera S.;2024-09-15
+00000000-0000-4000-8000-000000000109;Priya G.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO;IH-1010;Forklift Operator;Outbound and Dispatch;Morning;Meera S.;2025-10-15
+00000000-0000-4000-8000-000000000110;Rahul B.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO;IH-1011;Warehouse Operator;Picking;Evening;Meera S.;2021-11-15
+00000000-0000-4000-8000-000000000111;Nandini H.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO;IH-1012;Picker Packer;Returns;Night;Meera S.;2022-12-15
+00000000-0000-4000-8000-000000000112;Arif K.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO;IH-1013;Inventory Associate;Inbound and Inventory;Morning;Meera S.;2023-01-15
+00000000-0000-4000-8000-000000000113;Geeta L.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO;IH-1014;Dispatch Associate;Outbound and Dispatch;Evening;Meera S.;2024-02-15
+00000000-0000-4000-8000-000000000114;Vijay C.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO;IH-1015;Forklift Operator;Picking;Night;Meera S.;2025-03-15
+00000000-0000-4000-8000-000000000115;Sneha J.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO;IH-1016;Warehouse Operator;Returns;Morning;Meera S.;2021-04-15
+00000000-0000-4000-8000-000000000116;Tarun A.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO;IH-1017;Picker Packer;Inbound and Inventory;Evening;Meera S.;2022-05-15
+00000000-0000-4000-8000-000000000117;Meena Y.;Bengaluru Hub;permanent;hi;ACTIVE;DSC-COORD;INDIGO;IH-1018;Inventory Associate;Outbound and Dispatch;Night;Meera S.;2023-06-15
+00000000-0000-4000-8000-000000000118;Harish O.;Bengaluru Hub;contract;en;ACTIVE;DSC-COORD;INDIGO;IH-1019;Dispatch Associate;Picking;Morning;Meera S.;2024-07-15
+00000000-0000-4000-8000-000000000119;Divya U.;Bengaluru Hub;permanent;kn;ACTIVE;DSC-COORD;INDIGO;IH-1020;Forklift Operator;Returns;Evening;Meera S.;2025-08-15
+00000000-0000-4000-8000-000000000120;Karthik E.;Bengaluru Hub;contract;ta;ACTIVE;DSC-COORD;INDIGO;IH-1021;Warehouse Operator;Inbound and Inventory;Night;Meera S.;2021-09-15
+00000000-0000-4000-8000-000000000201;Farhan Q.;Hosur;permanent;en;ACTIVE;INV-CTRL;MERIDIAN;MF-1022;Picker Packer;Outbound and Dispatch;Morning;Arjun D.;2022-10-15
+00000000-0000-4000-8000-000000000202;Rekha W.;Chennai;contract;hi;ACTIVE;INV-CTRL;MERIDIAN;MF-1023;Inventory Associate;Picking;Evening;Arjun D.;2023-11-15
+00000000-0000-4000-8000-000000000203;Ajay Z.;Chennai;permanent;en;ACTIVE;INV-CTRL;MERIDIAN;MF-1024;Dispatch Associate;Returns;Night;Arjun D.;2024-12-15

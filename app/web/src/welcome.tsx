@@ -20,6 +20,7 @@ function Welcome() {
           {import.meta.env.DEV ? (
             <div className="welcome-actions">
               <Button design="Emphasized" onClick={() => devLogin('ravi')}>Local: Ravi (Worker)</Button>
+              <Button onClick={() => devLogin('presenter')}>Local: Presenter (all roles)</Button>
               <Button onClick={() => devLogin('meera')}>Local: Meera (Manager, Supervisor, HR)</Button>
               <Button onClick={() => devLogin('sunil')}>Local: Sunil (Supervisor)</Button>
             </div>

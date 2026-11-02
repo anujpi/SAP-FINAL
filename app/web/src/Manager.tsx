@@ -1,7 +1,7 @@
-import { ReactNode, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
-  Button, Card, CardHeader, IllustratedMessage, Input, Label, List, ListItemStandard, MessageStrip, ObjectStatus, Option, Panel, RadioButton, Select,
-  SideNavigation, SideNavigationItem, Table, TableCell, TableHeaderCell, TableHeaderRow, TableRow, Text, TextArea, Title
+  Button, Card, CardHeader, Input, Label, Link, List, ListItemStandard, MessageStrip, ObjectStatus, Option, Panel, RadioButton, Select,
+  SideNavigation, SideNavigationItem, Text, TextArea, Title
 } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/group.js'
 import '@ui5/webcomponents-icons/dist/validate.js'
@@ -11,8 +11,9 @@ import '@ui5/webcomponents-icons/dist/upload.js'
 import '@ui5/webcomponents-icons/dist/customer-briefing.js'
 import '@ui5/webcomponents-icons/dist/history.js'
 import '@ui5/webcomponents-icons/dist/shield.js'
-import '@ui5/webcomponents-fiori/dist/illustrations/NoEntries.js'
 import { list, parseJson, parsed, value } from './api'
+import { DataTable, Empty, STAGE, StageStatus } from './ui'
+import { EmployeeProfile } from './Employee'
 import type { User } from './main'
 
 export const SECTIONS = [
@@ -38,33 +39,9 @@ const PROOFS = [
   { id: 'training_record', label: 'Training record' }
 ]
 
-const STAGE: Record<string, { label: string; state: 'None' | 'Information' | 'Positive' | 'Critical' }> = {
-  NOT_STARTED: { label: 'Not started', state: 'None' },
-  HALTED: { label: 'Data erased', state: 'None' },
-  DISCOVERING: { label: 'Building profile', state: 'Information' },
-  AWAITING_READBACK: { label: 'Confirming profile', state: 'Information' },
-  ACTIVE: { label: 'Profile active', state: 'Information' },
-  AWAITING_MANAGER: { label: 'Waiting for role review', state: 'Critical' },
-  SHORTLISTED: { label: 'Shortlisted', state: 'Positive' }
-}
-
-const StageStatus = ({ stage }: { stage: string }) => <ObjectStatus state={STAGE[stage]?.state ?? 'None'}>{STAGE[stage]?.label ?? stage}</ObjectStatus>
 const NOTE_MOCK_SF = 'Mock SuccessFactors: a table standing in for it, because no customer system is connected. Connecting a real tenant replaces only this one step.'
 
-function DataTable({ columns, rows }: { columns: string[]; rows: ReactNode[][] }) {
-  return (
-    <Table
-      overflowMode="Popin"
-      headerRow={<TableHeaderRow>{columns.map(c => <TableHeaderCell key={c}><span>{c}</span></TableHeaderCell>)}</TableHeaderRow>}
-    >
-      {rows.map((cells, i) => <TableRow key={i}>{cells.map((cell, j) => <TableCell key={j}>{cell}</TableCell>)}</TableRow>)}
-    </Table>
-  )
-}
-
-const Empty = ({ title, subtitle }: { title: string; subtitle?: string }) => <IllustratedMessage name="NoEntries" titleText={title} subtitleText={subtitle} />
-
-export function ManagerApp({ user, section }: { user: User; section?: string }) {
+export function ManagerApp({ user, section, detail }: { user: User; section?: string; detail?: string }) {
   const [names, setNames] = useState<Record<string, string>>({})
   const [revision, setRevision] = useState(0)
   const [message, setMessage] = useState('')
@@ -105,7 +82,8 @@ export function ManagerApp({ user, section }: { user: User; section?: string }) 
       <main className="page">
         {error && <MessageStrip design="Negative" onClose={() => setError('')}>{error}</MessageStrip>}
         {message && <MessageStrip design="Positive" onClose={() => setMessage('')}>{message}</MessageStrip>}
-        {current === 'team' && <Team {...props} company={user.company} />}
+        {current === 'team' && !detail && <Team {...props} company={user.company} />}
+        {current === 'team' && detail && <EmployeeProfile worker={detail} names={names} revision={revision} />}
         {current === 'verify' && <Verify {...props} />}
         {current === 'review' && <Review {...props} canDecide={user.roles.includes('Manager')} />}
         {current === 'talent' && <Talent {...props} />}
@@ -133,13 +111,13 @@ function Team({ names, revision, company }: Props & { company: string }) {
   return (
     <>
       <Title level="H1" size="H3">My employees</Title>
-      <Text>{company} · {team.length} people</Text>
+      <Text>{company} · {team.length} people. Click a name to see their profile.</Text>
       <Card>
         <DataTable
-          columns={['Name', 'Site', 'Verified skills', 'Not yet verified', 'Open requests', 'Status']}
+          columns={['Name', 'Job', 'Verified skills', 'Not yet verified', 'Open requests', 'Status']}
           rows={team.map(w => [
-            w.name,
-            w.site,
+            <Link href={`#/manager/team/${w.ID}`}>{w.name}</Link>,
+            w.jobTitle,
             skillText(w, s => s.status === 'verified'),
             skillText(w, s => s.status !== 'verified'),
             w.pending.length ? <ObjectStatus state="Critical">{w.pending.length}</ObjectStatus> : '–',

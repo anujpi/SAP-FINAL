@@ -14,21 +14,17 @@ The exact steps to show Frontline Shift working. Rehearse from this file. All pe
 
 ## Who signs in
 
-- **Your SAP login**, with the Worker, Manager, Supervisor and HRAdmin role collections, is Meera S. at Indigo Hub Logistics, and also opens Ravi's journey. The home page shows the tiles for every role.
-- **A second SAP login** (a teammate's) is needed to show Arjun at Meridian Freight, in an Incognito window. In the cockpit, under Security → Users, give that person the Manager role collection, then map their email and restart:
-  ```bash
-  cf set-env frontline-shift-srv DEMO_STAFF_MAP "{\"teammate@example.com\":\"arjun\"}"
-  ```
-  ```bash
-  cf restart frontline-shift-srv
-  ```
-  Without it, skip step 15 and show step 14's public check page instead.
+Your one SAP login, with the Worker, Manager, Supervisor and HRAdmin role collections, can show everyone. Click your initials at the top right, then under **Demo: view as** pick **Ravi K., employee**, **Meera S., manager** or **Arjun D., other company**. Each browser tab remembers its own choice. Say out loud that this is a demo switch, and that in production each person signs in with their own account.
+
+**How It Works** (a tile on the home page, also in the initials menu) walks through the whole flow, and each step has a button that opens that screen as the right person. Use it to explain, or to drive the demo if you get lost.
 
 ## Tabs to open
 
-1. The app's home page. Open **My Career Journey** for Ravi. The clipboard icon at the top right opens the **Agent activity** panel.
-2. The app's home page in a second tab, for Meera.
-3. Incognito window, signed in as Arjun.
+Open the app in three tabs, and set each one with **Demo: view as**. Duplicating a tab copies its choice, so set it after duplicating.
+
+1. Ravi. The clipboard icon at the top right opens the **Agent activity** panel.
+2. Meera.
+3. Arjun.
 4. HANA Database Explorer, for the live data moment.
 5. The slides, then the backup video.
 
@@ -42,7 +38,7 @@ The exact steps to show Frontline Shift working. Rehearse from this file. All pe
 | 4 | Ravi | **Skills** tab | "The AI found these skills. Next to each one: what EWM's records show." Read the cycle counting number off the screen, because each day's upload raises it. |
 | 5 | Meera | **EWM Daily Upload**: **Use today's sample**, **Load into HANA** | "Each day the warehouse loads confirmed tasks. This is how we check what he said against real work." |
 | 6 | Ravi | **Ask my manager to verify** on *Cycle counting* and *Stock discrepancy resolution* | "He asks. Nothing is verified until a person says so." |
-| 7 | Meera | **My Employees** | "The manager signs in under her company and sees her people and their skills." |
+| 7 | Meera | **My Employees**, then click **Ravi K.** to open his profile | "The manager signs in under her company and sees her people. Here's one employee's job record, skills and what EWM shows." |
 | 8 | Meera | **Verification Requests**: read the EWM line, keep the proof, **Verify and issue certificate**, twice | "She must give proof. It's mocked today, and her name goes on the result." |
 | 9 | Ravi | **Certificates** tab | "A certificate naming the manager and the company." Then show **Resume**. |
 | 10 | Ravi | **Jobs** tab, open **How this was worked out** | "68%. This number is plain code, not AI. Only verified skills count." |

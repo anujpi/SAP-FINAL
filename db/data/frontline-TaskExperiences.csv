@@ -1,0 +1,70 @@
+ID;worker_ID;task;tool;frequency;example;confirmed
+00000000-0000-4000-8000-000000005001;00000000-0000-4000-8000-000000000101;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005002;00000000-0000-4000-8000-000000000101;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005003;00000000-0000-4000-8000-000000000101;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005004;00000000-0000-4000-8000-000000000102;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005005;00000000-0000-4000-8000-000000000102;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005006;00000000-0000-4000-8000-000000000102;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005007;00000000-0000-4000-8000-000000000103;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005008;00000000-0000-4000-8000-000000000103;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005009;00000000-0000-4000-8000-000000000103;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005010;00000000-0000-4000-8000-000000000104;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005011;00000000-0000-4000-8000-000000000104;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005012;00000000-0000-4000-8000-000000000104;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005013;00000000-0000-4000-8000-000000000105;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005014;00000000-0000-4000-8000-000000000105;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005015;00000000-0000-4000-8000-000000000105;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005016;00000000-0000-4000-8000-000000000106;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005017;00000000-0000-4000-8000-000000000106;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005018;00000000-0000-4000-8000-000000000106;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005019;00000000-0000-4000-8000-000000000107;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005020;00000000-0000-4000-8000-000000000107;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005021;00000000-0000-4000-8000-000000000107;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005022;00000000-0000-4000-8000-000000000108;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005023;00000000-0000-4000-8000-000000000108;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005024;00000000-0000-4000-8000-000000000108;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005025;00000000-0000-4000-8000-000000000109;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005026;00000000-0000-4000-8000-000000000109;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005027;00000000-0000-4000-8000-000000000109;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005028;00000000-0000-4000-8000-000000000110;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005029;00000000-0000-4000-8000-000000000110;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005030;00000000-0000-4000-8000-000000000110;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005031;00000000-0000-4000-8000-000000000111;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005032;00000000-0000-4000-8000-000000000111;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005033;00000000-0000-4000-8000-000000000111;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005034;00000000-0000-4000-8000-000000000112;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005035;00000000-0000-4000-8000-000000000112;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005036;00000000-0000-4000-8000-000000000112;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005037;00000000-0000-4000-8000-000000000113;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005038;00000000-0000-4000-8000-000000000113;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005039;00000000-0000-4000-8000-000000000113;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005040;00000000-0000-4000-8000-000000000114;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005041;00000000-0000-4000-8000-000000000114;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005042;00000000-0000-4000-8000-000000000114;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005043;00000000-0000-4000-8000-000000000115;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005044;00000000-0000-4000-8000-000000000115;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005045;00000000-0000-4000-8000-000000000115;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005046;00000000-0000-4000-8000-000000000116;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005047;00000000-0000-4000-8000-000000000116;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005048;00000000-0000-4000-8000-000000000116;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005049;00000000-0000-4000-8000-000000000117;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005050;00000000-0000-4000-8000-000000000117;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005051;00000000-0000-4000-8000-000000000117;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005052;00000000-0000-4000-8000-000000000118;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005053;00000000-0000-4000-8000-000000000118;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005054;00000000-0000-4000-8000-000000000118;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005055;00000000-0000-4000-8000-000000000119;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005056;00000000-0000-4000-8000-000000000119;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005057;00000000-0000-4000-8000-000000000119;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005058;00000000-0000-4000-8000-000000000120;Record stock moves between bins in the system;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005059;00000000-0000-4000-8000-000000000120;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005060;00000000-0000-4000-8000-000000000120;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005061;00000000-0000-4000-8000-000000000201;Pick orders from the pick list;Pick list;Daily;;true
+00000000-0000-4000-8000-000000005062;00000000-0000-4000-8000-000000000201;Update the daily stock report;Spreadsheet;Daily;;true
+00000000-0000-4000-8000-000000005063;00000000-0000-4000-8000-000000000201;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005064;00000000-0000-4000-8000-000000000202;Walk the aisle and report safety problems;Safety checklist;Weekly;;true
+00000000-0000-4000-8000-000000005065;00000000-0000-4000-8000-000000000202;Recount bins when the system and shelf disagree;RF scanner;Daily;;true
+00000000-0000-4000-8000-000000005066;00000000-0000-4000-8000-000000000202;Check and load outgoing orders onto the truck;Dispatch sheet;Daily;;true
+00000000-0000-4000-8000-000000005067;00000000-0000-4000-8000-000000000203;Hand over open work to the next shift;Shift log;Daily;;true
+00000000-0000-4000-8000-000000005068;00000000-0000-4000-8000-000000000203;Find out why stock is short and raise the adjustment;RF scanner;Weekly;;true
+00000000-0000-4000-8000-000000005069;00000000-0000-4000-8000-000000000203;Record stock moves between bins in the system;RF scanner;Daily;;true

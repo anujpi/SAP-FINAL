@@ -23,7 +23,9 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 
 **Live run on 2 Nov:** steps 1 to 14, 16 and 17 of `docs/DEMO.md` passed once on BTP in English, with typed input and real AI through SAP Generative AI Hub (no backup used). Reset demo data also passed.
 
-**Not yet tested on BTP:** step 15 (Arjun needs a second SAP login), sign-out, and Hindi. Also untested: voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
+**Also live and checked on BTP, 2 Nov:** the employee profile, the View As switch, How It Works and step 15 (Arjun replies, Ravi reads it). Screens opened as each person; the chain before step 15 was driven through the same backend calls.
+
+**Not yet tested on BTP:** sign-out and Hindi. Also untested: voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
 
 ## BTP facts
 

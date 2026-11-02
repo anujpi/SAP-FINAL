@@ -66,6 +66,15 @@
               "roles": [
                 "Manager"
               ]
+            },
+            "presenter": {
+              "password": "presenter",
+              "roles": [
+                "Worker",
+                "Manager",
+                "Supervisor",
+                "HRAdmin"
+              ]
             }
           }
         }

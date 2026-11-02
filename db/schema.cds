@@ -25,6 +25,13 @@ entity Workers : cuid {
   targetRole     : Association to Roles;
   outsideOptIn   : Boolean default false;
   company        : Association to Companies;
+  // Stand-in for the SuccessFactors employee record.
+  employeeCode   : String(20);
+  jobTitle       : String(100);
+  department     : String(60);
+  workShift      : String(20);
+  managerName    : String(100);
+  joinedOn       : Date;
 }
 
 // The daily extract of confirmed warehouse tasks from EWM. Company data, so it stays when a worker withdraws consent.

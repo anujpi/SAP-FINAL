@@ -9,7 +9,7 @@ function sapContext({ worker, vacancies, roleTitles, claims, skillNames, decisio
     aiRoute,
     empJob: {
       userId: worker.ID,
-      jobTitle: 'Warehouse Operator',
+      jobTitle: worker.jobTitle,
       location: worker.site,
       employmentType: worker.employmentType
     },

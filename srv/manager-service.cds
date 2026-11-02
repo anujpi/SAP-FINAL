@@ -14,6 +14,9 @@ service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', '
   /** Every employee with their skills, EWM support and open requests. */
   function teamSkills() returns LargeString;
 
+  /** One employee's whole profile: job details, skills, proof, EWM and what they do. Never their outside job search. */
+  function employeeProfile(worker : UUID) returns LargeString;
+
   /** Open requests, each with what EWM shows for that skill. */
   function verificationRequests() returns LargeString;
 

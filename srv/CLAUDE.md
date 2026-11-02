@@ -15,6 +15,8 @@ All responses from actions and functions that return `LargeString` are JSON stri
 
 Workers read only their own rows through `@restrict` with `$user.workerId`. A manager's company comes from the `Staff` table. On BTP, logins are email addresses, so `DEMO_STAFF_MAP` maps them to a `Staff` row, and with `DEMO_WORKER_ID` set any other login is Meera (`srv/lib/demo-worker.js`).
 
+**Demo: View As.** With `DEMO_WORKER_ID` set, a Manager login can send `x-demo-persona` (`ravi`, `meera`, `arjun`) to show that person on one laptop. It's read per request (`personaOf`), because the user object can be shared between requests. Unset `DEMO_WORKER_ID` in a real deployment.
+
 A worker's outside job search is private from their employer: those events stay out of `AuditEvents` in `ManagerService`, and `applicants()` shows only applications to the caller's own vacancies.
 
 `addEvidence` in the orchestrator is the one place a skill becomes verified. It signs the certificate and writes to `SuccessFactorsSkills`, a local stand-in. Swap that one step for a Destination call when a tenant exists.

@@ -8,6 +8,17 @@ export const setDevUser = (user: string) => {
   try { sessionStorage.setItem(DEV_USER, user) } catch { /* the mocked login just won't stick */ }
 }
 
+// Demo only: which person this browser tab is showing. Each tab keeps its own, so three tabs can show three people.
+const PERSONA = 'fs-persona'
+export const persona = () => {
+  try { return sessionStorage.getItem(PERSONA) ?? '' } catch { return '' }
+}
+export function setPersona(next: string, hash = '#/') {
+  try { sessionStorage.setItem(PERSONA, next) } catch { /* the switch just won't stick */ }
+  location.hash = hash
+  location.reload()
+}
+
 export const signIn = () => location.assign('/index.html')
 export function signOut() {
   if (import.meta.env.DEV) {
@@ -49,6 +60,7 @@ async function getCsrfToken() {
 
 async function request(path: string, body?: unknown) {
   const headers: Record<string, string> = { ...authHeaders() }
+  if (persona()) headers['x-demo-persona'] = persona()
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
     headers['x-csrf-token'] = await getCsrfToken()

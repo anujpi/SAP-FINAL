@@ -41,7 +41,6 @@ a.tile:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0070f2);
 .worker { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; }
 .worker.with-trace { grid-template-columns: minmax(0, 1fr) 22rem; align-items: start; }
 .worker-main { width: min(100%, 46rem); margin: 0 auto; padding: 1rem; display: grid; gap: 1rem; }
-.worker-head { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: center; }
 .trace { display: grid; gap: .75rem; padding: 1rem; background: var(--sapGroup_ContentBackground, #fff); border-left: 1px solid var(--sapGroup_ContentBorderColor, #d9d9d9); min-height: calc(100vh - 3.25rem); width: 100%; align-content: start; }
 .steps { list-style: none; margin: 0; padding: 0; display: flex; gap: .25rem; }
 .steps li { flex: 1; display: grid; justify-items: center; gap: .25rem; text-align: center; color: var(--sapContent_LabelColor, #556b82); font-size: .8125rem; min-width: 0; }
@@ -102,3 +101,20 @@ a.tile:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0070f2);
   .printing, .printing * { visibility: visible; }
   .printing { position: absolute; inset: 0 0 auto; border-radius: 0; }
 }
+
+/* Employee record */
+.profile-card { display: grid; gap: 1rem; padding: 1rem; }
+.profile-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+.profile-name { flex: 1; min-width: 12rem; display: grid; gap: .125rem; color: var(--sapContent_LabelColor, #556b82); }
+.profile-facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; }
+.profile-facts dt { color: var(--sapContent_LabelColor, #556b82); font-size: .8125rem; }
+.profile-facts dd { margin: 0; font-weight: 700; }
+.view-as { display: grid; gap: .25rem; }
+
+/* How it works */
+.how { max-width: 60rem; margin: 0 auto; width: 100%; }
+.how-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.how-steps li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); gap: .75rem; align-items: start; }
+.how-number { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: 50%; background: var(--sapBrandColor, #0070f2); color: #fff; font-weight: 700; }
+.how-head { display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap; width: 100%; }
+.how-who { font-size: .8125rem; font-weight: 700; color: var(--sapBrandColor, #0070f2); text-transform: uppercase; letter-spacing: .04em; }

@@ -1,7 +1,7 @@
 const { test } = require('node:test')
 const assert = require('node:assert')
 const { ewmSupport, parseExtract, HEADER } = require('../srv/lib/ewm')
-const { staffLogin } = require('../srv/lib/demo-worker')
+const { staffLogin, personaOf } = require('../srv/lib/demo-worker')
 
 const ID = '00000000-0000-4000-8000-000000000001'
 
@@ -32,4 +32,17 @@ test('staff logins: the map wins, demo mode falls back to Meera, local logins st
   assert.strictEqual(staffLogin('a@example.com', { DEMO_STAFF_MAP: '{"a@example.com":"arjun"}', DEMO_WORKER_ID: 'x' }), 'arjun')
   assert.strictEqual(staffLogin('b@example.com', { DEMO_WORKER_ID: 'x' }), 'meera')
   assert.strictEqual(staffLogin('sunil', {}), 'sunil')
+})
+
+test('View as: only a manager login in demo mode can switch, and only to known people', () => {
+  const user = (...roles) => ({ is: role => roles.includes(role) })
+  const manager = user('Manager')
+  assert.strictEqual(personaOf(manager, 'arjun', 'demo-id'), 'arjun')
+  assert.strictEqual(staffLogin('someone', { DEMO_WORKER_ID: 'x' }, 'arjun'), 'arjun')
+  // Nothing is remembered: the next request with no header is back to the login's own view.
+  assert.strictEqual(personaOf(manager, undefined, 'demo-id'), undefined)
+
+  assert.strictEqual(personaOf(user('Worker'), 'arjun', 'demo-id'), undefined)
+  assert.strictEqual(personaOf(manager, 'arjun', ''), undefined)
+  assert.strictEqual(personaOf(manager, 'constructor', 'demo-id'), undefined)
 })

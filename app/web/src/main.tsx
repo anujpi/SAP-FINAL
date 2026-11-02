@@ -3,17 +3,25 @@ import { createRoot } from 'react-dom/client'
 import { Avatar, Button, IllustratedMessage, MessageStrip, Popover, ShellBar, ShellBarItem, Text, ThemeProvider, Title } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/activity-items.js'
 import '@ui5/webcomponents-fiori/dist/illustrations/UnableToLoad.js'
-import { devUser, list, parsed, signOut, value } from './api'
+import { devUser, list, parsed, persona, setPersona, signOut, value } from './api'
 import { WorkerApp } from './Worker'
 import { ManagerApp } from './Manager'
 import { Launchpad } from './Launchpad'
 import { Landscape } from './Landscape'
+import { HowItWorks } from './HowItWorks'
+import { initials } from './ui'
 import './styles.css'
 
-export type User = { name: string; title: string; company: string; roles: string[] }
+export type User = { name: string; title: string; company: string; roles: string[]; persona: string; canSwitch: boolean }
+
+const PEOPLE = [
+  { id: 'ravi', label: 'Ravi K., employee' },
+  { id: 'meera', label: 'Meera S., manager' },
+  { id: 'arjun', label: 'Arjun D., other company' },
+  { id: '', label: 'All my roles' }
+]
 
 const has = (user: User, ...roles: string[]) => roles.some(role => user.roles.includes(role))
-const initials = (name: string) => name.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('')
 
 function useHash() {
   const [hash, setHash] = useState(location.hash)
@@ -49,7 +57,7 @@ function App() {
   // A worker on a phone goes straight to their journey: the home page would be one tile.
   const onlyWorker = user && user.roles.length === 1 && user.roles[0] === 'Worker'
   const path = hash.replace(/^#\/?/, '') || (onlyWorker ? 'worker' : '')
-  const [app, section] = path.split('/')
+  const [app, section, detail] = path.split('/')
 
   const resetDemo = async () => {
     setProfileOpen(false)
@@ -62,8 +70,9 @@ function App() {
   let screen = null
   if (user) {
     if (app === 'worker' && has(user, 'Worker')) screen = <WorkerApp key={resetKey} showTrace={trace} user={user} />
-    else if (app === 'manager' && has(user, 'Manager', 'Supervisor', 'HRAdmin')) screen = <ManagerApp key={`${resetKey}-${section}`} user={user} section={section} />
+    else if (app === 'manager' && has(user, 'Manager', 'Supervisor', 'HRAdmin')) screen = <ManagerApp key={`${resetKey}-${section}`} user={user} section={section} detail={detail} />
     else if (app === 'landscape' && has(user, 'Manager', 'HRAdmin')) screen = <Landscape />
+    else if (app === 'how') screen = <HowItWorks user={user} />
     else if (app === '') screen = <Launchpad user={user} />
     else screen = (
       <IllustratedMessage name="UnableToLoad" titleText="You don't have access to this app" subtitleText="Ask your administrator for the role, or go back to the home page.">
@@ -91,6 +100,15 @@ function App() {
             {user.title && <Text>{user.title}</Text>}
             {user.company && <Text>{user.company}</Text>}
             <Text className="fine-print">Roles: {user.roles.join(', ') || 'none assigned'}</Text>
+            <Button design="Transparent" onClick={() => { setProfileOpen(false); location.hash = '#/how' }}>How it works</Button>
+            {user.canSwitch && (
+              <div className="view-as">
+                <Text className="fine-print">Demo: view as</Text>
+                {PEOPLE.map(p => (
+                  <Button key={p.id} design={persona() === p.id ? 'Emphasized' : 'Default'} onClick={() => setPersona(p.id)}>{p.label}</Button>
+                ))}
+              </div>
+            )}
             {has(user, 'HRAdmin') && <Button design="Transparent" onClick={resetDemo}>Reset demo data</Button>}
             <Button onClick={signOut}>Sign out</Button>
           </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Icon, Tag, Text, Title } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/employee.js'
+import '@ui5/webcomponents-icons/dist/hint.js'
 import '@ui5/webcomponents-icons/dist/group.js'
 import '@ui5/webcomponents-icons/dist/validate.js'
 import '@ui5/webcomponents-icons/dist/workflow-tasks.js'
@@ -56,6 +57,13 @@ export function Launchpad({ user }: { user: User }) {
         <Title level="H1" size="H3">Welcome, {user.name}</Title>
         {(user.title || user.company) && <Text>{[user.title, user.company].filter(Boolean).join(', ')}</Text>}
       </div>
+
+      <section>
+        <Title level="H2" size="H5">Start here</Title>
+        <div className="tiles">
+          <Tile title="How It Works" subtitle="The whole flow, step by step" icon="hint" href="#/how" />
+        </div>
+      </section>
 
       {is('Worker') && (
         <section>
