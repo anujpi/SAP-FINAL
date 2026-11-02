@@ -46,3 +46,11 @@ test('View as: only a manager login in demo mode can switch, and only to known p
   assert.strictEqual(personaOf(manager, 'arjun', ''), undefined)
   assert.strictEqual(personaOf(manager, 'constructor', 'demo-id'), undefined)
 })
+
+test('a candidate reference is different per company and hides the worker', () => {
+  const { anonRef } = require('../srv/lib/credential')
+  const a = anonRef(ID, 'MERIDIAN')
+  assert.match(a, /^[0-9A-F]{6}$/)
+  assert.notStrictEqual(a, anonRef(ID, 'CAUVERY'))
+  assert.strictEqual(a, anonRef(ID, 'MERIDIAN'))
+})

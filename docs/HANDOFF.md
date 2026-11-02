@@ -25,6 +25,8 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 
 **Also live and checked on BTP, 2 Nov:** the employee profile, the View As switch, How It Works and step 15 (Arjun replies, Ravi reads it). Screens opened as each person; the chain before step 15 was driven through the same backend calls.
 
+**Hiring and permissions, live and checked on BTP, 2 Nov:** a company posts a role, sees anonymous candidates and asks to connect. The worker picks certificates or says no, and can take it back. On take-back, the company loses the name on every screen. Ravi's employer sees none of it. Other certificates are sample data that never score.
+
 **Not yet tested on BTP:** sign-out and Hindi. Also untested: voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
 
 ## BTP facts

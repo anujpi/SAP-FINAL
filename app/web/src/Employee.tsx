@@ -73,6 +73,11 @@ export function EmployeeProfile({ worker, names, revision }: { worker: string; n
         )}
       </Card>
 
+      <Card header={<CardHeader titleText="Other certificates on record" subtitleText="Sample data. Not verified by a manager, and they don't count towards a match." />}>
+        {!profile.otherCertificates.length && <div className="card-body"><Text>None on record.</Text></div>}
+        {profile.otherCertificates.length > 0 && <DataTable columns={['Certificate', 'Issued by', 'Date']} rows={profile.otherCertificates.map((c: any) => [c.title, c.issuer, dateOf(c.issuedOn)])} />}
+      </Card>
+
       <Card header={<CardHeader titleText="What they do" subtitleText="In their own words, confirmed by them. Never used for appraisal or discipline." />}>
         {!profile.tasks.length && <div className="card-body"><Text>They haven't described their work yet.</Text></div>}
         {profile.tasks.length > 0 && <DataTable columns={['Task', 'Tool', 'How often']} rows={profile.tasks.map((t: any) => [t.task, t.tool || '–', t.frequency || '–'])} />}

@@ -1,11 +1,11 @@
 const cds = require('@sap/cds')
-const { handle, resetWorker } = require('./orchestrator')
+const { handle, resetWorker, postVacancy } = require('./orchestrator')
 const review = require('./agents/review')
 const audit = require('./agents/audit')
 const askJson = require('./lib/llm')
 const sapContext = require('./lib/sap-context')
 const { ewmSupport, parseExtract } = require('./lib/ewm')
-const { checkShare } = require('./lib/credential')
+const { checkShare, anonRef } = require('./lib/credential')
 const { staffLogin, personaOf, personaHeader } = require('./lib/demo-worker')
 
 // A worker's interest in outside jobs is private: managers never see those matches, and they stay out of the audit.
@@ -65,7 +65,7 @@ module.exports = cds.service.impl(function () {
   })
 
   this.on('employeeProfile', async req => {
-    const { SkillClaims, SuccessFactorsSkills, EvidenceItems, VerificationRequests, EwmTaskRecords, TaskExperiences, Companies, Roles } = cds.entities('frontline')
+    const { SkillClaims, SuccessFactorsSkills, EvidenceItems, VerificationRequests, EwmTaskRecords, TaskExperiences, Companies, Roles, OtherCertificates } = cds.entities('frontline')
     const worker_ID = req.data.worker
     const { worker } = await ownWorker(req, worker_ID)
     const company = await SELECT.one.from(Companies).where({ ID: worker.company_ID })
@@ -95,6 +95,7 @@ module.exports = cds.service.impl(function () {
         }
       }),
       tasks: (await SELECT.from(TaskExperiences).where({ worker_ID, confirmed: true })).map(t => ({ ID: t.ID, task: t.task, tool: t.tool, frequency: t.frequency })),
+      otherCertificates: await SELECT.from(OtherCertificates).where({ worker_ID }).orderBy('issuedOn desc'),
       ewmRecords: records.slice(0, 8).map(r => ({ ID: r.ID, workDate: r.workDate, taskType: r.taskType, confirmedTasks: r.confirmedTasks }))
     })
   })
@@ -161,6 +162,97 @@ module.exports = cds.service.impl(function () {
     return JSON.stringify(await SELECT.from(SuccessFactorsSkills).where({ company_ID, skill_ID: req.data.skill }).orderBy('proficiency desc', 'userName'))
   })
 
+  // Everyone at other companies who has chosen to be seen, with at least one verified skill.
+  async function openPeople(company_ID) {
+    const { Workers, SkillClaims } = cds.entities('frontline')
+    const people = await SELECT.from(Workers).where({ outsideOptIn: true, company_ID: { '!=': company_ID } })
+    if (!people.length) return []
+    const proven = groupBy(await SELECT.from(SkillClaims).where({ worker_ID: { in: people.map(p => p.ID) }, status: 'verified' }), 'worker_ID')
+    return people.filter(p => proven.has(p.ID)).map(p => ({ ...p, proven: proven.get(p.ID), ref: anonRef(p.ID, company_ID) }))
+  }
+
+  // People who said yes and later took it back. They go back to being anonymous to that company.
+  async function withdrawnPeople(worker_IDs) {
+    const { Applications, ShareLinks } = cds.entities('frontline')
+    if (!worker_IDs.length) return new Set()
+    const applications = await SELECT.from(Applications).where({ worker_ID: { in: worker_IDs } })
+    if (!applications.length) return new Set()
+    const cancelled = new Set((await SELECT.from(ShareLinks).columns('token').where({ token: { in: applications.map(a => a.token) }, revokedAt: { '!=': null } })).map(l => l.token))
+    return new Set(applications.filter(a => cancelled.has(a.token)).map(a => `${a.worker_ID}|${a.vacancy_ID}`))
+  }
+
+  async function ownOpenRole(req, vacancy, company_ID) {
+    const { Vacancies } = cds.entities('frontline')
+    const role = await SELECT.one.from(Vacancies).where({ ID: vacancy, company_ID, isExternal: true })
+    return role ?? req.reject(404, 'This role is not one of yours')
+  }
+
+  this.on('openRoles', async req => {
+    const { Vacancies, Roles, Applications } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const titles = new Map((await SELECT.from(Roles)).map(r => [r.ID, r.title]))
+    const people = await openPeople(company_ID)
+    const vacancies = await SELECT.from(Vacancies).where({ company_ID, isExternal: true })
+    const applied = vacancies.length ? groupBy(await SELECT.from(Applications).where({ vacancy_ID: { in: vacancies.map(v => v.ID) } }), 'vacancy_ID') : new Map()
+    return JSON.stringify(vacancies.map(v => ({
+      ID: v.ID, title: titles.get(v.role_ID), site: v.site, isNew: v.source === 'posted', postedAt: v.postedAt,
+      openPeople: people.length, applicants: applied.get(v.ID)?.length ?? 0
+    })))
+  })
+
+  this.on('postRole', async req => {
+    const { Companies } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const company = await SELECT.one.from(Companies).where({ ID: company_ID })
+    return postVacancy(company, req.data.role, req.data.site)
+  })
+
+  this.on('candidates', async req => {
+    const { RoleMatches, HireInterests } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const { vacancy } = req.data
+    await ownOpenRole(req, vacancy, company_ID)
+    const people = await openPeople(company_ID)
+    if (!people.length) return '[]'
+    const worker_ID = { in: people.map(p => p.ID) }
+    const scores = new Map((await SELECT.from(RoleMatches).where({ vacancy_ID: vacancy, worker_ID })).map(m => [m.worker_ID, m.score]))
+    const withdrawn = await withdrawnPeople(people.map(p => p.ID))
+    const asked = new Map((await SELECT.from(HireInterests).where({ vacancy_ID: vacancy, worker_ID })).map(i => [i.worker_ID, withdrawn.has(`${i.worker_ID}|${vacancy}`) ? 'withdrawn' : i.status]))
+    // Only the anonymous reference, skills and score. Never a name, a site, an employer or who verified them.
+    return JSON.stringify(people
+      .map(p => ({ ref: p.ref, score: scores.get(p.ID) ?? 0, skills: p.proven.map(c => ({ skill_ID: c.skill_ID, proficiency: c.proficiency })), status: asked.get(p.ID) ?? '' }))
+      .sort((a, b) => b.score - a.score))
+  })
+
+  this.on('askToConnect', async req => {
+    const { company_ID } = await staffOf(req)
+    const { vacancy, candidate, message } = req.data
+    await ownOpenRole(req, vacancy, company_ID)
+    const person = (await openPeople(company_ID)).find(p => p.ref === candidate)
+    if (!person) return req.reject(404, 'This person is no longer open to other companies')
+    return JSON.stringify(await handle(person.ID, 'hire_interest_sent', { vacancy, company_ID, message }, req.user.id))
+  })
+
+  this.on('outreach', async req => {
+    const { HireInterests, Vacancies, Roles, Workers } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const titles = new Map((await SELECT.from(Roles)).map(r => [r.ID, r.title]))
+    const vacancies = new Map((await SELECT.from(Vacancies).where({ company_ID })).map(v => [v.ID, v]))
+    const sent = await SELECT.from(HireInterests).where({ company_ID }).orderBy('createdAt desc')
+    const names = sent.some(i => i.status === 'granted')
+      ? new Map((await SELECT.from(Workers).columns('ID', 'name').where({ ID: { in: sent.map(i => i.worker_ID) } })).map(w => [w.ID, w.name]))
+      : new Map()
+    const withdrawn = await withdrawnPeople([...new Set(sent.map(i => i.worker_ID))])
+    return JSON.stringify(sent.map(i => {
+      const status = withdrawn.has(`${i.worker_ID}|${i.vacancy_ID}`) ? 'withdrawn' : i.status
+      return {
+        ID: i.ID, status, sentAt: i.createdAt,
+        role: titles.get(vacancies.get(i.vacancy_ID)?.role_ID),
+        who: status === 'granted' ? names.get(i.worker_ID) : `Candidate ${anonRef(i.worker_ID, company_ID)}`
+      }
+    }))
+  })
+
   this.on('applicants', async req => {
     const { Applications, Vacancies, Workers, Roles } = cds.entities('frontline')
     const { company_ID } = await staffOf(req)
@@ -171,10 +263,12 @@ module.exports = cds.service.impl(function () {
     return JSON.stringify(await Promise.all(applications.map(async a => {
       const vacancy = vacancies.find(v => v.ID === a.vacancy_ID)
       const worker = await SELECT.one.from(Workers).columns('name').where({ ID: a.worker_ID })
+      const certificates = await checkShare(a.token)
       return {
         ID: a.ID, status: a.status, message: a.message, appliedAt: a.createdAt,
-        applicant: worker?.name, role: roles.get(vacancy.role_ID), site: vacancy.site,
-        certificates: await checkShare(a.token)
+        // Taking back permission takes back the name too.
+        applicant: certificates.status === 'cancelled' ? 'Permission withdrawn' : worker?.name,
+        role: roles.get(vacancy.role_ID), site: vacancy.site, certificates
       }
     })))
   })
@@ -187,6 +281,7 @@ module.exports = cds.service.impl(function () {
     const vacancy = found && await SELECT.one.from(Vacancies).where({ ID: found.vacancy_ID })
     if (!vacancy) return req.reject(404, 'Application not found')
     if (vacancy.company_ID !== company_ID) return req.reject(403, 'This application is not for your company')
+    if ((await checkShare(found.token)).status === 'cancelled') return req.reject(409, 'This person has taken back permission')
     return JSON.stringify(await handle(found.worker_ID, 'application_answered', { application, status, message }, req.user.id))
   })
 

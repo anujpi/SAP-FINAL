@@ -23,6 +23,10 @@ function isGenuine(c) {
 
 const newToken = () => randomBytes(32).toString('hex')
 
+// What a company calls a candidate before they agree to connect. Different per company, so companies can't compare notes.
+const anonRef = (worker_ID, company_ID) =>
+  createHmac('sha256', secret()).update(`${worker_ID}|${company_ID}`).digest('hex').slice(0, 6).toUpperCase()
+
 /** Returns only what the worker chose to share. Used by the public check and by employers reading an application. */
 async function checkShare(token) {
   const { ShareLinks, SkillCredentials, Skills, Workers } = cds.entities('frontline')
@@ -52,4 +56,4 @@ async function checkShare(token) {
   }
 }
 
-module.exports = { sign, isGenuine, newToken, checkShare }
+module.exports = { sign, isGenuine, newToken, anonRef, checkShare }

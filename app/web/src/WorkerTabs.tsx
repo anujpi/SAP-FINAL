@@ -95,7 +95,7 @@ export function Jobs({ t, run, revision, busy, names, stage }: HomeProps) {
       {optIn && external.map(m => {
         const application = applications.find(a => a.vacancy_ID === m.vacancy_ID)
         return (
-          <MatchCard key={m.ID} m={m} t={t} names={names} title={`${roles[m.vacancy?.role_ID]} · ${m.vacancy?.employer}`}>
+          <MatchCard key={m.ID} m={m} t={t} names={names} title={`${roles[m.vacancy?.role_ID]} · ${m.vacancy?.employer}${m.vacancy?.source === 'posted' ? ` (${t.newRole})` : ''}`}>
             {application && (
               <>
                 <ObjectStatus state={application.status === 'interview' ? 'Positive' : 'Information'}>{t[application.status as 'applied' | 'interview' | 'closed'] ?? application.status}</ObjectStatus>
@@ -152,6 +152,72 @@ function MatchCard({ m, t, names, title, children }: { m: any; t: Texts; names: 
         {children}
       </div>
     </Card>
+  )
+}
+
+/** The worker's permissions: who is asking, and who can see their certificates right now. */
+export function Requests({ t, run, revision, busy, names }: HomeProps) {
+  const [data, setData] = useState<{ requests: any[]; access: any[] }>({ requests: [], access: [] })
+  const [certificates, setCertificates] = useState<any[]>([])
+  const [chosen, setChosen] = useState<Record<string, string[]>>({})
+
+  useEffect(() => {
+    parsed<any>('/worker/myHireRequests()').then(setData).catch(() => setData({ requests: [], access: [] }))
+    list('/passport/MyCredentials').then(setCertificates).catch(() => setCertificates([]))
+  }, [revision])
+
+  const pending = data.requests.filter(r => r.status === 'pending')
+  const toggle = (id: string, skill: string) => setChosen(old => {
+    const now = old[id] ?? []
+    return { ...old, [id]: now.includes(skill) ? now.filter(s => s !== skill) : [...now, skill] }
+  })
+
+  return (
+    <>
+      <Card header={<CardHeader titleText={t.permissionTitle} />}>
+        <div className="card-body">
+          <ol className="plain">
+            {t.permissionSteps.map(step => <li key={step}>{step}</li>)}
+          </ol>
+        </div>
+      </Card>
+
+      {!pending.length && <Text>{t.noRequests}</Text>}
+      {pending.map(r => (
+        <Card key={r.ID} header={<CardHeader titleText={t.wantsToConnect(r.company)} subtitleText={`${r.role} · ${r.site}`} />}>
+          <div className="card-body">
+            <p className="score"><strong>{r.score}%</strong> {t.skillMatch} <small>({t.illustrative})</small></p>
+            {r.message && <MessageStrip design="Information" hideCloseButton><strong>{r.company}:</strong> {r.message}</MessageStrip>}
+            <Title level="H3" size="H6">{t.chooseCerts}</Title>
+            {!certificates.length && <Text className="fine-print">{t.needCert}</Text>}
+            {certificates.map(c => (
+              <CheckBox key={c.ID} wrappingType="Normal" text={names[c.skill_ID] ?? c.skill_ID} checked={(chosen[r.ID] ?? []).includes(c.skill_ID)} onChange={() => toggle(r.ID, c.skill_ID)} />
+            ))}
+            <Text className="fine-print">{t.onlyThisCompany(r.company)}</Text>
+            <div className="actions">
+              <Button design="Emphasized" disabled={busy || !chosen[r.ID]?.length} onClick={() => run(() => sendEvent('hire_interest_answered', { interest: r.ID, grant: true, skills: chosen[r.ID] }))}>{t.shareConnect}</Button>
+              <Button disabled={busy} onClick={() => run(() => sendEvent('hire_interest_answered', { interest: r.ID, grant: false }))}>{t.notNow}</Button>
+            </div>
+          </div>
+        </Card>
+      ))}
+
+      <Card header={<CardHeader titleText={t.whoCanSee} subtitleText={t.privateNote} />}>
+        {!data.access.length && <div className="card-body"><Text>{t.noOneCanSee}</Text></div>}
+        <ul className="skill-rows">
+          {data.access.map(a => (
+            <li key={a.ID}>
+              <div className="skill-row-head">
+                <span>{a.company} · {a.role}</span>
+                <ObjectStatus state={a.cancelled ? 'None' : 'Positive'}>{a.cancelled ? t.accessCancelled : t.canSee}</ObjectStatus>
+              </div>
+              <Text className="fine-print">{a.skills.map((s: string) => names[s] ?? s).join(', ')}</Text>
+              {!a.cancelled && <Button design="Negative" disabled={busy} onClick={() => run(() => value('/passport/cancelLink', { token: a.token }))}>{t.takeBack}</Button>}
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </>
   )
 }
 
@@ -256,6 +322,7 @@ export function Certificates({ t, run, revision, busy, names, me }: HomeProps) {
       <Text>{t.passportHint}</Text>
       {!certificates.length && <Text>{t.noVerified}</Text>}
       {certificates.map(c => <Certificate key={c.ID} c={c} t={t} name={me.name} skill={names[c.skill_ID] ?? c.skill_ID} />)}
+      <OtherCertificates t={t} revision={revision} />
       {certificates.length > 0 && (
         <Card header={<CardHeader titleText={t.shareCerts} />}>
           <div className="card-body">
@@ -272,6 +339,19 @@ export function Certificates({ t, run, revision, busy, names, me }: HomeProps) {
       {links.length > 0 && <Title level="H2" size="H5">{t.activeLinks}</Title>}
       {links.map(link => <ShareLink key={link.ID} link={link} t={t} run={run} busy={busy} names={names} />)}
     </>
+  )
+}
+
+function OtherCertificates({ t, revision }: { t: Texts; revision: number }) {
+  const [others, setOthers] = useState<any[]>([])
+  useEffect(() => { list('/worker/MyOtherCertificates').then(setOthers).catch(() => setOthers([])) }, [revision])
+  if (!others.length) return null
+  return (
+    <Card header={<CardHeader titleText={t.otherCerts} subtitleText={t.otherCertsNote} />}>
+      <List separators="Inner">
+        {others.map(c => <ListItemStandard key={c.ID} wrappingType="Normal" description={`${c.issuer} · ${dateOf(c.issuedOn)}`}>{c.title}</ListItemStandard>)}
+      </List>
+    </Card>
   )
 }
 
@@ -297,11 +377,13 @@ function ShareLink({ link, t, run, busy, names }: { link: any; t: Texts; run: Ru
 export function Resume({ t, revision, names, me, user }: HomeProps) {
   const [tasks, setTasks] = useState<any[]>([])
   const [certificates, setCertificates] = useState<any[]>([])
+  const [others, setOthers] = useState<any[]>([])
   const { page, print } = usePrint()
 
   useEffect(() => {
     list('/worker/MyTasks').then(setTasks).catch(() => setTasks([]))
     list('/passport/MyCredentials').then(setCertificates).catch(() => setCertificates([]))
+    list('/worker/MyOtherCertificates').then(setOthers).catch(() => setOthers([]))
   }, [revision])
 
   return (
@@ -325,6 +407,12 @@ export function Resume({ t, revision, names, me, user }: HomeProps) {
         <>
           <Title level="H3" size="H5">{t.whatIDo}</Title>
           <ul className="plain">{tasks.map(x => <li key={x.ID}>{x.task}</li>)}</ul>
+        </>
+      )}
+      {others.length > 0 && (
+        <>
+          <Title level="H3" size="H5">{t.otherCerts}</Title>
+          <ul className="plain">{others.map(c => <li key={c.ID}>{c.title}, {c.issuer}, {dateOf(c.issuedOn)}</li>)}</ul>
         </>
       )}
       <div className="actions"><Button onClick={print}>{t.print}</Button></div>

@@ -1,5 +1,6 @@
-import { Button, Card, ObjectStatus, Text, Title } from '@ui5/webcomponents-react'
-import { setPersona } from './api'
+import { useEffect, useState } from 'react'
+import { Button, Card, CardHeader, MessageStrip, ObjectStatus, Text, Title } from '@ui5/webcomponents-react'
+import { parsed, setPersona } from './api'
 import { DataTable } from './ui'
 import type { User } from './main'
 
@@ -35,9 +36,19 @@ const STEPS: Step[] = [
     behind: 'Each certificate is signed, so any change is detected. Anyone can check a shared link with no login, and Ravi can cancel it.'
   },
   {
-    who: 'Other company', title: 'Trusts it and replies', persona: 'arjun', hash: '#/manager/applicants', open: 'Open as Arjun', status: 'Sample data',
-    what: 'Ravi applies to another company with his certificates. Arjun at Meridian Freight sees they are genuine and can invite him. Ravi\'s employer can\'t see any of this.',
-    behind: 'A worker\'s outside job search stays out of their employer\'s screens and audit log. The companies and jobs are fictional.'
+    who: 'Other company', title: 'Posts a role and finds anonymous candidates', persona: 'arjun', hash: '#/manager/hire', open: 'Open as Arjun', status: 'Sample data',
+    what: 'Arjun at Meridian Freight posts a new role and sees who matches: verified skills and a score, with no name and no employer. He asks to connect.',
+    behind: 'Only people who turned on other companies appear. Each company gets its own candidate reference, so companies can\'t compare notes.'
+  },
+  {
+    who: 'Worker', title: 'Decides who can see them', persona: 'ravi', hash: '#/worker', open: 'Open as Ravi', status: 'Live',
+    what: 'Ravi sees who asked and for which role, picks which certificates to share, or says no. He can take it back at any time.',
+    behind: 'His yes is stored as a consent record in HANA. His employer\'s screens and audit log never show any of this.'
+  },
+  {
+    who: 'Other company', title: 'Checks the certificates and replies', persona: 'arjun', hash: '#/manager/applicants', open: 'Open as Arjun', status: 'Live',
+    what: 'Only now does Arjun see Ravi\'s name and chosen certificates, checked as genuine. He can invite him to interview.',
+    behind: 'If Ravi takes back permission, his name and certificates disappear from this screen straight away.'
   },
   {
     who: 'HR', title: 'Finds people for better roles', persona: 'meera', hash: '#/manager/talent', open: 'Open as Meera', status: 'Mock',
@@ -61,11 +72,41 @@ const open = (step: Step, canSwitch: boolean) => {
   else location.hash = step.hash
 }
 
+const PERMISSIONS = [
+  ['Worker', 'Starts a profile', 'Worker gives consent', 'Their company can see their skills'],
+  ['Worker', 'Turns on other companies', 'Worker chooses', 'Other companies see skills and score only: no name, no employer'],
+  ['Other company', 'Asks to connect', 'Worker says yes or no', 'That one company sees their name and the certificates they picked'],
+  ['Worker', 'Takes back permission', 'Worker chooses', 'That company loses access straight away'],
+  ['Manager', 'Verifies a skill', 'Signed-in Manager role, same company', 'A certificate, and the skill goes into SuccessFactors'],
+  ['Anyone', 'Opens a shared link', 'Worker created the link', 'Only what that link shares, until it is cancelled']
+]
+
+const SAP_PERMISSIONS = [
+  ['Sign-in and roles', 'XSUAA role collections decide which screens and actions each person gets', 'Live'],
+  ['SAP HANA Cloud', 'People never connect to the database. The app reads it through its own HDI container user, and checks each person\'s role and company first', 'Live'],
+  ['SAP S/4HANA EWM', 'A read-only communication arrangement (SAP_COM_0353), set up by the customer\'s SAP admin', 'Planned'],
+  ['SAP SuccessFactors', 'An OAuth client with a read-only permission role for employee data. Writing skills needs Skills Partner status or file import', 'Planned']
+]
+
+function LiveData() {
+  const [source, setSource] = useState<any>(null)
+  useEffect(() => { parsed('/user/dataSource()').then(setSource).catch(() => setSource(null)) }, [])
+  if (!source) return null
+  const counts = Object.entries(source.counts).map(([label, n]) => `${n} ${label}`).join(' · ')
+  return (
+    <MessageStrip design={source.kind === 'hana' ? 'Positive' : 'Critical'} hideCloseButton>
+      <strong>{source.kind === 'hana' ? 'Read live from SAP HANA Cloud just now:' : `Local test database (${source.kind}), not HANA:`}</strong> {counts}
+    </MessageStrip>
+  )
+}
+
 export function HowItWorks({ user }: { user: User }) {
   return (
     <main className="page how">
       <Title level="H1" size="H3">How it works</Title>
       <Text>The work people already do becomes skills they can prove. AI recommends, people decide. Follow the steps in order, and each button opens that screen as the right person.</Text>
+
+      <LiveData />
 
       <ol className="how-steps">
         {STEPS.map((step, i) => (
@@ -86,6 +127,15 @@ export function HowItWorks({ user }: { user: User }) {
           </li>
         ))}
       </ol>
+
+      <Title level="H2" size="H4">Who gives permission for what</Title>
+      <Text>Nobody sees a worker's data unless a rule below allows it. Each permission is logged.</Text>
+      <Card>
+        <DataTable columns={['Who acts', 'What happens', 'Permission needed', 'What it unlocks']} rows={PERMISSIONS} />
+      </Card>
+      <Card header={<CardHeader titleText="Permissions in SAP" subtitleText="What a customer's SAP admin would set up" />}>
+        <DataTable columns={['System', 'How access works', 'Status']} rows={SAP_PERMISSIONS} />
+      </Card>
 
       <Title level="H2" size="H4">The seven agents</Title>
       <Text>Only two use AI. Anything that affects someone's job is plain code a person can check, or a person's own decision.</Text>

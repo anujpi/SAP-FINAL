@@ -45,9 +45,13 @@ Open the app in three tabs, and set each one with **Demo: view as**. Duplicating
 | 11 | Ravi | **Learn**: *Stock transfers*, **Mark as done**, answer `stock transfer`, **Submit**. Back to **Jobs**. | "**80%.** He learned in minutes, proved it, and the score moved live." This is the main moment. |
 | 12 | Meera | **Find Talent**: pick *Cycle counting* | "Why a company buys this: verified skills go into SuccessFactors, so HR can filter people for better roles." Say it's a mock store. |
 | 13 | Meera | **SAP Landscape**: click EWM, then SuccessFactors skills | "It fits around the SAP they already run." Be clear about what's live and what isn't. |
-| 14 | Ravi | **Jobs**: turn on other companies, **Apply with my certificates** on a Meridian Freight job | "His employer can't see this." |
-| 15 | Arjun | **Outside Applicants**: certificates show genuine, **Invite to interview** with a message | "Another company can trust it, because it can check it." Ravi sees the reply on **Jobs**. |
-| 16 | Ravi | **Certificates**: tick one skill, **Create share link**, **Open link**. Then **Cancel this link** on the link showing only that skill, and refresh. The other link belongs to the step 14 application. | "Anyone can check it with no login, and he stays in control." |
+| 14 | Ravi | **Jobs**: turn on other companies | "He chooses to be seen. Companies get his skills and score only, with no name and no employer." |
+| 15a | Arjun | **Hire From Outside**: post a role at Hosur. Under **Candidates**, pick **Inventory Controller, Hosur**, and **Ask to connect** on the 80% candidate | "A new role, and anonymous candidates. He doesn't know who this is." |
+| 15b | Ravi | **Requests**: tick *Cycle counting*, then **Share and connect** | "This is the permission step. He sees who's asking, and picks exactly what they get." |
+| 15c | Arjun | **Outside Applicants**: name and one certificate, shown as genuine. **Invite to interview** with a message | "Only now does he see Ravi's name, and it can be checked." Ravi reads the reply on **Jobs**. |
+| 15d | Ravi | Optional: **Requests**, **Take back permission**. Arjun's screens lose his name. | "He can change his mind at any time." Do this last, because Arjun can't reply afterwards. |
+| 15e | Meera | **Outside Applicants** and **Audit Log** show nothing about it | "His current employer never finds out." |
+| 16 | Ravi | **Certificates**: show *Other certificates on record*. Tick one skill, **Create share link**, **Open link**. Then **Cancel this link** on the new link, and refresh. Leave any other link alone: it belongs to the application in step 15. | "Anyone can check it with no login, and he stays in control." |
 | 17 | Meera | **Audit Log**, then **Fairness Audit** | "Every hand-off is logged, and his job search isn't in it. Fairness figures are fictional sample data." |
 
 Keep **Ask my manager to review** and **Role Reviews** for Q&A: it's the path for an internal move, where the manager decides and must give a reason for "Not yet".
@@ -65,6 +69,8 @@ Keep **Ask my manager to review** and **Role Reviews** for Q&A: it's the path fo
 |---|---|
 | App, login and database | Live on SAP BTP with HANA Cloud and XSUAA |
 | AI | The footer and Agent activity show the route. Say which one it is: SAP Generative AI Hub (a shared AI Core tenant, with SAP data masking), or the backups: Anthropic API, Google Gemini (not SAP), or the offline fallback. |
+| Data | Everything on screen is read live from HANA Cloud. **How It Works** shows live counts and says so. On a local test copy it says it isn't HANA. |
+| Hiring, roles and certificates | Companies, candidates, jobs and "other certificates" are fictional sample data, but posting, requests, permission and take-back really run and are stored in HANA. |
 | EWM | The upload and the HANA records are real. The records themselves are sample data, and no EWM system is connected. |
 | SuccessFactors | A local table stands in for it. Say so. If asked: SAP limits the Growth Portfolio API to designated Skills Partners (KBA 3774098), so the real route is partner status or file-based import. |
 | Manager's proof | Mocked: only a type and reference are stored. |

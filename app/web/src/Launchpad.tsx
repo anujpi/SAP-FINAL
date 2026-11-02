@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Icon, Tag, Text, Title } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/employee.js'
 import '@ui5/webcomponents-icons/dist/hint.js'
+import '@ui5/webcomponents-icons/dist/add-employee.js'
 import '@ui5/webcomponents-icons/dist/group.js'
 import '@ui5/webcomponents-icons/dist/validate.js'
 import '@ui5/webcomponents-icons/dist/workflow-tasks.js'
@@ -91,6 +92,7 @@ export function Launchpad({ user }: { user: User }) {
           <Title level="H2" size="H5">Hiring and compliance</Title>
           <div className="tiles">
             <Tile title="Find Talent" subtitle="Filter by verified skill" icon="search" href="#/manager/talent" />
+            <Tile title="Hire From Outside" subtitle="Post a role, find anonymous candidates" icon="add-employee" href="#/manager/hire" />
             <Tile title="Outside Applicants" subtitle="Certificates from other companies" icon="customer-briefing" href="#/manager/applicants" kpi={counts.applicants} />
             <Tile title="Audit Log" subtitle="Every agent hand-off" icon="history" href="#/manager/audit" />
             {is('HRAdmin') && <Tile title="Fairness Audit" subtitle="Fictional sample figures" icon="shield" href="#/manager/fairness" />}

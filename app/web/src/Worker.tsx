@@ -6,9 +6,9 @@ import {
 import '@ui5/webcomponents-icons/dist/microphone.js'
 import '@ui5/webcomponents-icons/dist/sys-enter-2.js'
 import '@ui5/webcomponents-icons/dist/ai.js'
-import { AI_ROUTE, list, parseJson, sendEvent, value } from './api'
+import { AI_ROUTE, list, parseJson, parsed, sendEvent, value } from './api'
 import { Lang, speechLang, texts, Texts } from './i18n'
-import { Certificates, Jobs, Learn, Resume, Skills } from './WorkerTabs'
+import { Certificates, Jobs, Learn, Requests, Resume, Skills } from './WorkerTabs'
 import { ProfileCard } from './ui'
 import type { User } from './main'
 
@@ -33,6 +33,8 @@ const ACTIVITY: Record<string, string> = {
   outside_opt_in: 'Agents C and F: Matching, Market',
   application_submitted: 'Application sent with certificates',
   application_answered: 'Other company replied',
+  hire_interest_sent: 'A company asked to connect',
+  hire_interest_answered: 'Worker answered: permission logged',
   review_requested: 'Agent E: Review packet',
   manager_decided: 'Manager decision'
 }
@@ -244,7 +246,7 @@ function Readback({ t, run, busy, revision, lang }: ScreenProps & { lang: Lang }
   )
 }
 
-const TABS = ['skills', 'match', 'learn', 'passport', 'resume'] as const
+const TABS = ['skills', 'match', 'requests', 'learn', 'passport', 'resume'] as const
 
 function Home({ t, run, revision, busy, stage, me, user }: ScreenProps & { stage: string; me: any; user: User }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('skills')
@@ -254,8 +256,10 @@ function Home({ t, run, revision, busy, stage, me, user }: ScreenProps & { stage
   const [score, setScore] = useState<number | null>(null)
   const [verified, setVerified] = useState(0)
   const [lessons, setLessons] = useState<[number, number]>([0, 0])
+  const [waiting, setWaiting] = useState(0)
 
   useEffect(() => {
+    parsed<any>('/worker/myHireRequests()').then(r => setWaiting(r.requests.filter((q: any) => q.status === 'pending').length)).catch(() => setWaiting(0))
     list('/worker/MyDecisions?$orderby=createdAt desc&$top=1').then(rows => setDecision(rows[0] ?? null)).catch(() => setDecision(null))
     list('/worker/Skills').then(rows => setNames(Object.fromEntries(rows.map(s => [s.ID, s.name])))).catch(() => setNames({}))
     list("/worker/MySkills?$filter=status eq 'verified'").then(rows => setVerified(rows.length)).catch(() => setVerified(0))
@@ -281,6 +285,7 @@ function Home({ t, run, revision, busy, stage, me, user }: ScreenProps & { stage
           {decision.outcome === 'not_yet' ? t.decisionNotYet : t.decisionMore} <strong>{decision.reasons}</strong>
         </MessageStrip>
       )}
+      {waiting > 0 && <MessageStrip design="Information" hideCloseButton><strong>{t.requestsWaiting(waiting)}</strong></MessageStrip>}
       <div className="kpis">
         <div className="kpi"><strong>{verified}</strong><span>{t.verifiedSkills}</span></div>
         <div className="kpi"><strong>{score === null ? '–' : `${score}%`}</strong><span>{t.skillMatch} ({t.illustrative})</span></div>
@@ -291,6 +296,7 @@ function Home({ t, run, revision, busy, stage, me, user }: ScreenProps & { stage
       </TabContainer>
       {tab === 'skills' && <Skills {...props} />}
       {tab === 'match' && <Jobs {...props} />}
+      {tab === 'requests' && <Requests {...props} />}
       {tab === 'learn' && <Learn {...props} />}
       {tab === 'passport' && <Certificates {...props} />}
       {tab === 'resume' && <Resume {...props} />}

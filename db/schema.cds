@@ -65,6 +65,24 @@ entity Applications : cuid, managed {
   message : String(500);
 }
 
+// A company asking to connect with an anonymous candidate. Nothing about the person is shared until they say yes.
+entity HireInterests : cuid, managed {
+  worker    : Association to Workers;
+  vacancy   : Association to Vacancies;
+  company   : Association to Companies;
+  status    : String(20);        // pending | granted | declined
+  message   : String(500);
+  decidedAt : Timestamp;
+}
+
+// Certificates a worker already holds from elsewhere. Sample data on record: not signed here, and they never score.
+entity OtherCertificates : cuid {
+  worker   : Association to Workers;
+  title    : String(100);
+  issuer   : String(100);
+  issuedOn : Date;
+}
+
 // Stands in for SuccessFactors until a real tenant is connected.
 entity SuccessFactorsSkills : cuid {
   company     : Association to Companies;
@@ -137,6 +155,7 @@ entity Vacancies {
       employer   : String(100);
       source     : String(20) default 'mock';
       company    : Association to Companies;
+      postedAt   : Timestamp;
 }
 
 entity RoleMatches : cuid, managed {

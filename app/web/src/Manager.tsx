@@ -4,6 +4,7 @@ import {
   SideNavigation, SideNavigationItem, Text, TextArea, Title
 } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/group.js'
+import '@ui5/webcomponents-icons/dist/add-employee.js'
 import '@ui5/webcomponents-icons/dist/validate.js'
 import '@ui5/webcomponents-icons/dist/workflow-tasks.js'
 import '@ui5/webcomponents-icons/dist/search.js'
@@ -14,6 +15,7 @@ import '@ui5/webcomponents-icons/dist/shield.js'
 import { list, parseJson, parsed, value } from './api'
 import { DataTable, Empty, STAGE, StageStatus } from './ui'
 import { EmployeeProfile } from './Employee'
+import { Hiring } from './Hiring'
 import type { User } from './main'
 
 export const SECTIONS = [
@@ -22,6 +24,7 @@ export const SECTIONS = [
   { id: 'review', label: 'Role reviews', icon: 'workflow-tasks', roles: ['Manager', 'HRAdmin'] },
   { id: 'talent', label: 'Find talent', icon: 'search', roles: ['Manager', 'HRAdmin'] },
   { id: 'ewm', label: 'EWM daily upload', icon: 'upload', roles: ['Manager', 'Supervisor'] },
+  { id: 'hire', label: 'Hire from outside', icon: 'add-employee', roles: ['Manager', 'HRAdmin'] },
   { id: 'applicants', label: 'Outside applicants', icon: 'customer-briefing', roles: ['Manager', 'HRAdmin'] },
   { id: 'audit', label: 'Audit log', icon: 'history', roles: ['Manager', 'HRAdmin'] },
   { id: 'fairness', label: 'Fairness audit', icon: 'shield', roles: ['HRAdmin'] }
@@ -88,6 +91,7 @@ export function ManagerApp({ user, section, detail }: { user: User; section?: st
         {current === 'review' && <Review {...props} canDecide={user.roles.includes('Manager')} />}
         {current === 'talent' && <Talent {...props} />}
         {current === 'ewm' && <EwmUpload {...props} />}
+        {current === 'hire' && <Hiring {...props} canAct={user.roles.includes('Manager')} />}
         {current === 'applicants' && <Applicants {...props} canAnswer={user.roles.includes('Manager')} />}
         {current === 'audit' && <Audit revision={revision} />}
         {current === 'fairness' && <Fairness revision={revision} />}
@@ -387,12 +391,12 @@ function Applicants({ revision, run, busy, canAnswer }: Props & { canAnswer: boo
 
   const answer = (id: string, status: string, done: string) => run(() => value('/manager/answerApplication', { application: id, status, message: messages[id] ?? '' }), done)
 
-  if (!applicants.length) return <Empty title="No outside applicants" subtitle="People at other companies who apply with their certificates appear here." />
+  if (!applicants.length) return <Empty title="No outside applicants" subtitle="People at other companies who apply, or say yes to your request, appear here." />
 
   return (
     <>
       <Title level="H1" size="H3">Outside applicants</Title>
-      <Text>People from other companies applying to your jobs. Each certificate is checked before you see it.</Text>
+      <Text>People who applied, or who said yes to your request. Each certificate is checked before you see it.</Text>
       {applicants.map(a => (
         <Card key={a.ID} header={<CardHeader titleText={a.applicant} subtitleText={`${a.role} · ${a.site}`} />}>
           <div className="card-body">
@@ -407,7 +411,7 @@ function Applicants({ revision, run, busy, canAnswer }: Props & { canAnswer: boo
               />
             )}
             {a.message && <Text>Your message: {a.message}</Text>}
-            {canAnswer && a.status === 'applied' && (
+            {canAnswer && a.status === 'applied' && a.certificates.status === 'genuine' && (
               <>
                 <Label for={`msg-${a.ID}`}>Message to the applicant</Label>
                 <TextArea id={`msg-${a.ID}`} rows={2} maxlength={500} value={messages[a.ID] ?? ''} onInput={e => { const next = e.target.value; setMessages(m => ({ ...m, [a.ID]: next })) }} />

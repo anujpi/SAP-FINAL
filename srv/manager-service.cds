@@ -6,10 +6,11 @@ service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', '
   @readonly entity ReviewQueue as select from db.Workers { ID, name, site, stage, company.ID as company_ID } where stage = 'AWAITING_MANAGER';
   @readonly entity Team as select from db.Workers { ID, name, site, stage, company.ID as company_ID };
   @readonly entity Skills as projection on db.Skills excluding { keywords };
+  @readonly entity Roles as projection on db.Roles;
 
   // A worker's interest in outside jobs is private, so those events never show here.
   @requires: ['Manager', 'HRAdmin']
-  @readonly entity AuditEvents as select from db.AuditEvents { * } where type not in ('outside_opt_in', 'application_submitted', 'application_answered');
+  @readonly entity AuditEvents as select from db.AuditEvents { * } where type not in ('outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered');
 
   /** Every employee with their skills, EWM support and open requests. */
   function teamSkills() returns LargeString;
@@ -33,6 +34,24 @@ service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', '
   /** Employees with this verified skill, from the mock SuccessFactors store. */
   @requires: ['Manager', 'HRAdmin']
   function findTalent(skill : String) returns LargeString;
+
+  /** This company's roles open to outside people, with how many candidates and applicants each has. */
+  @requires: ['Manager', 'HRAdmin']
+  function openRoles() returns LargeString;
+
+  @requires: 'Manager'
+  action postRole(role : String, site : String) returns String;
+
+  /** People at other companies open to offers, matched to one of this company's roles. Anonymous: no name, no employer. */
+  @requires: ['Manager', 'HRAdmin']
+  function candidates(vacancy : String) returns LargeString;
+
+  @requires: 'Manager'
+  action askToConnect(vacancy : String, candidate : String, message : String) returns LargeString;
+
+  /** The requests this company has sent. A name appears only once the person has said yes. */
+  @requires: ['Manager', 'HRAdmin']
+  function outreach() returns LargeString;
 
   /** People from other companies applying here, with their certificates checked. */
   @requires: ['Manager', 'HRAdmin']

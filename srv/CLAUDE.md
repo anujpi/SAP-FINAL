@@ -17,6 +17,8 @@ Workers read only their own rows through `@restrict` with `$user.workerId`. A ma
 
 **Demo: View As.** With `DEMO_WORKER_ID` set, a Manager login can send `x-demo-persona` (`ravi`, `meera`, `arjun`) to show that person on one laptop. It's read per request (`personaOf`), because the user object can be shared between requests. Unset `DEMO_WORKER_ID` in a real deployment.
 
+**The permission ladder for outside hiring.** Turning on `outsideOptIn` makes a worker visible to other companies through `candidates()`, which returns only an anonymous per-company reference, verified skills and a score. Never add a name, site, employer or verifier to it. `askToConnect` creates a `HireInterest`. A yes (`hire_interest_answered`) creates a share link and an application for the chosen certificates only, and writes a `ConsentRecord`. Cancelling that link takes the name away everywhere: `applicants()` and `outreach()` both check it. Only `resetDemo` deletes all hiring requests and posted roles.
+
 A worker's outside job search is private from their employer: those events stay out of `AuditEvents` in `ManagerService`, and `applicants()` shows only applications to the caller's own vacancies.
 
 `addEvidence` in the orchestrator is the one place a skill becomes verified. It signs the certificate and writes to `SuccessFactorsSkills`, a local stand-in. Swap that one step for a Destination call when a tenant exists.

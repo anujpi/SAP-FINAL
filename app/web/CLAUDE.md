@@ -10,6 +10,7 @@ Read the root `CLAUDE.md` first. One React and TypeScript app built on SAP's UI5
 | Worker journey and agent activity panel | `src/Worker.tsx`, `src/WorkerTabs.tsx` | `/#/worker` |
 | Employees, verification, role reviews, find talent, EWM upload, outside applicants, audit, fairness | `src/Manager.tsx` | `/#/manager/<section>` |
 | One employee's profile | `src/Employee.tsx` | `/#/manager/team/<worker ID>` |
+| Post a role, anonymous candidates, requests sent | `src/Hiring.tsx` | `/#/manager/hire` |
 | Guided walkthrough | `src/HowItWorks.tsx` | `/#/how` |
 | Shared table, status and profile card | `src/ui.tsx` | |
 | How it fits around SAP systems | `src/Landscape.tsx` | `/#/landscape` |

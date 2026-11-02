@@ -29,6 +29,12 @@ service WorkerService @(path: '/worker', requires: 'Worker') {
   @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
   entity MyApplications as projection on db.Applications excluding { token };
 
+  @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
+  entity MyOtherCertificates as projection on db.OtherCertificates;
+
+  /** Companies asking to connect, and which companies can see this worker's certificates right now. */
+  function myHireRequests() returns LargeString;
+
   /** What EWM shows for each of this worker's skills. */
   function myEwmSupport() returns LargeString;
 

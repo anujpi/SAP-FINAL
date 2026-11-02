@@ -4,13 +4,14 @@ const discover = require('./agents/discover')
 const verify = require('./agents/verify')
 const match = require('./agents/match')
 const pathway = require('./agents/pathway')
+const { randomBytes } = require('node:crypto')
 const { sign, newToken } = require('./lib/credential')
 
 const PROOF_TYPES = ['ewm_records', 'observed_on_shift', 'training_record']
 
 // These can happen at any point once a profile exists, and none of them move the journey on.
 const stayIn = stage => Object.fromEntries(
-  ['verification_requested', 'verification_decided', 'outside_opt_in', 'application_submitted', 'application_answered'].map(type => [type, stage])
+  ['verification_requested', 'verification_decided', 'outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered'].map(type => [type, stage])
 )
 
 const TRANSITIONS = {
@@ -33,7 +34,7 @@ const TRANSITIONS = {
 const WORKER_EVENTS = new Set([
   'consent_granted', 'consent_revoked', 'input_submitted', 'readback_confirmed',
   'assessment_submitted', 'module_completed', 'outside_opt_in', 'review_requested',
-  'verification_requested', 'application_submitted'
+  'verification_requested', 'application_submitted', 'hire_interest_answered'
 ])
 
 const ACTOR_ROLE = type => (WORKER_EVENTS.has(type) ? 'worker' : 'manager')
@@ -54,7 +55,7 @@ async function refresh(worker) {
   const { SkillClaims, Vacancies, RoleSkills, RoleMatches, LearningModules, LearningPlans } = db()
   const claims = await SELECT.from(SkillClaims).where({ worker_ID: worker.ID })
   const vacancies = await SELECT.from(Vacancies)
-  const inScope = vacancies.filter(v => !v.isExternal || worker.outsideOptIn)
+  const inScope = vacancies.filter(v => !v.isExternal || (worker.outsideOptIn && v.company_ID !== worker.company_ID))
 
   await DELETE.from(RoleMatches).where({ worker_ID: worker.ID })
   let targetGaps = []
@@ -111,7 +112,7 @@ async function addEvidence(worker, skill_ID, type, proficiency, verifier, proof 
 
 async function eraseWorkerData(workerId) {
   const d = db()
-  for (const e of [d.TaskExperiences, d.SkillClaims, d.EvidenceItems, d.RoleMatches, d.LearningPlans, d.SkillCredentials, d.ShareLinks, d.ReviewDecisions, d.VerificationRequests, d.Applications, d.SuccessFactorsSkills])
+  for (const e of [d.TaskExperiences, d.SkillClaims, d.EvidenceItems, d.RoleMatches, d.LearningPlans, d.SkillCredentials, d.ShareLinks, d.ReviewDecisions, d.VerificationRequests, d.Applications, d.SuccessFactorsSkills, d.HireInterests])
     await DELETE.from(e).where({ worker_ID: workerId })
 }
 
@@ -192,7 +193,7 @@ const HANDLERS = {
     const { Vacancies, SkillCredentials, ShareLinks, Applications } = db()
     if (!worker.outsideOptIn) fail(409, 'Turn on outside jobs first')
     const job = await SELECT.one.from(Vacancies).where({ ID: vacancy, isExternal: true })
-    if (!job) fail(404, 'This job is not open to outside applicants')
+    if (!job || job.company_ID === worker.company_ID) fail(404, 'This job is not open to outside applicants')
     if (await SELECT.one.from(Applications).where({ worker_ID: worker.ID, vacancy_ID: vacancy })) fail(409, 'You have already applied for this job')
     const shared = [...new Set(skills ?? [])]
     const held = await SELECT.from(SkillCredentials).where({ worker_ID: worker.ID, skill_ID: { in: shared } })
@@ -208,6 +209,37 @@ const HANDLERS = {
     if (message?.length > 500) fail(400, 'Message must be 500 characters or fewer')
     await UPDATE(db().Applications, application).with({ status, message })
     return { contract: 'Application' }
+  },
+
+  // A company asks to connect. Only the service can send this, after checking the role is its own.
+  async hire_interest_sent(worker, { vacancy, company_ID, message }) {
+    const { HireInterests } = db()
+    if (!worker.outsideOptIn) fail(409, 'This person is no longer open to other companies')
+    if (message?.length > 500) fail(400, 'Message must be 500 characters or fewer')
+    if (await SELECT.one.from(HireInterests).where({ worker_ID: worker.ID, vacancy_ID: vacancy })) fail(409, 'You have already asked this person about this role')
+    await INSERT.into(HireInterests).entries({ worker_ID: worker.ID, vacancy_ID: vacancy, company_ID, status: 'pending', message })
+    return { contract: 'HireInterest' }
+  },
+
+  // The worker's permission. A yes shares only the certificates they picked, with only this company.
+  async hire_interest_answered(worker, { interest, grant, skills }) {
+    const { HireInterests, SkillCredentials, ShareLinks, Applications, ConsentRecords } = db()
+    const open = await SELECT.one.from(HireInterests).where({ ID: interest, worker_ID: worker.ID, status: 'pending' })
+    if (!open) fail(404, 'This request is not open')
+    const decidedAt = new Date().toISOString()
+    if (!grant) {
+      await UPDATE(HireInterests, interest).with({ status: 'declined', decidedAt })
+      return { contract: 'HireInterest' }
+    }
+    const shared = [...new Set(skills ?? [])]
+    const held = await SELECT.from(SkillCredentials).where({ worker_ID: worker.ID, skill_ID: { in: shared } })
+    if (!shared.length || held.length !== shared.length) fail(400, 'Only verified skills can be shared')
+    const token = newToken()
+    await INSERT.into(ShareLinks).entries({ worker_ID: worker.ID, token, skills: JSON.stringify(shared) })
+    await INSERT.into(Applications).entries({ worker_ID: worker.ID, vacancy_ID: open.vacancy_ID, token, status: 'applied' })
+    await INSERT.into(ConsentRecords).entries({ worker_ID: worker.ID, purpose: `share_with_${open.company_ID}`, granted: true })
+    await UPDATE(HireInterests, interest).with({ status: 'granted', decidedAt })
+    return { contract: 'HireInterest' }
   },
 
   // Finishing a lesson unlocks practice. It never verifies a skill by itself.
@@ -256,9 +288,37 @@ async function handle(workerId, type, payload = {}, actor) {
 
 // Demo only: puts a worker back on the first screen.
 async function resetWorker(workerId) {
+  const { ConsentRecords, Workers, HireInterests, Vacancies, RoleMatches } = db()
   await eraseWorkerData(workerId)
-  await DELETE.from(db().ConsentRecords).where({ worker_ID: workerId })
-  await UPDATE(db().Workers, workerId).with({ stage: 'NOT_STARTED', outsideOptIn: false })
+  await DELETE.from(ConsentRecords).where({ worker_ID: workerId })
+  await UPDATE(Workers, workerId).with({ stage: 'NOT_STARTED', outsideOptIn: false })
+  // Also clear what companies did in the demo, so a new run starts clean.
+  await DELETE.from(HireInterests)
+  const posted = (await SELECT.from(Vacancies).columns('ID').where({ source: 'posted' })).map(v => v.ID)
+  if (posted.length) {
+    await DELETE.from(RoleMatches).where({ vacancy_ID: { in: posted } })
+    await DELETE.from(Vacancies).where({ ID: { in: posted } })
+  }
 }
 
-module.exports = { handle, nextStage, resetWorker, WORKER_EVENTS, TRANSITIONS }
+// A company posts a new role. Everyone open to other companies gets a match to it straight away.
+async function postVacancy(company, role_ID, site) {
+  const { Vacancies, Workers, Roles, RoleSkills, SkillClaims, RoleMatches, AuditEvents } = db()
+  if (!(await SELECT.one.from(Roles).where({ ID: role_ID }))) fail(400, `Unknown role ${role_ID}`)
+  if (!site?.trim() || site.length > 50) fail(400, 'A site of up to 50 characters is required')
+  const ID = `EXT-${randomBytes(4).toString('hex').toUpperCase()}`
+  await INSERT.into(Vacancies).entries({ ID, role_ID, site: site.trim(), isExternal: true, employer: company.name, source: 'posted', company_ID: company.ID, postedAt: new Date().toISOString() })
+  const requirements = await SELECT.from(RoleSkills).where({ role_ID })
+  for (const worker of await SELECT.from(Workers).where({ outsideOptIn: true, company_ID: { '!=': company.ID } })) {
+    const result = match(requirements, await SELECT.from(SkillClaims).where({ worker_ID: worker.ID }))
+    await INSERT.into(RoleMatches).entries({
+      worker_ID: worker.ID, vacancy_ID: ID, score: result.score,
+      strengths: JSON.stringify(result.strengths), gaps: JSON.stringify(result.gaps),
+      eligibility: JSON.stringify({ eligible: true, reasons: ['Worker opted in to outside jobs'] }), ruleTrace: JSON.stringify(result.ruleTrace)
+    })
+  }
+  await INSERT.into(AuditEvents).entries({ company_ID: company.ID, type: 'role_posted', stage: 'n/a', actor: 'manager', contract: 'Vacancy' })
+  return ID
+}
+
+module.exports = { handle, nextStage, resetWorker, postVacancy, WORKER_EVENTS, TRANSITIONS }

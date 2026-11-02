@@ -4,7 +4,16 @@ const { staffLogin, personaOf, personaHeader, PERSONA_ROLES } = require('./lib/d
 
 const ROLES = ['Worker', 'Manager', 'Supervisor', 'HRAdmin']
 
+const COUNTED = { Workers: 'employees', SkillClaims: 'skills', EwmTaskRecords: 'EWM records', SkillCredentials: 'certificates', OtherCertificates: 'other certificates', Vacancies: 'open roles', HireInterests: 'hiring requests', AuditEvents: 'audit events' }
+
 module.exports = cds.service.impl(function () {
+  this.on('dataSource', async () => {
+    const entities = cds.entities('frontline')
+    const counts = {}
+    for (const [name, label] of Object.entries(COUNTED)) counts[label] = (await SELECT.one.from(entities[name]).columns('count(*) as n')).n
+    return JSON.stringify({ kind: cds.db.kind, counts })
+  })
+
   this.on('me', async req => {
     const { Staff, Workers, Companies } = cds.entities('frontline')
     const persona = personaOf(req.user, personaHeader(req))
