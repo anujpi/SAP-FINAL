@@ -7,7 +7,7 @@ The exact steps to show Frontline Shift working. Rehearse from this file. All pe
 ## One hour before
 
 1. **Start HANA.** The free tier stops by itself, even within a day, so assume it's stopped. Run `cf update-service frontline-db -c scripts/hana-start.json`, or click **Start** in HANA Cloud Central. Allow up to 20 minutes, and check `frontline-db` shows **Running**.
-2. Log in to `cf`, then run `cf apps`. `frontline-shift` and `frontline-shift-srv` must show `web:1/1`. If not, run `cf restart frontline-shift-srv`.
+2. **Start the apps.** The trial stops them too, overnight, and the site then shows `404 Not Found: Requested route`. Log in to `cf`, then run `cf apps`. `frontline-shift` and `frontline-shift-srv` must show `web:1/1`. If not, run `cf start frontline-shift-srv`, then `cf start frontline-shift`.
 3. Open the app, sign in, and do the whole run once.
 4. Open `/#/manager`, choose **Attest skills**, and click **Reset demo for this worker**.
 5. Keep ready: phone hotspot, charger, projector adapter, the backup video on the laptop.

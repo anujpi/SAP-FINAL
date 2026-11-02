@@ -67,5 +67,35 @@
         "workerId"
       ]
     }
+  ],
+  "role-collections": [
+    {
+      "name": "Worker (frontline-shift)",
+      "description": "Worker",
+      "role-template-references": [
+        "$XSAPPNAME.Worker"
+      ]
+    },
+    {
+      "name": "Manager (frontline-shift)",
+      "description": "Manager",
+      "role-template-references": [
+        "$XSAPPNAME.Manager"
+      ]
+    },
+    {
+      "name": "Supervisor (frontline-shift)",
+      "description": "Supervisor",
+      "role-template-references": [
+        "$XSAPPNAME.Supervisor"
+      ]
+    },
+    {
+      "name": "HRAdmin (frontline-shift)",
+      "description": "HRAdmin",
+      "role-template-references": [
+        "$XSAPPNAME.HRAdmin"
+      ]
+    }
   ]
 }

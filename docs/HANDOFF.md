@@ -17,9 +17,9 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 |---|---|
 | Backend, seven agents, Skill Passport | Built. 19 unit tests and `npm run journey` pass locally. |
 | Web app (`app/web`) | Worker, manager and public check screens. The full journey was run in a browser locally, in English and Hindi. |
-| Live on SAP BTP | Deployed with HANA Cloud and XSUAA. Tested: public check route answers from HANA, and protected pages redirect to SAP login. |
+| Live on SAP BTP | Deployed with HANA Cloud and XSUAA. All 15 steps in `docs/DEMO.md` passed on the live URL in English on 2 Nov, with typed input and the offline AI backup. |
 
-**Not yet tested:** the logged-in screens on BTP, a real LLM reply on any route, voice with a real microphone or phone, and the Hindi wording by a Hindi speaker.
+**Not yet tested:** a real LLM reply on any route, voice with a real microphone or phone, Hindi on the live URL, and the Hindi wording by a Hindi speaker.
 
 ## BTP facts
 
@@ -35,11 +35,13 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 | Apps | `frontline-shift` (Approuter), `frontline-shift-srv`, `frontline-shift-db-deployer` (runs once) |
 | Ravi's worker ID | `00000000-0000-4000-8000-000000000001` (fictional) |
 
-`PASSPORT_SECRET` is already set on `frontline-shift-srv`. `cf`, the `multiapps` plugin, `mbt` and GNU Make are installed.
+`PASSPORT_SECRET` and `DEMO_WORKER_ID` (Ravi's ID) are already set on `frontline-shift-srv`. With `DEMO_WORKER_ID` set, any Worker login with no `workerId` attribute acts as Ravi, so the `ravi-attribute` role isn't needed for the demo. See `srv/lib/demo-worker.js`. `cf`, the `multiapps` plugin, `mbt` and GNU Make are installed.
 
 ## Things that will catch you out
 
 - **HANA stops by itself**, even the same day. A deploy then fails with "HANA Database instance is stopped". Fix: `cf update-service frontline-db -c scripts/hana-start.json`, wait about 3 minutes, then retry with the `cf deploy -i <id> -a retry` command from the error.
+- **The trial also stops the apps overnight.** The site then shows `404 Not Found: Requested route`. Fix: `cf start frontline-shift-srv`, then `cf start frontline-shift`.
+- **"Unauthorized" after signing in** means the sign-in page sat open too long. Reload the app link.
 - **The cockpit needs Chrome.** Entitlements gave 403 errors in the Claude desktop app's built-in browser, though the same pages worked in Chrome.
 - **`cf login` needs Anuj.** It's `cf login -a https://api.cf.ap21.hana.ondemand.com --sso`, and he pastes the code. If `cf` commands say not logged in, ask him to do this.
 - **SAP AI Core isn't offered on this trial**, so Generative AI Hub is unavailable unless the organisers or SAP's separate trial give a key.

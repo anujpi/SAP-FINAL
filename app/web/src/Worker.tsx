@@ -41,6 +41,7 @@ export function WorkerApp() {
     setMe(people[0] ?? null)
     setTrace(events)
     setRoute(activeRoute)
+    if (!people[0]) throw new Error("This login isn't linked to a worker, so there's nothing to show. An admin needs to set its worker ID.")
     setRevision(r => r + 1)
   }, [])
 

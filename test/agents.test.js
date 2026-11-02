@@ -6,6 +6,7 @@ const pathway = require('../srv/agents/pathway')
 const verify = require('../srv/agents/verify')
 const discover = require('../srv/agents/discover')
 const workerIdOf = require('../srv/lib/worker-id')
+const { applyDemoWorker } = require('../srv/lib/demo-worker')
 const { nextStage, WORKER_EVENTS } = require('../srv/orchestrator')
 
 // Keep these tests offline even if a real key is set on this machine.
@@ -84,6 +85,16 @@ test('worker id: reads both XSUAA lists and mocked plain values', () => {
   assert.equal(workerIdOf({ user: { attr: { workerId: ['abc'] } } }), 'abc')
   assert.equal(workerIdOf({ user: { attr: { workerId: 'abc' } } }), 'abc')
   assert.equal(workerIdOf({ user: { attr: {} } }), undefined)
+})
+
+test('demo worker: fills in only for a Worker with no attribute, and only when set', () => {
+  const user = (role, attr = {}) => ({ is: r => r === role, attr })
+  const apply = (u, id) => { applyDemoWorker(u, id); return u.attr.workerId }
+  assert.equal(apply(user('Worker'), 'demo-id'), 'demo-id')
+  assert.equal(apply(user('Worker'), undefined), undefined)
+  assert.equal(apply(user('Manager'), 'demo-id'), undefined)
+  assert.equal(apply(user('Worker', { workerId: ['real'] }), 'demo-id')[0], 'real')
+  assert.equal(apply(user('Worker', { workerId: [] }), 'demo-id'), 'demo-id')
 })
 
 test('orchestrator: invalid events are rejected with 409', () => {
