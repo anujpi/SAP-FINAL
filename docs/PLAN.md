@@ -3,6 +3,8 @@
 From today to the finale, then from the finale to a real product.
 Written Fri 30 Oct 2026. Tick boxes as you go. Costs and prices are planning estimates, not quotes.
 
+**Updated Mon 2 Nov.** The product flow changed, and it overrides anything older below. See "The product" in the root `CLAUDE.md` and the run in `docs/DEMO.md`: spoken work → AI skills → EWM check → manager verifies with proof → certificate and resume naming the manager and company → apply to other companies → skills in SuccessFactors, so HR can filter by skill. The app now uses SAP Generative AI Hub, not the Anthropic backup described in section 1.
+
 ## 1. Where things stand
 
 | Area | Status |

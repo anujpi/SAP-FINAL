@@ -1,12 +1,16 @@
 # Web app
 
-Read the root `CLAUDE.md` first. One React, TypeScript and plain CSS app with three parts, talking only to our backend:
+Read the root `CLAUDE.md` first. One React and TypeScript app built on SAP's UI5 Web Components, so it looks and behaves like SAP Fiori. `styles.css` holds layout only. Colours come from the theme. It talks only to our backend:
 
 | Part | File | URL |
 |---|---|---|
-| Worker journey and system trace | `src/Worker.tsx` | `/#/worker` |
-| Review, attestation, audit, fairness, reset | `src/Manager.tsx` | `/#/manager` |
-| Public Skill Passport check (no login) | `src/check.tsx` | `/check.html#<token>` |
+| Public sign-in page | `src/welcome.tsx` | `/welcome.html` |
+| Shell, role routing, sign-out, reset | `src/main.tsx` | `/index.html` |
+| Home page with tiles by role | `src/Launchpad.tsx` | `/#/` |
+| Worker journey and agent activity panel | `src/Worker.tsx`, `src/WorkerTabs.tsx` | `/#/worker` |
+| Employees, verification, role reviews, find talent, EWM upload, outside applicants, audit, fairness | `src/Manager.tsx` | `/#/manager/<section>` |
+| How it fits around SAP systems | `src/Landscape.tsx` | `/#/landscape` |
+| Public certificate check (no login) | `src/check.tsx` | `/check.html#<token>` |
 
 `src/api.ts` is the only code that calls the backend. `src/i18n.ts` holds the English and Hindi worker text. Manager screens are English only.
 

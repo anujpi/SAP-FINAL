@@ -1,5 +1,5 @@
-ID;role_ID;site;isExternal;employer;source
-REQ-1001;DSC-COORD;Bengaluru Hub;false;Internal;mock
-EXT-2001;INV-CTRL;Hosur;true;Sample Logistics A;sample
-EXT-2002;DSC-COORD;Chennai;true;Sample Retail B;sample
-EXT-2003;DISP-LEAD;Mysuru;true;Sample Foods C;sample
+ID;role_ID;site;isExternal;employer;source;company_ID
+REQ-1001;DSC-COORD;Bengaluru Hub;false;Indigo Hub Logistics;mock;INDIGO
+EXT-2001;INV-CTRL;Hosur;true;Meridian Freight;sample;MERIDIAN
+EXT-2002;DSC-COORD;Chennai;true;Meridian Freight;sample;MERIDIAN
+EXT-2003;DISP-LEAD;Mysuru;true;Cauvery Foods;sample;CAUVERY

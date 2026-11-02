@@ -1,17 +1,34 @@
-// Talks only to our own backend. Locally it logs in as a mocked user; on BTP the Approuter session handles login.
-let devUser = 'ravi'
-export const actAs = (user: 'ravi' | 'meera' | 'sunil') => { devUser = user }
+// Talks only to our own backend. Locally the welcome page picks a mocked user; on BTP the Approuter session handles login.
+const DEV_USER = 'fs-dev-user'
+export const devUser = () => {
+  if (!import.meta.env.DEV) return ''
+  try { return sessionStorage.getItem(DEV_USER) ?? '' } catch { return '' }
+}
+export const setDevUser = (user: string) => {
+  try { sessionStorage.setItem(DEV_USER, user) } catch { /* the mocked login just won't stick */ }
+}
+
+export const signIn = () => location.assign('/index.html')
+export function signOut() {
+  if (import.meta.env.DEV) {
+    setDevUser('')
+    location.assign('/welcome.html')
+  } else {
+    location.assign('/do/logout')
+  }
+}
 
 let csrfToken: string | null = null
 
 function authHeaders(): Record<string, string> {
-  return import.meta.env.DEV ? { Authorization: `Basic ${btoa(`${devUser}:${devUser}`)}` } : {}
+  const user = devUser()
+  return import.meta.env.DEV ? { Authorization: `Basic ${btoa(`${user}:${user}`)}` } : {}
 }
 
 async function getCsrfToken() {
   if (import.meta.env.DEV) return ''
   if (!csrfToken) {
-    const res = await fetch('/worker/', { headers: { 'x-csrf-token': 'fetch' } })
+    const res = await fetch('/user/', { headers: { 'x-csrf-token': 'fetch' } })
     csrfToken = res.headers.get('x-csrf-token') ?? ''
   }
   return csrfToken
@@ -55,4 +72,11 @@ export const sendEvent = (type: string, payload?: unknown) =>
 
 export const parseJson = <T,>(text: string | null | undefined, fallback: T): T => {
   try { return text ? JSON.parse(text) : fallback } catch { return fallback }
+}
+
+export const AI_ROUTE: Record<string, string> = {
+  'generative-ai-hub': 'SAP Generative AI Hub',
+  'direct-anthropic': 'Anthropic API (not SAP)',
+  'direct-gemini': 'Google Gemini (not SAP)',
+  offline: 'Offline backup (no AI)'
 }

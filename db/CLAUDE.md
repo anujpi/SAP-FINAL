@@ -2,14 +2,16 @@
 
 Owner: Vikas. Read the root `CLAUDE.md` first.
 
-`schema.cds` is the source of truth for all 16 tables. CAP creates them on in-memory SQLite locally and on HANA Cloud in production, so don't write database-specific SQL.
+`schema.cds` is the source of truth for all 21 tables. CAP creates them on in-memory SQLite locally and on HANA Cloud in production, so don't write database-specific SQL.
 
 ## Seed data
 
 `data/frontline-<Entity>.csv`, separated by semicolons. Everything is fictional.
 
 - **Ravi:** ID `00000000-0000-4000-8000-000000000001`, starts at `NOT_STARTED`.
-- **20 sample workers:** exist so the bias audit has groups to compare, with matches and decisions already filled in.
+- **Companies and staff:** Indigo Hub Logistics (Meera, Sunil, Ravi and 20 others) and Meridian Freight (Arjun and 3 workers). Cauvery Foods only has a job.
+- **The 20 workers at Indigo:** exist so the bias audit has groups to compare and My Employees isn't empty, with matches, decisions, skills and SuccessFactors rows already filled in.
+- **EWM records:** the daily extract. Ravi's rows are what give 46 cycle counting tasks in `scripts/journey.js`.
 - **Vacancies:** one internal requisition (`source: mock`) and three outside jobs (`source: sample`).
 - **Learning modules:** `url` currently points at `https://learning.sap.com`. **Replace these with real course links** before the demo, and don't invent URLs. `M-TRANS` holds the one scripted practice task.
 

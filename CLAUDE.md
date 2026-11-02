@@ -1,7 +1,8 @@
 # Frontline Shift
 
 AI career mobility for frontline workers, built by Team NOVESTACK for the SAP Hackfest 2026 Grand Finale (Theme 2: Inclusive Workforce).
-Ravi, a warehouse operator, talks about his work. The app turns that into verified skills, an explained job match, a learning pathway, a manager decision and a Skill Passport he controls.
+
+**The product, in Anuj's words:** a worker signs in and says what they've done, and the AI lists their skills. The daily EWM records in HANA show whether the work really happened. The worker asks their manager to confirm a skill. The manager signs in under their own company, sees all their employees and their skills, and answers with proof (mocked for now). The worker then gets a certificate and resume line saying which manager at which company verified it, and can use those to apply to other companies. A company buys this because it fits the SAP it already runs: verified skills go into SuccessFactors, so HR can filter people for better roles by skill.
 
 Build closes **Tue 3 Nov**. Finale is **Wed 4 Nov**: 10 minutes of presentation, 5 of Q&A. Every member attends. Keep the demo on one laptop, with a backup video.
 
@@ -12,12 +13,12 @@ Architecture page: https://claude.ai/artifact/DfqnwXcHN89kbnJkotfNiK
 
 | Layer | Tech |
 |---|---|
-| Web app | React, TypeScript, plain CSS (`app/web`). Worker, manager and public check screens, tested locally |
-| Login | SAP Approuter + XSUAA. Mocked users locally. |
+| Web app | React, TypeScript and SAP Fiori through UI5 Web Components (`app/web`). Sign-in page, launchpad, worker, manager, SAP landscape and public check screens |
+| Login | SAP Approuter + XSUAA. Screens follow the signed-in roles, and managers see only their own company. Mocked users locally. |
 | Backend | CAP Node.js on BTP Cloud Foundry (`srv/`) |
 | LLM | `srv/lib/llm.js` only. Generative AI Hub on SAP AI Core if bound, otherwise a direct Anthropic API backup, otherwise a marked offline fallback |
 | Database | HANA Cloud in production, in-memory SQLite locally (`db/`) |
-| SAP systems | Mock data in SAP's shape. No live SAP system is connected. |
+| SAP systems | No live SAP system is connected. EWM is a daily extract loaded into HANA (sample data). SuccessFactors is a local table standing in for it (`SuccessFactorsSkills`). |
 | Process lifecycle | SAP Signavio: optional, about half a day, never ahead of the app |
 
 ## Commands

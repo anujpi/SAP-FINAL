@@ -3,6 +3,7 @@ const { handle, WORKER_EVENTS } = require('./orchestrator')
 const market = require('./agents/market')
 const askJson = require('./lib/llm')
 const workerIdOf = require('./lib/worker-id')
+const { ewmSupport } = require('./lib/ewm')
 
 function parsePayload(req, payload) {
   if (!payload) return {}
@@ -23,6 +24,11 @@ module.exports = cds.service.impl(function () {
   })
 
   this.on('aiStatus', () => askJson.provider())
+
+  this.on('myEwmSupport', async req => {
+    const { EwmTaskRecords } = cds.entities('frontline')
+    return JSON.stringify(ewmSupport(await SELECT.from(EwmTaskRecords).where({ worker_ID: workerIdOf(req) })))
+  })
 
   this.on('marketSignal', async () => {
     const { Vacancies, RoleSkills } = cds.entities('frontline')

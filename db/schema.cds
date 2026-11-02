@@ -2,6 +2,19 @@ namespace frontline;
 
 using { cuid, managed } from '@sap/cds/common';
 
+entity Companies {
+  key ID   : String(30);
+      name : String(100);
+}
+
+// Who a manager login is and which company they work for. It scopes everything they see.
+entity Staff {
+  key login   : String(100);
+      name    : String(100);
+      title   : String(100);
+      company : Association to Companies;
+}
+
 // Journey stage values live in srv/orchestrator.js, the only code that changes them.
 entity Workers : cuid {
   name           : String(100);
@@ -11,6 +24,49 @@ entity Workers : cuid {
   stage          : String(20) default 'NOT_STARTED';
   targetRole     : Association to Roles;
   outsideOptIn   : Boolean default false;
+  company        : Association to Companies;
+}
+
+// The daily extract of confirmed warehouse tasks from EWM. Company data, so it stays when a worker withdraws consent.
+entity EwmTaskRecords : cuid {
+  worker         : Association to Workers;
+  workDate       : Date;
+  taskType       : String(30);
+  confirmedTasks : Integer;
+  warehouse      : String(10);
+  importedBy     : String(30);
+}
+
+// A worker asks their manager to confirm a skill. The manager answers with proof (mocked: a type and a reference).
+entity VerificationRequests : cuid, managed {
+  worker        : Association to Workers;
+  skill         : Association to Skills;
+  status        : String(20);    // pending | verified | not_yet
+  proofType     : String(30);
+  proofRef      : String(100);
+  note          : String(500);
+  decidedByName : String(100);
+  decidedAt     : Timestamp;
+}
+
+// A worker applying to another company with their certificates. The current employer never sees these.
+entity Applications : cuid, managed {
+  worker  : Association to Workers;
+  vacancy : Association to Vacancies;
+  token   : String(64);          // the share link holding the certificates they chose
+  status  : String(20);          // applied | interview | closed
+  message : String(500);
+}
+
+// Stands in for SuccessFactors until a real tenant is connected.
+entity SuccessFactorsSkills : cuid {
+  company     : Association to Companies;
+  worker      : Association to Workers;
+  userName    : String(100);
+  skill       : Association to Skills;
+  proficiency : Integer;
+  verifiedBy  : String(100);
+  syncedAt    : Timestamp;
 }
 
 entity ConsentRecords : cuid, managed {
@@ -47,8 +103,10 @@ entity SkillClaims : cuid {
 entity EvidenceItems : cuid, managed {
   worker     : Association to Workers;
   skill      : Association to Skills;
-  type       : String(30);       // assessment | supervisor_attestation
+  type       : String(30);       // assessment | manager_verification
   attestedBy : String(100);
+  proofType  : String(30);
+  proofRef   : String(100);
 }
 
 entity Roles {
@@ -71,6 +129,7 @@ entity Vacancies {
       isExternal : Boolean default false;
       employer   : String(100);
       source     : String(20) default 'mock';
+      company    : Association to Companies;
 }
 
 entity RoleMatches : cuid, managed {
@@ -111,6 +170,7 @@ entity ReviewDecisions : cuid, managed {
 entity AuditEvents : cuid {
   occurredAt : Timestamp @cds.on.insert: $now;
   worker_ID  : UUID;
+  company_ID : String(30);
   type       : String(30);
   stage      : String(20);
   actor      : String(100);
@@ -124,6 +184,10 @@ entity SkillCredentials : cuid {
   proficiency : Integer;
   method      : String(30);
   issuedAt    : Timestamp;
+  verifiedBy  : String(100);
+  verifierTitle : String(100);
+  company     : String(100);     // the name at the time, so a certificate outlives a job change
+  proofType   : String(30);
   signature   : String(64);
 }
 

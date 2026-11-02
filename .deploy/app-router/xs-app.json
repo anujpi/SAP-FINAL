@@ -1,6 +1,10 @@
 {
-  "welcomeFile": "/index.html",
+  "welcomeFile": "/welcome.html",
   "authenticationMethod": "route",
+  "logout": {
+    "logoutEndpoint": "/do/logout",
+    "logoutPage": "/welcome.html"
+  },
   "routes": [
     {
       "source": "^/(passport/check\\(.*)$",
@@ -10,15 +14,15 @@
       "csrfProtection": false
     },
     {
-      "source": "^/(worker|manager|passport)(.*)$",
+      "source": "^/(worker|manager|passport|user)(.*)$",
       "target": "$1$2",
       "destination": "srv-api",
       "authenticationType": "xsuaa",
       "csrfProtection": true
     },
     {
-      "source": "^/check\\.html$",
-      "target": "check.html",
+      "source": "^/(check|welcome)\\.html$",
+      "target": "$1.html",
       "localDir": "resources",
       "authenticationType": "none"
     },

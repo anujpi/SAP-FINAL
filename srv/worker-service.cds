@@ -23,6 +23,15 @@ service WorkerService @(path: '/worker', requires: 'Worker') {
   @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
   entity MyAuditEvents as projection on db.AuditEvents;
 
+  @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
+  entity MyRequests as projection on db.VerificationRequests;
+
+  @readonly @restrict: [{ grant: 'READ', where: 'worker_ID = $user.workerId' }]
+  entity MyApplications as projection on db.Applications excluding { token };
+
+  /** What EWM shows for each of this worker's skills. */
+  function myEwmSupport() returns LargeString;
+
   @readonly entity Roles as projection on db.Roles;
   @readonly entity Skills as projection on db.Skills excluding { keywords };
   @readonly entity LearningModules as projection on db.LearningModules excluding { answerKey };

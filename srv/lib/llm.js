@@ -1,12 +1,14 @@
-// One door to the LLM. Order: Generative AI Hub, then the direct Anthropic backup, then a marked offline fallback.
+// One door to the LLM. Order: Generative AI Hub, then direct Anthropic, then Google Gemini (free tier), then a marked offline fallback.
 const MASKED = ['profile-person', 'profile-email', 'profile-phone', 'profile-nationalid']
 const DIRECT_MODEL = 'claude-opus-5-5'
+const GEMINI_MODEL = 'gemini-3.8-flash'
 
 const hasAiCore = () => Boolean(process.env.AICORE_SERVICE_KEY || process.env.VCAP_SERVICES?.includes('"aicore"'))
 
 function provider() {
   if (hasAiCore() && process.env.LLM_MODEL) return 'generative-ai-hub'
   if (process.env.ANTHROPIC_API_KEY) return 'direct-anthropic'
+  if (process.env.GEMINI_API_KEY) return 'direct-gemini'
   return 'offline'
 }
 
@@ -25,7 +27,10 @@ async function completeHub(system, user) {
       prompt: { template: [{ role: 'system', content: system }, { role: 'user', content: '{{?input}}' }] }
     },
     masking: { masking_providers: [buildDpiMaskingProvider({ method: 'anonymization', entities: MASKED })] }
-  })
+  },
+  // A shared AI Core tenant can hold several orchestration deployments, and some refuse our model.
+  // AICORE_DEPLOYMENT_ID pins the one that works; unset, the SDK picks one in the resource group.
+  process.env.AICORE_DEPLOYMENT_ID ? { deploymentId: process.env.AICORE_DEPLOYMENT_ID } : undefined)
   const response = await client.chatCompletion({ placeholderValues: { input: user } })
   return response.getContent()
 }
@@ -47,12 +52,33 @@ async function completeDirect(system, user) {
   return response.content.find(block => block.type === 'text')?.text ?? ''
 }
 
+async function completeGemini(system, user) {
+  const base = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com'
+  const model = process.env.GEMINI_MODEL || GEMINI_MODEL
+  const res = await fetch(`${base}/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+    signal: AbortSignal.timeout(45_000),
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: 'user', parts: [{ text: redact(user) }] }],
+      generationConfig: { responseMimeType: 'application/json' }
+    })
+  })
+  if (!res.ok) throw Object.assign(new Error(`Gemini HTTP ${res.status}`), { status: res.status })
+  const data = await res.json()
+  if (data.promptFeedback?.blockReason) throw new Error('The model declined this request')
+  return data.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? ''
+}
+
+const COMPLETE = { 'generative-ai-hub': completeHub, 'direct-anthropic': completeDirect, 'direct-gemini': completeGemini }
+
 const parseJson = text => JSON.parse(text.trim().replace(/^```(?:json)?\s*|\s*```$/g, ''))
 
 async function askJson({ system, user, validate, fallback }) {
   const active = provider()
   if (active === 'offline') return { value: fallback, degraded: true }
-  const complete = active === 'generative-ai-hub' ? completeHub : completeDirect
+  const complete = COMPLETE[active]
 
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -60,6 +86,7 @@ async function askJson({ system, user, validate, fallback }) {
       if (validate(value)) return { value, degraded: false }
     } catch (e) {
       console.error(`LLM call failed (${active}):`, e.message)
+      if (e.status === 429) break // rate limited: retrying only burns the quota, so use the marked backup
     }
   }
   return { value: fallback, degraded: true }

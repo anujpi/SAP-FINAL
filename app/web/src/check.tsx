@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Card, CardHeader, List, ListItemStandard, MessageStrip, ShellBar, Text, ThemeProvider } from '@ui5/webcomponents-react'
 import './styles.css'
+
+const PROOF: Record<string, string> = { ewm_records: 'EWM records', observed_on_shift: 'Observed on shift', training_record: 'Training record', assessment: 'Practice assessment' }
 
 // Public page: no login, and it shows only what the check function returns.
 function Check() {
@@ -19,32 +22,35 @@ function Check() {
   }, [])
 
   return (
-    <main className="phone">
-      <header className="bar"><strong>Skill Passport check</strong></header>
-      <div className="demo-badge">DEMO · All data is fictional</div>
-      <section className="stack">
-        {!result && !failed && <p>Checking…</p>}
-        {failed && <p className="alert" role="alert">This check could not be completed. Please try again.</p>}
-        {result?.status === 'unknown' && <p className="alert">Link not found.</p>}
-        {result?.status === 'cancelled' && <p className="notice">Cancelled by the worker.</p>}
-        {result?.status === 'altered' && <p className="alert">Could not be verified.</p>}
+    <ThemeProvider>
+      <ShellBar primaryTitle="Skill certificate check" secondaryTitle="Frontline Shift · sample data" />
+      <main className="worker-main">
+        {!result && !failed && <Text>Checking…</Text>}
+        {failed && <MessageStrip design="Negative" hideCloseButton>This check could not be completed. Please try again.</MessageStrip>}
+        {result?.status === 'unknown' && <MessageStrip design="Negative" hideCloseButton>Link not found.</MessageStrip>}
+        {result?.status === 'cancelled' && <MessageStrip design="Critical" hideCloseButton>Cancelled by the worker.</MessageStrip>}
+        {result?.status === 'altered' && <MessageStrip design="Negative" hideCloseButton>Could not be verified.</MessageStrip>}
         {result?.status === 'genuine' && (
           <>
-            <p className="success"><strong>Genuine, not altered.</strong></p>
-            <h1>{result.worker}</h1>
-            <ul className="cards">
-              {result.skills.map((s: any) => (
-                <li key={s.skill}>
-                  <strong>{s.skill}</strong>
-                  <small>Level {s.proficiency} · {s.method === 'supervisor_attestation' ? 'Supervisor attestation' : 'Assessment'} · {new Date(s.issuedAt).toLocaleDateString()}</small>
-                </li>
-              ))}
-            </ul>
-            <p>The worker chose to share these skills. Please interview and assess as usual.</p>
+            <MessageStrip design="Positive" hideCloseButton><strong>Genuine, not altered.</strong></MessageStrip>
+            <Card header={<CardHeader titleText={result.worker} subtitleText="Certificates this worker chose to share" />}>
+              <List separators="Inner">
+                {result.skills.map((s: any) => (
+                  <ListItemStandard
+                    key={s.skill}
+                    wrappingType="Normal"
+                    description={`Level ${s.proficiency} · Verified by ${[s.verifiedBy, s.verifierTitle, s.company].filter(Boolean).join(', ')} · ${PROOF[s.proofType] ?? 'Proof on file'} · ${new Date(s.issuedAt).toLocaleDateString()}`}
+                  >
+                    {s.skill}
+                  </ListItemStandard>
+                ))}
+              </List>
+            </Card>
+            <Text>Please interview and assess as usual.</Text>
           </>
         )}
-      </section>
-    </main>
+      </main>
+    </ThemeProvider>
   )
 }
 

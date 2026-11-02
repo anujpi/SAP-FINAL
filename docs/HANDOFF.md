@@ -13,13 +13,15 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 
 ## What works now
 
+**Product flow, set by Anuj on 2 Nov:** see "The product" in the root `CLAUDE.md`. The app was rebuilt around it that day, on SAP Fiori components.
+
 | Part | State |
 |---|---|
-| Backend, seven agents, Skill Passport | Built. 19 unit tests and `npm run journey` pass locally. |
-| Web app (`app/web`) | Worker, manager and public check screens. The full journey was run in a browser locally, in English and Hindi. |
-| Live on SAP BTP | Deployed with HANA Cloud and XSUAA. All 15 steps in `docs/DEMO.md` passed on the live URL in English on 2 Nov, with typed input and the offline AI backup. |
+| Backend, seven agents, certificates, companies, EWM upload, outside applications, mock SuccessFactors | Built. 32 unit tests and `npm run journey` pass locally, with AI through SAP Generative AI Hub. |
+| Web app (`app/web`) | Sign-in page, launchpad, worker, manager, SAP landscape and public check screens. The worker, manager and other-company flow was run in a browser locally, plus Hindi and phone width. |
+| Live on SAP BTP | **The live URL still has the old app until the next deploy.** The old app passed its run there on 2 Nov, and the Hub route is confirmed on it for Agent A. |
 
-**Not yet tested:** a real LLM reply on any route, voice with a real microphone or phone, Hindi on the live URL, and the Hindi wording by a Hindi speaker.
+**Not yet tested:** the rebuilt app on BTP (the sign-in page, sign-out, the new `/user` route and the new HANA tables), voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
 
 ## BTP facts
 
@@ -35,7 +37,7 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 | Apps | `frontline-shift` (Approuter), `frontline-shift-srv`, `frontline-shift-db-deployer` (runs once) |
 | Ravi's worker ID | `00000000-0000-4000-8000-000000000001` (fictional) |
 
-`PASSPORT_SECRET` and `DEMO_WORKER_ID` (Ravi's ID) are already set on `frontline-shift-srv`. With `DEMO_WORKER_ID` set, any Worker login with no `workerId` attribute acts as Ravi, so the `ravi-attribute` role isn't needed for the demo. See `srv/lib/demo-worker.js`. `cf`, the `multiapps` plugin, `mbt` and GNU Make are installed.
+`PASSPORT_SECRET` and `DEMO_WORKER_ID` (Ravi's ID) are already set on `frontline-shift-srv`. With `DEMO_WORKER_ID` set, any Worker login with no `workerId` attribute acts as Ravi, so the `ravi-attribute` role isn't needed for the demo, and any manager login not in `DEMO_STAFF_MAP` acts as Meera. See `srv/lib/demo-worker.js`. `cf`, the `multiapps` plugin, `mbt` and GNU Make are installed.
 
 ## Things that will catch you out
 
@@ -44,7 +46,8 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 - **"Unauthorized" after signing in** means the sign-in page sat open too long. Reload the app link.
 - **The cockpit needs Chrome.** Entitlements gave 403 errors in the Claude desktop app's built-in browser, though the same pages worked in Chrome.
 - **`cf login` needs Anuj.** It's `cf login -a https://api.cf.ap21.hana.ondemand.com --sso`, and he pastes the code. If `cf` commands say not logged in, ask him to do this.
-- **SAP AI Core isn't offered on this trial**, so Generative AI Hub is unavailable unless the organisers or SAP's separate trial give a key.
+- **SAP AI Core comes from a shared tenant, not this trial.** `scripts/aicore-key.ps1` saves its key to `.env`. The tenant has several orchestration deployments and some refuse `gpt-4.1` (403 "not allowed"), so `AICORE_DEPLOYMENT_ID` pins the working one (`orchestration-trial`). Other deployments there belong to other people, so leave them alone. Never print or commit the key.
+- **A locked file stops `mbt build`.** `npm ci --prefix app/web` fails with EPERM on `rolldown-binding…node` if any `cds watch` or Vite process is still running, and it leaves `app/web/node_modules` half deleted. Stop every `npm run watch` first, then run `npm ci --prefix app/web`.
 - **SQLite doesn't enforce text lengths, but HANA does.** Clip LLM text to fit `db/schema.cds`, and don't assume a local pass means HANA will pass.
 - **XSUAA sends attributes as lists.** Use `srv/lib/worker-id.js`, not `req.user.attr.workerId`.
 - **`npm run watch` restarts on every file save**, and it picks a random port if 4004 is taken. Make sure no old server is running before you run the journey, and stop yours afterwards.
@@ -78,8 +81,10 @@ cf deploy mta_archives/frontline-shift_1.0.0.mtar -f
 
 ## What's left, in order
 
+**Steps 2 to 4 below are done, and the demo steps changed.** The order now is: Anuj commits, deploys the rebuilt app, runs `docs/DEMO.md` on the live URL, optionally adds a second login for Arjun, then does steps 5 and 6.
+
 ### 1. Anuj commits the current work
-Everything since commit `d34dcd4` is uncommitted on branch `scaffold-cap`. All of it is safe to commit, and `.env` doesn't exist yet.
+Everything since commit `23ec669` is uncommitted on branch `scaffold-cap`. All of it is safe to commit, because `.env` is ignored.
 
 ### 2. Anuj gives himself access (in Chrome, on the cockpit link above)
 1. **Security → Users**, his email, **Assign Role Collection**: Worker, Manager, Supervisor, HRAdmin, all ending in `(frontline-shift eb72796ftrial-dev)`.
@@ -90,12 +95,10 @@ Everything since commit `d34dcd4` is uncommitted on branch `scaffold-cap`. All o
 ### 3. Test the live app end to end
 Anuj follows `docs/DEMO.md` on the live URL and reports what happens. Fix what breaks, then redeploy. Likely trouble spots: login redirect, CSRF on POST (`src/api.ts`), the `workerId` attribute reaching the app, and timestamps from HANA.
 
-### 4. Real AI
-Anuj creates an Anthropic API key with a spending limit. Locally he puts it in `.env`. On BTP he runs this himself, then restarts the app:
-```bash
-cf set-env frontline-shift-srv ANTHROPIC_API_KEY his-key-here
-```
-Claude can then run `cf restart frontline-shift-srv`. Confirm `/worker/aiStatus()` says `direct-anthropic`, and test agents A and B with real English and Hindi answers, including mixed language and an attempt to inject instructions. The system trace must show the true route.
+### 4. Real AI on the live app
+Route order: SAP Generative AI Hub, then direct Anthropic, then Google Gemini, then the marked offline backup.
+Done locally. On BTP `AICORE_SERVICE_KEY`, `LLM_MODEL` and `AICORE_DEPLOYMENT_ID` are set on `frontline-shift-srv`, but the app still needs a redeploy with the latest `srv/lib/llm.js` (it adds the deployment pin). After that, confirm `/worker/aiStatus()` says `generative-ai-hub` and the trace shows "SAP Generative AI Hub".
+Backup: a free Gemini key from https://aistudio.google.com/apikey, set with `cf set-env frontline-shift-srv GEMINI_API_KEY <key>`. It only applies if the Hub and Anthropic routes aren't configured.
 
 ### 5. Prove the demo
 Three clean runs in a row on the live URL. Test voice in Chrome with a real microphone. Fix anything rough.

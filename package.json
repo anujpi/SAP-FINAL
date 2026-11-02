@@ -60,6 +60,12 @@
                 "Supervisor",
                 "HRAdmin"
               ]
+            },
+            "arjun": {
+              "password": "arjun",
+              "roles": [
+                "Manager"
+              ]
             }
           }
         }

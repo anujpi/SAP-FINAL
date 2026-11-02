@@ -4,6 +4,14 @@ const discover = require('./agents/discover')
 const verify = require('./agents/verify')
 const match = require('./agents/match')
 const pathway = require('./agents/pathway')
+const { sign, newToken } = require('./lib/credential')
+
+const PROOF_TYPES = ['ewm_records', 'observed_on_shift', 'training_record']
+
+// These can happen at any point once a profile exists, and none of them move the journey on.
+const stayIn = stage => Object.fromEntries(
+  ['verification_requested', 'verification_decided', 'outside_opt_in', 'application_submitted', 'application_answered'].map(type => [type, stage])
+)
 
 const TRANSITIONS = {
   NOT_STARTED: { consent_granted: 'DISCOVERING' },
@@ -11,22 +19,24 @@ const TRANSITIONS = {
   DISCOVERING: { input_submitted: 'AWAITING_READBACK' },
   AWAITING_READBACK: { input_submitted: 'AWAITING_READBACK', readback_confirmed: 'ACTIVE' },
   ACTIVE: {
-    evidence_added: 'ACTIVE',
+    ...stayIn('ACTIVE'),
     assessment_submitted: 'ACTIVE',
     module_completed: 'ACTIVE',
     outside_opt_in: 'ACTIVE',
     review_requested: 'AWAITING_MANAGER'
   },
-  AWAITING_MANAGER: { evidence_added: 'AWAITING_MANAGER', manager_decided: 'ACTIVE' }
+  AWAITING_MANAGER: { ...stayIn('AWAITING_MANAGER'), manager_decided: 'ACTIVE' },
+  SHORTLISTED: stayIn('SHORTLISTED')
 }
 
-// Events a worker may send. Attestations and decisions only arrive through ManagerService.
+// Events a worker may send. Verifications and decisions only arrive through ManagerService.
 const WORKER_EVENTS = new Set([
   'consent_granted', 'consent_revoked', 'input_submitted', 'readback_confirmed',
-  'assessment_submitted', 'module_completed', 'outside_opt_in', 'review_requested'
+  'assessment_submitted', 'module_completed', 'outside_opt_in', 'review_requested',
+  'verification_requested', 'application_submitted'
 ])
 
-const ACTOR_ROLE = type => (WORKER_EVENTS.has(type) ? 'worker' : type === 'manager_decided' ? 'manager' : 'supervisor')
+const ACTOR_ROLE = type => (WORKER_EVENTS.has(type) ? 'worker' : 'manager')
 
 function fail(status, message) {
   throw Object.assign(new Error(message), { status, code: String(status) })
@@ -72,20 +82,36 @@ async function refresh(worker) {
   else await INSERT.into(LearningPlans).entries({ worker_ID: worker.ID, modules: JSON.stringify(modules), completed: '[]' })
 }
 
-async function addEvidence(worker, skill_ID, type, proficiency, attestedBy) {
-  const { Skills, EvidenceItems, SkillClaims } = db()
+// A proven skill gets evidence, a signed certificate, a place in SuccessFactors and a fresh match.
+async function addEvidence(worker, skill_ID, type, proficiency, verifier, proof = {}) {
+  const { Skills, EvidenceItems, SkillClaims, SkillCredentials, SuccessFactorsSkills, Companies } = db()
   if (!(await SELECT.one.from(Skills).where({ ID: skill_ID }))) fail(400, `Unknown skill ${skill_ID}`)
-  await INSERT.into(EvidenceItems).entries({ worker_ID: worker.ID, skill_ID, type, attestedBy })
+  await INSERT.into(EvidenceItems).entries({ worker_ID: worker.ID, skill_ID, type, attestedBy: verifier.name, proofType: proof.type, proofRef: proof.ref })
   await DELETE.from(SkillClaims).where({ worker_ID: worker.ID, skill_ID })
   await INSERT.into(SkillClaims).entries({
     worker_ID: worker.ID, skill_ID, source: type, confidence: 1, status: 'verified', proficiency
   })
+
+  const company = await SELECT.one.from(Companies).where({ ID: worker.company_ID })
+  const credential = {
+    worker_ID: worker.ID, skill_ID, proficiency, method: type, issuedAt: new Date().toISOString(),
+    verifiedBy: verifier.name, verifierTitle: verifier.title ?? '', company: company?.name ?? '', proofType: proof.type ?? ''
+  }
+  await DELETE.from(SkillCredentials).where({ worker_ID: worker.ID, skill_ID })
+  await INSERT.into(SkillCredentials).entries({ ...credential, signature: sign(credential) })
+
+  // ponytail: writes to a local table standing in for SuccessFactors. Swap this for a Destination call when a tenant exists.
+  await DELETE.from(SuccessFactorsSkills).where({ worker_ID: worker.ID, skill_ID })
+  await INSERT.into(SuccessFactorsSkills).entries({
+    company_ID: worker.company_ID, worker_ID: worker.ID, userName: worker.name, skill_ID, proficiency, verifiedBy: verifier.name, syncedAt: credential.issuedAt
+  })
+
   await refresh(worker)
 }
 
 async function eraseWorkerData(workerId) {
   const d = db()
-  for (const e of [d.TaskExperiences, d.SkillClaims, d.EvidenceItems, d.RoleMatches, d.LearningPlans, d.SkillCredentials, d.ShareLinks, d.ReviewDecisions])
+  for (const e of [d.TaskExperiences, d.SkillClaims, d.EvidenceItems, d.RoleMatches, d.LearningPlans, d.SkillCredentials, d.ShareLinks, d.ReviewDecisions, d.VerificationRequests, d.Applications, d.SuccessFactorsSkills])
     await DELETE.from(e).where({ worker_ID: workerId })
 }
 
@@ -129,14 +155,59 @@ const HANDLERS = {
     if (!m?.answerKey) fail(400, `Module ${module} has no practice task`)
     // answerKey lists accepted answers separated by |, one per language.
     const passed = m.answerKey.toLowerCase().split('|').includes(String(answer).trim().toLowerCase())
-    if (passed) await addEvidence(worker, m.skill_ID, 'assessment', m.proficiency, 'system')
+    if (passed) await addEvidence(worker, m.skill_ID, 'assessment', m.proficiency, { name: 'Frontline Shift assessment' }, { type: 'assessment' })
     return { contract: 'EvidenceItem', passed }
   },
 
-  async evidence_added(worker, { skill, proficiency }, actor) {
-    if (!Number.isInteger(proficiency) || proficiency < 1 || proficiency > 3) fail(400, 'Proficiency must be 1, 2 or 3')
-    await addEvidence(worker, skill, 'supervisor_attestation', proficiency, actor)
-    return { contract: 'EvidenceItem' }
+  async verification_requested(worker, { skill }) {
+    const { Skills, SkillClaims, VerificationRequests } = db()
+    if (!(await SELECT.one.from(Skills).where({ ID: skill }))) fail(400, `Unknown skill ${skill}`)
+    const claim = await SELECT.one.from(SkillClaims).where({ worker_ID: worker.ID, skill_ID: skill })
+    if (claim?.status === 'verified') fail(409, 'This skill is already verified')
+    const open = await SELECT.one.from(VerificationRequests).where({ worker_ID: worker.ID, skill_ID: skill, status: 'pending' })
+    if (!open) await INSERT.into(VerificationRequests).entries({ worker_ID: worker.ID, skill_ID: skill, status: 'pending' })
+    return { contract: 'VerificationRequest' }
+  },
+
+  // The manager's yes needs proof, and their no needs a reason. Only the service can send this event.
+  async verification_decided(worker, { request, approved, proofType, proofRef, proficiency, note, staff }) {
+    const { VerificationRequests } = db()
+    const open = await SELECT.one.from(VerificationRequests).where({ ID: request, worker_ID: worker.ID, status: 'pending' })
+    if (!open) fail(404, 'This request is not open')
+    const decided = { decidedByName: staff.name, decidedAt: new Date().toISOString() }
+    if (approved) {
+      if (!PROOF_TYPES.includes(proofType)) fail(400, `Proof must be one of ${PROOF_TYPES.join(', ')}`)
+      if (!proofRef?.trim() || proofRef.length > 100) fail(400, 'A proof reference of up to 100 characters is required')
+      if (!Number.isInteger(proficiency) || proficiency < 1 || proficiency > 3) fail(400, 'Proficiency must be 1, 2 or 3')
+      await addEvidence(worker, open.skill_ID, 'manager_verification', proficiency, staff, { type: proofType, ref: proofRef })
+      await UPDATE(VerificationRequests, request).with({ ...decided, status: 'verified', proofType, proofRef })
+    } else {
+      if (!note?.trim() || note.length > 500) fail(400, 'A reason of up to 500 characters is required')
+      await UPDATE(VerificationRequests, request).with({ ...decided, status: 'not_yet', note })
+    }
+    return { contract: 'VerificationRequest' }
+  },
+
+  async application_submitted(worker, { vacancy, skills }) {
+    const { Vacancies, SkillCredentials, ShareLinks, Applications } = db()
+    if (!worker.outsideOptIn) fail(409, 'Turn on outside jobs first')
+    const job = await SELECT.one.from(Vacancies).where({ ID: vacancy, isExternal: true })
+    if (!job) fail(404, 'This job is not open to outside applicants')
+    if (await SELECT.one.from(Applications).where({ worker_ID: worker.ID, vacancy_ID: vacancy })) fail(409, 'You have already applied for this job')
+    const shared = [...new Set(skills ?? [])]
+    const held = await SELECT.from(SkillCredentials).where({ worker_ID: worker.ID, skill_ID: { in: shared } })
+    if (!shared.length || held.length !== shared.length) fail(400, 'Only verified skills can be sent with an application')
+    const token = newToken()
+    await INSERT.into(ShareLinks).entries({ worker_ID: worker.ID, token, skills: JSON.stringify(shared) })
+    await INSERT.into(Applications).entries({ worker_ID: worker.ID, vacancy_ID: vacancy, token, status: 'applied' })
+    return { contract: 'Application' }
+  },
+
+  async application_answered(worker, { application, status, message }) {
+    if (!['interview', 'closed'].includes(status)) fail(400, `Unknown status ${status}`)
+    if (message?.length > 500) fail(400, 'Message must be 500 characters or fewer')
+    await UPDATE(db().Applications, application).with({ status, message })
+    return { contract: 'Application' }
   },
 
   // Finishing a lesson unlocks practice. It never verifies a skill by itself.
@@ -179,7 +250,7 @@ async function handle(workerId, type, payload = {}, actor) {
 
   await UPDATE(Workers, workerId).with({ stage })
   // The trail records the role, not the login, so it holds no personal content.
-  await INSERT.into(AuditEvents).entries({ worker_ID: workerId, type, stage, actor: ACTOR_ROLE(type), contract, degraded })
+  await INSERT.into(AuditEvents).entries({ worker_ID: workerId, company_ID: worker.company_ID, type, stage, actor: ACTOR_ROLE(type), contract, degraded })
   return { stage, contract, degraded, ...result }
 }
 

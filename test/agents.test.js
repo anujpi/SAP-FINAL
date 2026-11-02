@@ -109,5 +109,6 @@ test('orchestrator: consent can be revoked from any stage', () => {
 
 test('orchestrator: workers cannot send decisions or attestations', () => {
   assert.equal(WORKER_EVENTS.has('manager_decided'), false)
-  assert.equal(WORKER_EVENTS.has('evidence_added'), false)
+  assert.equal(WORKER_EVENTS.has('verification_decided'), false)
+  assert.equal(WORKER_EVENTS.has('application_answered'), false)
 })
