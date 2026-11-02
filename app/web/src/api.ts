@@ -18,6 +18,19 @@ export function signOut() {
   }
 }
 
+// Reloading sends the browser through sign-in. Once a minute at most, so a bad proxy can't cause a reload loop.
+function signInAgain() {
+  try {
+    const last = Number(sessionStorage.getItem('fs-signed-in-again') ?? 0)
+    if (Date.now() - last < 60_000) return false
+    sessionStorage.setItem('fs-signed-in-again', String(Date.now()))
+    location.reload()
+    return true
+  } catch {
+    return false
+  }
+}
+
 let csrfToken: string | null = null
 
 function authHeaders(): Record<string, string> {
@@ -48,6 +61,14 @@ async function request(path: string, body?: unknown) {
   const text = await res.text()
   let json: any = null
   try { json = text ? JSON.parse(text) : null } catch { /* a login page or proxy error, reported below */ }
+  // When a session ends, the Approuter answers with its login page or refuses the CSRF token.
+  const sessionEnded = !import.meta.env.DEV && (
+    res.status === 401 || res.headers.get('x-csrf-token')?.toLowerCase() === 'required' || (res.ok && Boolean(text) && json === null)
+  )
+  if (sessionEnded) {
+    if (signInAgain()) return new Promise(() => {}) // the page is reloading, so leave the screen as it is
+    throw new Error('Your session ended. Please sign in again.')
+  }
   if (!res.ok) {
     const message = json?.error?.message ?? `The server answered ${res.status}. Please try again.`
     // Screens treat a failed read as empty, so raise it here rather than show a misleading blank.

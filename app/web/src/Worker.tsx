@@ -260,7 +260,9 @@ function Home({ t, run, revision, busy, stage, me, user }: ScreenProps & { stage
       setScore(scores.length ? Math.max(...scores) : null)
     }).catch(() => setScore(null))
     list('/worker/MyPlan').then(rows => {
-      setLessons([parseJson<string[]>(rows[0]?.completed, []).length, parseJson<string[]>(rows[0]?.modules, []).length])
+      const completed = parseJson<string[]>(rows[0]?.completed, [])
+      // A lesson leaves the plan once its skill is verified, so count it from both lists.
+      setLessons([completed.length, new Set([...completed, ...parseJson<string[]>(rows[0]?.modules, [])]).size])
     }).catch(() => setLessons([0, 0]))
   }, [revision])
 

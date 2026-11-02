@@ -39,7 +39,7 @@ The exact steps to show Frontline Shift working. Rehearse from this file. All pe
 | 1 | Sign-in | Open the app and click **Sign in with SAP** | "Real SAP sign-in. What you see depends on your role and your company." |
 | 2 | Ravi | Pick **हिन्दी** or English, then agree | "Consent comes first, in the worker's own language." |
 | 3 | Ravi | Tap **Talk** and speak, or type the answer below, then confirm the read-back | "Ravi has never had this written down. SAP's AI turns his words into tasks, and he corrects them before anything is saved." |
-| 4 | Ravi | **Skills** tab | "The AI found these skills. Next to each one: what EWM's records show. 46 confirmed cycle counts." |
+| 4 | Ravi | **Skills** tab | "The AI found these skills. Next to each one: what EWM's records show." Read the cycle counting number off the screen, because each day's upload raises it. |
 | 5 | Meera | **EWM Daily Upload**: **Use today's sample**, **Load into HANA** | "Each day the warehouse loads confirmed tasks. This is how we check what he said against real work." |
 | 6 | Ravi | **Ask my manager to verify** on *Cycle counting* and *Stock discrepancy resolution* | "He asks. Nothing is verified until a person says so." |
 | 7 | Meera | **My Employees** | "The manager signs in under her company and sees her people and their skills." |
@@ -51,7 +51,7 @@ The exact steps to show Frontline Shift working. Rehearse from this file. All pe
 | 13 | Meera | **SAP Landscape**: click EWM, then SuccessFactors skills | "It fits around the SAP they already run." Be clear about what's live and what isn't. |
 | 14 | Ravi | **Jobs**: turn on other companies, **Apply with my certificates** on a Meridian Freight job | "His employer can't see this." |
 | 15 | Arjun | **Outside Applicants**: certificates show genuine, **Invite to interview** with a message | "Another company can trust it, because it can check it." Ravi sees the reply on **Jobs**. |
-| 16 | Ravi | **Certificates**: tick a skill, **Create share link**, **Open link**. Then **Cancel this link** and refresh. | "Anyone can check it with no login, and he stays in control." |
+| 16 | Ravi | **Certificates**: tick one skill, **Create share link**, **Open link**. Then **Cancel this link** on the link showing only that skill, and refresh. The other link belongs to the step 14 application. | "Anyone can check it with no login, and he stays in control." |
 | 17 | Meera | **Audit Log**, then **Fairness Audit** | "Every hand-off is logged, and his job search isn't in it. Fairness figures are fictional sample data." |
 
 Keep **Ask my manager to review** and **Role Reviews** for Q&A: it's the path for an internal move, where the manager decides and must give a reason for "Not yet".

@@ -19,9 +19,11 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 |---|---|
 | Backend, seven agents, certificates, companies, EWM upload, outside applications, mock SuccessFactors | Built. 32 unit tests and `npm run journey` pass locally, with AI through SAP Generative AI Hub. |
 | Web app (`app/web`) | Sign-in page, launchpad, worker, manager, SAP landscape and public check screens. The worker, manager and other-company flow was run in a browser locally, plus Hindi and phone width. |
-| Live on SAP BTP | **The live URL still has the old app until the next deploy.** The old app passed its run there on 2 Nov, and the Hub route is confirmed on it for Agent A. |
+| Live on SAP BTP | The rebuilt app was deployed on 2 Nov, and the seed data is loaded in HANA. The public sign-in page loads, the app redirects to SAP sign-in, and the backend reports the Generative AI Hub route. |
 
-**Not yet tested:** the rebuilt app on BTP (the sign-in page, sign-out, the new `/user` route and the new HANA tables), voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
+**Live run on 2 Nov:** steps 1 to 14, 16 and 17 of `docs/DEMO.md` passed once on BTP in English, with typed input and real AI through SAP Generative AI Hub (no backup used). Reset demo data also passed.
+
+**Not yet tested on BTP:** step 15 (Arjun needs a second SAP login), sign-out, and Hindi. Also untested: voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
 
 ## BTP facts
 
@@ -43,7 +45,8 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 
 - **HANA stops by itself**, even the same day. A deploy then fails with "HANA Database instance is stopped". Fix: `cf update-service frontline-db -c scripts/hana-start.json`, wait about 3 minutes, then retry with the `cf deploy -i <id> -a retry` command from the error.
 - **The trial also stops the apps overnight.** The site then shows `404 Not Found: Requested route`. Fix: `cf start frontline-shift-srv`, then `cf start frontline-shift`.
-- **"Unauthorized" after signing in** means the sign-in page sat open too long. Reload the app link.
+- **"Unauthorized" after signing in** means the sign-in page sat open too long. Open the app link again.
+- **A deploy or restart of `frontline-shift` ends every session.** An open page now reloads and signs in again by itself, and goes back to the first tab.
 - **The cockpit needs Chrome.** Entitlements gave 403 errors in the Claude desktop app's built-in browser, though the same pages worked in Chrome.
 - **`cf login` needs Anuj.** It's `cf login -a https://api.cf.ap21.hana.ondemand.com --sso`, and he pastes the code. If `cf` commands say not logged in, ask him to do this.
 - **SAP AI Core comes from a shared tenant, not this trial.** `scripts/aicore-key.ps1` saves its key to `.env`. The tenant has several orchestration deployments and some refuse `gpt-4.1` (403 "not allowed"), so `AICORE_DEPLOYMENT_ID` pins the working one (`orchestration-trial`). Other deployments there belong to other people, so leave them alone. Never print or commit the key.
@@ -51,6 +54,7 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 - **SQLite doesn't enforce text lengths, but HANA does.** Clip LLM text to fit `db/schema.cds`, and don't assume a local pass means HANA will pass.
 - **XSUAA sends attributes as lists.** Use `srv/lib/worker-id.js`, not `req.user.attr.workerId`.
 - **`npm run watch` restarts on every file save**, and it picks a random port if 4004 is taken. Make sure no old server is running before you run the journey, and stop yours afterwards.
+- **A new seed CSV for a table that already has rows fails the deploy** ("include_filter definitions match with N records"). Empty that table once, then retry. It only happens the first time a CSV is added.
 - **Editing seed CSVs needs a redeploy** to reach HANA, and a deploy reloads those tables, which resets the demo state.
 
 ## Local commands
@@ -81,7 +85,7 @@ cf deploy mta_archives/frontline-shift_1.0.0.mtar -f
 
 ## What's left, in order
 
-**Steps 2 to 4 below are done, and the demo steps changed.** The order now is: Anuj commits, deploys the rebuilt app, runs `docs/DEMO.md` on the live URL, optionally adds a second login for Arjun, then does steps 5 and 6.
+**Steps 1 to 4 below are done, and the demo steps changed.** The order now is: Anuj runs `docs/DEMO.md` on the live URL, optionally adds a second login for Arjun, then does steps 5 and 6.
 
 ### 1. Anuj commits the current work
 Everything since commit `23ec669` is uncommitted on branch `scaffold-cap`. All of it is safe to commit, because `.env` is ignored.
