@@ -10,7 +10,7 @@ function audit(rows) {
       const g = groups.get(r[dimension]) ?? { group: r[dimension], n: 0, total: 0, shortlisted: 0 }
       g.n++
       g.total += r.score
-      if (r.outcome === 'shortlist') g.shortlisted++
+      if (r.outcome === 'shortlist' || r.outcome === 'move_to_role') g.shortlisted++
       groups.set(r[dimension], g)
     }
     const stats = [...groups.values()].map(g => ({

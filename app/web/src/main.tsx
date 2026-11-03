@@ -7,6 +7,7 @@ import { devUser, list, parsed, persona, setPersona, signOut, value } from './ap
 import { WorkerApp } from './Worker'
 import { ManagerApp } from './Manager'
 import { Launchpad } from './Launchpad'
+import { useNotifications } from './Notifications'
 import { initials } from './ui'
 import './styles.css'
 
@@ -40,6 +41,7 @@ function App() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [resetKey, setResetKey] = useState(0)
   const profileRef = useRef<HTMLElement | null>(null)
+  const notes = useNotifications(user)
 
   useEffect(() => {
     if (import.meta.env.DEV && !devUser()) { location.assign('/welcome.html'); return }
@@ -95,8 +97,10 @@ function App() {
         profile={user ? <Avatar initials={initials(user.name)} /> : undefined}
         onProfileClick={e => { profileRef.current = e.detail.targetRef; setProfileOpen(true) }}
       >
+        {notes.bell}
         {app === 'worker' && <ShellBarItem icon="activity-items" text="Agent activity" onClick={() => setTrace(on => !on)} />}
       </ShellBar>
+      {notes.panel}
       <Popover open={profileOpen} opener={profileRef.current} placement="Bottom" horizontalAlign="End" onClose={() => setProfileOpen(false)}>
         {user && (
           <div className="profile">

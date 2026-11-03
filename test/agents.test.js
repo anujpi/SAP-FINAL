@@ -113,6 +113,18 @@ test('sign-in: only presenters can use View as, and only as known people', () =>
   assert.equal(worker.staffLogin, undefined)
 })
 
+test('sign-in: a fixed login is always one person and cannot switch', () => {
+  const fixed = require('../srv/lib/identity').fixedLogins({ DEMO_LOGINS: 'Me@Gmail.com=meera, other@x.com=ravi, bad@x.com=constructor' })
+  assert.equal(fixed.has('bad@x.com'), false)
+  const ravi = resolve({ keys: ['other@x.com'], directory: DIRECTORY, persona: 'meera', presenterKeys: [], fixed, demoWorkerId: 'w-ravi' })
+  assert.deepEqual(ravi.roles, ['Worker'])
+  assert.equal(ravi.workerId, 'w-ravi')
+  assert.equal(ravi.presenter, false)
+  const meera = resolve({ keys: ['me@gmail.com'], directory: DIRECTORY, persona: 'ravi', presenterKeys: [], fixed, demoWorkerId: 'w-ravi' })
+  assert.deepEqual(meera.roles, ['Manager', 'Supervisor', 'HRAdmin'])
+  assert.equal(meera.staffLogin, 'meera')
+})
+
 test('orchestrator: invalid events are rejected with 409', () => {
   assert.equal(nextStage('NOT_STARTED', 'consent_granted'), 'DISCOVERING')
   assert.throws(() => nextStage('NOT_STARTED', 'review_requested'), e => e.status === 409)

@@ -52,12 +52,39 @@ a.tile:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0070f2);
 .skill-row-head { display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap; width: 100%; font-weight: 700; }
 
 /* Certificate and resume */
-.certificate { display: grid; gap: .5rem; padding: 1.5rem; background: var(--sapGroup_ContentBackground, #fff); border: 2px solid var(--sapBrandColor, #0070f2); border-radius: .75rem; }
-.certificate-mark { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--sapBrandColor, #0070f2); font-weight: 700; }
-.certificate dl { margin: .25rem 0 0; display: grid; grid-template-columns: max-content 1fr; gap: .25rem .75rem; }
-.certificate dt { color: var(--sapContent_LabelColor, #556b82); }
-.certificate dd { margin: 0; }
-.resume { display: grid; gap: .75rem; padding: 1.5rem; background: var(--sapGroup_ContentBackground, #fff); border-radius: .75rem; }
+/* The certificate is a paper document, so it keeps fixed paper colours in either theme. */
+.certificate-wrap { display: grid; gap: .25rem; }
+.certificate { padding: .625rem; background: #fdfbf5; color: #1b2a3d; border-radius: .25rem; box-shadow: 0 2px 10px rgba(16, 32, 64, .18); font-family: Georgia, "Times New Roman", "Noto Serif Devanagari", serif; }
+.cert-frame { display: grid; justify-items: center; gap: .375rem; padding: 1.25rem clamp(1rem, 4vw, 2.5rem) 1rem; text-align: center; border: 2px solid #0a2f6e; outline: 1px solid #b8963e; outline-offset: -7px; background: radial-gradient(circle at 50% 40%, rgba(184, 150, 62, .08), transparent 60%); }
+.cert-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; font-family: var(--sapFontFamily, "72", sans-serif); font-size: .75rem; color: #5a6b80; }
+.cert-brand { display: inline-flex; align-items: center; gap: .375rem; font-weight: 700; color: #0a2f6e; letter-spacing: .02em; }
+.cert-logo { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: .25rem; background: #0a2f6e; color: #fff; font-size: .625rem; }
+.cert-kicker { margin-top: .5rem; font-size: clamp(1.25rem, 4vw, 1.75rem); font-variant: small-caps; letter-spacing: .06em; color: #0a2f6e; }
+.cert-line { font-style: italic; color: #5a6b80; font-size: .9375rem; }
+.cert-name { font-size: clamp(1.5rem, 5vw, 2.25rem); font-weight: 700; padding: 0 1.5rem .25rem; border-bottom: 1px solid #b8963e; }
+.cert-skill { font-size: clamp(1.25rem, 4vw, 1.625rem); font-weight: 700; color: #0a2f6e; }
+.cert-level { font-family: var(--sapFontFamily, "72", sans-serif); font-size: .875rem; color: #5a6b80; }
+.cert-foot { width: 100%; margin-top: 1rem; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; align-items: end; }
+.cert-sign { display: grid; gap: .125rem; justify-items: center; font-family: var(--sapFontFamily, "72", sans-serif); font-size: .8125rem; color: #3a4a5e; }
+.cert-sign small { width: 100%; padding-top: .25rem; border-top: 1px solid #8a97a8; color: #5a6b80; font-size: .6875rem; text-transform: uppercase; letter-spacing: .08em; }
+.cert-signature { font-family: "Segoe Script", "Brush Script MT", "Lucida Handwriting", cursive; font-size: 1.375rem; color: #0a2f6e; }
+.cert-date { font-family: Georgia, serif; font-size: 1rem; color: #1b2a3d; }
+.cert-seal { width: 4.5rem; height: 4.5rem; display: grid; place-content: center; justify-items: center; border-radius: 50%; color: #fff; background: radial-gradient(circle, #d4b45a 0 55%, #b8963e 56% 100%); box-shadow: 0 0 0 3px #fdfbf5, 0 0 0 4px #b8963e; font-family: var(--sapFontFamily, "72", sans-serif); }
+.cert-seal span { font-size: 1.5rem; line-height: 1; }
+.cert-seal small { font-size: .5625rem; text-transform: uppercase; letter-spacing: .08em; }
+.cert-fine { margin-top: .75rem; max-width: 34rem; font-family: var(--sapFontFamily, "72", sans-serif); font-size: .6875rem; color: #6b7a8c; }
+@media (max-width: 480px) { .cert-foot { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
+
+.resume { display: grid; gap: 1rem; padding: 1.5rem; background: var(--sapGroup_ContentBackground, #fff); border-radius: .75rem; box-shadow: var(--sapContent_Shadow0, 0 1px 3px rgba(0, 0, 0, .15)); }
+.resume-head { display: grid; gap: .25rem; padding-bottom: .75rem; border-bottom: 3px solid var(--sapBrandColor, #0070f2); color: var(--sapContent_LabelColor, #556b82); }
+.resume-name { font-size: 1.75rem; font-weight: 700; color: var(--sapTextColor, #1d2d3e); }
+.resume-section { margin: 0 0 .5rem; font-size: .8125rem; text-transform: uppercase; letter-spacing: .08em; color: var(--sapBrandColor, #0070f2); }
+.resume-skills { list-style: none; margin: 0; padding: 0; display: grid; gap: .625rem; }
+.resume-skills li { display: grid; gap: .125rem; padding-bottom: .625rem; border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.resume-skill-head { display: flex; justify-content: space-between; gap: .75rem; align-items: center; }
+.level-dots { display: inline-flex; gap: .25rem; }
+.level-dots i { width: .625rem; height: .625rem; border-radius: 50%; background: var(--sapNeutralBackground, #e0e4e8); }
+.level-dots i.on { background: var(--sapPositiveColor, #256f3a); }
 
 /* Manager */
 .with-nav { display: flex; min-height: calc(100vh - 3.25rem); }
@@ -94,7 +121,7 @@ a.tile:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0070f2);
   body { background: #fff; }
   body * { visibility: hidden; }
   .printing, .printing * { visibility: visible; }
-  .printing { position: absolute; inset: 0 0 auto; border-radius: 0; }
+  .printing { position: absolute; inset: 0 0 auto; border-radius: 0; box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 /* Employee record */
@@ -152,8 +179,8 @@ button.kpi:hover, a.kpi:hover { box-shadow: var(--sapContent_Shadow1, 0 2px 8px 
 .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; align-items: start; }
 .waiting, .activity, .bars { list-style: none; margin: 0; padding: 0 1rem .75rem; display: grid; gap: .5rem; }
 .waiting li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5); }
-.waiting li div { display: grid; }
-.waiting li span { color: var(--sapContent_LabelColor, #556b82); font-size: .875rem; }
+.waiting li > div:first-child { display: grid; }
+.waiting li > div:first-child > span { color: var(--sapContent_LabelColor, #556b82); font-size: .875rem; }
 .bars li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 2rem; gap: .5rem; align-items: center; font-size: .875rem; }
 .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar { height: .625rem; border-radius: 1rem; background: var(--sapNeutralBackground, #eef0f2); overflow: hidden; }
@@ -170,3 +197,8 @@ button.kpi:hover, a.kpi:hover { box-shadow: var(--sapContent_Shadow1, 0 2px 8px 
   .kpis.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .waiting .overdue { color: var(--sapCriticalTextColor, #b44f00); font-weight: 700; }
+
+/* Notifications */
+.notes { display: grid; gap: .5rem; padding: .5rem; width: min(24rem, 90vw); }
+.notes ui5-li.unread { border-left: 4px solid var(--sapBrandColor, #0070f2); font-weight: 700; }
+.proof-clip { width: 100%; max-width: 22rem; max-height: 14rem; border-radius: .5rem; background: #000; }

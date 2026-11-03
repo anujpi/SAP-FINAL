@@ -4,6 +4,7 @@ import {
   Button, Card, CardHeader, CheckBox, Input, Link, List, ListItemStandard, MessageStrip, ObjectStatus,
   Panel, ProgressIndicator, Text, Title
 } from '@ui5/webcomponents-react'
+import '@ui5/webcomponents-icons/dist/print.js'
 import { list, parseJson, parsed, sendEvent, value } from './api'
 import type { Texts } from './i18n'
 import { ProfileCard } from './ui'
@@ -361,23 +362,42 @@ function usePrint() {
   return { page, print }
 }
 
+const longDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })
+
 function Certificate({ c, t, name, skill }: { c: any; t: Texts; name: string; skill: string }) {
   const { page, print } = usePrint()
   return (
-    <article className="certificate" ref={page}>
-      <span className="certificate-mark">{t.certTitle}</span>
-      <Title level="H3" size="H4">{skill}</Title>
-      <Text>{t.certBody(name, skill, c.proficiency)}</Text>
-      <dl>
-        <dt>{t.verifiedBy}</dt>
-        <dd>{[c.verifiedBy, c.verifierTitle, c.company].filter(Boolean).join(', ')}</dd>
-        <dt>{t.proof}</dt>
-        <dd>{t.proofNames[c.proofType] ?? c.proofType}</dd>
-        <dt>{t.issued}</dt>
-        <dd>{dateOf(c.issuedAt)}</dd>
-      </dl>
-      <div className="actions"><Button design="Transparent" onClick={print}>{t.print}</Button></div>
-    </article>
+    <div className="certificate-wrap">
+      <article className="certificate" ref={page}>
+        <div className="cert-frame">
+          <header className="cert-head">
+            <span className="cert-brand"><span className="cert-logo">FS</span> Frontline Shift</span>
+            <span className="cert-no">{t.certNo} {c.ID.slice(0, 8).toUpperCase()}</span>
+          </header>
+          <p className="cert-kicker">{t.certTitle}</p>
+          <p className="cert-line">{t.certThis}</p>
+          <p className="cert-name">{name}</p>
+          <p className="cert-line">{t.certShown}</p>
+          <p className="cert-skill">{skill}</p>
+          <p className="cert-level">{t.levelOf(c.proficiency)} · {t.proof}: {t.proofNames[c.proofType] ?? c.proofType}</p>
+          <footer className="cert-foot">
+            <div className="cert-sign">
+              <span className="cert-signature">{c.verifiedBy}</span>
+              <span>{[c.verifierTitle, c.company].filter(Boolean).join(', ')}</span>
+              <small>{t.verifiedBy}</small>
+            </div>
+            <div className="cert-seal" aria-hidden="true"><span>✓</span><small>{t.certSeal}</small></div>
+            <div className="cert-sign">
+              <span className="cert-date">{longDate(c.issuedAt)}</span>
+              <span>&nbsp;</span>
+              <small>{t.issued}</small>
+            </div>
+          </footer>
+          <p className="cert-fine">{t.certFine}</p>
+        </div>
+      </article>
+      <div className="actions"><Button design="Transparent" icon="print" onClick={print}>{t.print}</Button></div>
+    </div>
   )
 }
 
@@ -456,15 +476,14 @@ function ShareLink({ link, t, run, busy, names }: { link: any; t: Texts; run: Ru
   )
 }
 
+// Only manager-verified skills reach the resume. What someone said in a recording is never printed here.
 export function Resume({ t, revision, names, me, user }: HomeProps) {
-  const [tasks, setTasks] = useState<any[]>([])
   const [certificates, setCertificates] = useState<any[]>([])
   const [others, setOthers] = useState<any[]>([])
   const { page, print } = usePrint()
 
   useEffect(() => {
-    list('/worker/MyTasks?$filter=confirmed eq true').then(setTasks).catch(() => setTasks([]))
-    list('/passport/MyCredentials').then(setCertificates).catch(() => setCertificates([]))
+    list('/passport/MyCredentials?$orderby=proficiency desc').then(setCertificates).catch(() => setCertificates([]))
     list('/worker/MyOtherCertificates').then(setOthers).catch(() => setOthers([]))
   }, [revision])
 
@@ -472,34 +491,35 @@ export function Resume({ t, revision, names, me, user }: HomeProps) {
     <>
     <ProfileCard person={me} company={user.company} labels={t.profile} />
     <article className="resume" ref={page}>
-      <Title level="H2" size="H3">{me.name}</Title>
-      <Text>{[user.company, me.site].filter(Boolean).join(' · ')}</Text>
-      {!tasks.length && !certificates.length && <Text>{t.resumeEmpty}</Text>}
+      <header className="resume-head">
+        <p className="resume-name">{me.name}</p>
+        <p>{[me.jobTitle, user.company, me.site].filter(Boolean).join(' · ')}</p>
+      </header>
+      <MessageStrip design="Information" hideCloseButton>{t.resumeRule}</MessageStrip>
+      {!certificates.length && <Text>{t.resumeEmpty}</Text>}
       {certificates.length > 0 && (
-        <>
-          <Title level="H3" size="H5">{t.verifiedSkills}</Title>
-          <ul className="plain">
+        <section>
+          <h3 className="resume-section">{t.verifiedSkills}</h3>
+          <ul className="resume-skills">
             {certificates.map(c => (
               <li key={c.ID}>
-                <strong>{names[c.skill_ID] ?? c.skill_ID}</strong> ({t.level} {c.proficiency}). {t.verifiedBy}: {[c.verifiedBy, c.verifierTitle, c.company].filter(Boolean).join(', ')}, {dateOf(c.issuedAt)}
+                <div className="resume-skill-head">
+                  <strong>{names[c.skill_ID] ?? c.skill_ID}</strong>
+                  <span className="level-dots" aria-label={t.levelOf(c.proficiency)}>{[1, 2, 3].map(n => <i key={n} className={n <= c.proficiency ? 'on' : ''} />)}</span>
+                </div>
+                <span className="fine-print">{t.verifiedBy} {[c.verifiedBy, c.verifierTitle, c.company].filter(Boolean).join(', ')} · {t.proofNames[c.proofType] ?? c.proofType} · {dateOf(c.issuedAt)} · {t.certNo} {c.ID.slice(0, 8).toUpperCase()}</span>
               </li>
             ))}
           </ul>
-        </>
-      )}
-      {tasks.length > 0 && (
-        <>
-          <Title level="H3" size="H5">{t.whatIDo}</Title>
-          <ul className="plain">{tasks.map(x => <li key={x.ID}>{x.task}</li>)}</ul>
-        </>
+        </section>
       )}
       {others.length > 0 && (
-        <>
-          <Title level="H3" size="H5">{t.otherCerts}</Title>
+        <section>
+          <h3 className="resume-section">{t.otherCerts}</h3>
           <ul className="plain">{others.map(c => <li key={c.ID}>{c.title}, {c.issuer}, {dateOf(c.issuedOn)}</li>)}</ul>
-        </>
+        </section>
       )}
-      <div className="actions"><Button onClick={print}>{t.print}</Button></div>
+      <div className="actions"><Button icon="print" onClick={print}>{t.print}</Button></div>
     </article>
     </>
   )

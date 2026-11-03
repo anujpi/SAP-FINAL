@@ -1,7 +1,8 @@
 using { frontline as db } from '../db/schema';
 
 // Everything here is limited to the signed-in person's own company. See manager-service.js.
-service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', 'HRAdmin']) {
+// Room for a short proof clip in one request.
+service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', 'HRAdmin'], cds.server.body_parser.limit: '12mb') {
 
   @readonly entity ReviewQueue as select from db.Workers { ID, name, site, stage, company.ID as company_ID } where stage = 'AWAITING_MANAGER';
   @readonly entity Team as select from db.Workers { ID, name, site, stage, ewmUser, company.ID as company_ID } where active = true;
@@ -37,7 +38,11 @@ service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', '
   function verificationRequests() returns LargeString;
 
   @requires: ['Manager', 'Supervisor']
-  action decideVerification(request : UUID, approved : Boolean, proofType : String, proofRef : String, proficiency : Integer, note : String) returns LargeString;
+  action decideVerification(request : UUID, approved : Boolean, proofType : String, proofRef : String, proficiency : Integer, note : String, clip : LargeString) returns LargeString;
+
+  /** The proof clip attached to a verified request, as a data URL. Only for the worker's own company. */
+  @requires: ['Manager', 'Supervisor', 'HRAdmin']
+  function proofClip(request : UUID) returns LargeString;
 
   /** Loads one day's EWM extract, as CSV. */
   @requires: ['Manager', 'Supervisor']

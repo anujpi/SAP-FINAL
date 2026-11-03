@@ -119,7 +119,12 @@ const step = name => console.log('ok  ', name)
   parsed(await send('verification_requested', { skill: 'FORKLIFT' }))
   const forklift = parsed(await call('/manager/verificationRequests()', { user: 'meera' })).find(r => r.skill_ID === 'FORKLIFT')
   assert.equal((await answer(forklift.ID, { approved: true, proofType: 'ewm_records', proofRef: 'EWM-BLR1-2026-10', proficiency: 1 })).status, 400, 'EWM records are proof only when EWM shows the work')
-  parsed(await answer(forklift.ID, { approved: false, note: 'Let me see it on a shift first' }))
+  assert.equal((await answer(forklift.ID, { approved: true, proofType: 'video', proofRef: 'forklift.mp4', proficiency: 1 })).status, 400, 'video proof needs a clip')
+  assert.equal((await answer(forklift.ID, { approved: true, proofType: 'video', proofRef: 'forklift.mp4', proficiency: 1, clip: 'data:text/html;base64,PHA+' })).status, 400, 'only a video counts')
+  parsed(await answer(forklift.ID, { approved: true, proofType: 'video', proofRef: 'forklift.mp4', proficiency: 1, clip: 'data:video/mp4;base64,AAAAIGZ0eXA=' }))
+  assert.equal((await call(`/manager/proofClip(request=${forklift.ID})`, { user: 'meera' })).value, 'data:video/mp4;base64,AAAAIGZ0eXA=')
+  assert.equal((await call(`/manager/proofClip(request=${forklift.ID})`, { user: 'arjun' })).status, 403)
+  step('a video proof needs a real clip, which only the worker\'s own company can watch')
   step(`a second recording adds skills (${added.found.map(f => f.skill_ID).join(', ') || 'none'}) and keeps verified ones; not matched: ${added.unmatched.length}`)
 
   parsed(await call('/manager/registerPerson', { user: 'meera', body: { name: 'Test Person', email: 'test.person@indigohub.example', kind: 'Worker', jobTitle: 'Picker', site: 'Bengaluru Hub', ewmUser: 'BLR1-OP900' } }))
@@ -170,7 +175,7 @@ const step = name => console.log('ok  ', name)
   assert.equal(parsed(await call('/worker/MyMatches', { user: 'ravi' })).length, 4)
   parsed(await send('review_requested'))
   const packet = parsed(await call(`/manager/reviewPacket(worker=${RAVI})`, { user: 'meera' }))
-  assert.equal(packet.verified.length, 3)
+  assert.equal(packet.verified.length, 4) // cycle counting, stock discrepancy, forklift (video) and the practice task
   assert.deepEqual(packet.matches.map(x => x.vacancy_ID), ['REQ-1001'])
   step('Agent E built the review packet, without Ravi\'s outside job matches')
 
@@ -185,7 +190,7 @@ const step = name => console.log('ok  ', name)
   assert.ok(people.length > 1)
   assert.ok(!/Ravi|Indigo|Meera|Bengaluru|00000000-/.test(raw), 'candidates must be anonymous')
   assert.equal((await call(`/manager/candidates(vacancy='${posted}')`, { user: 'meera' })).status, 404)
-  const raviRef = people.find(p => p.skills.length === 3).ref
+  const raviRef = people.find(p => p.skills.length === 4).ref
   step('Arjun sees anonymous candidates: skills and score only')
 
   assert.equal((await send('hire_interest_sent', { vacancy: posted })).status, 403)

@@ -35,10 +35,10 @@ module.exports = cds.service.impl(function () {
     const links = new Map((await SELECT.from(ShareLinks).where({ worker_ID })).map(l => [l.token, l]))
     return JSON.stringify({
       requests: (await SELECT.from(HireInterests).where({ worker_ID }).orderBy('createdAt desc')).map(i => ({
-        ID: i.ID, status: i.status, message: i.message, score: scores.get(i.vacancy_ID) ?? 0, ...job(i.vacancy_ID)
+        ID: i.ID, status: i.status, message: i.message, at: i.createdAt, score: scores.get(i.vacancy_ID) ?? 0, ...job(i.vacancy_ID)
       })),
       access: (await SELECT.from(Applications).where({ worker_ID }).orderBy('createdAt desc')).map(a => ({
-        ID: a.ID, status: a.status, token: a.token, cancelled: Boolean(links.get(a.token)?.revokedAt),
+        ID: a.ID, status: a.status, at: a.modifiedAt, token: a.token, cancelled: Boolean(links.get(a.token)?.revokedAt),
         skills: JSON.parse(links.get(a.token)?.skills ?? '[]'), ...job(a.vacancy_ID)
       }))
     })

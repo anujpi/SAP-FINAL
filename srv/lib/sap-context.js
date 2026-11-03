@@ -3,7 +3,7 @@
 function sapContext({ worker, vacancies, roleTitles, claims, skillNames, decision, ewmRecords, aiRoute }) {
   const requisitions = vacancies.filter(v => !v.isExternal && v.role_ID === worker.targetRole_ID)
   const proven = claims.filter(c => c.status === 'verified')
-  const shortlisted = decision?.outcome === 'shortlist'
+  const shortlisted = decision?.outcome === 'shortlist' || decision?.outcome === 'move_to_role'
 
   return {
     aiRoute,
@@ -19,7 +19,7 @@ function sapContext({ worker, vacancies, roleTitles, claims, skillNames, decisio
     writeBack: {
       sent: false,
       skills: proven.map(c => ({ userId: worker.ID, skillId: c.skill_ID, skillName: skillNames[c.skill_ID], proficiencyLevel: c.proficiency, source: c.source })),
-      jobApplication: shortlisted && requisitions[0] ? { jobReqId: requisitions[0].ID, candidateId: worker.ID, status: 'Shortlisted' } : null
+      jobApplication: shortlisted && requisitions[0] ? { jobReqId: requisitions[0].ID, candidateId: worker.ID, status: decision.outcome === 'move_to_role' ? 'Hired' : 'Shortlisted' } : null
     }
   }
 }

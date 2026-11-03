@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Button, Card, CardHeader, Link, MessageStrip, ObjectStatus, Text } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/nav-back.js'
-import { parsed } from './api'
+import '@ui5/webcomponents-icons/dist/video.js'
+import { parsed, value } from './api'
 import { DataTable, Empty, ProfileCard, StageStatus } from './ui'
 
-const PROOF: Record<string, string> = { ewm_records: 'EWM records', observed_on_shift: 'Observed on shift', training_record: 'Training record', assessment: 'Practice assessment' }
+const PROOF: Record<string, string> = { ewm_records: 'EWM records', observed_on_shift: 'Observed on shift', training_record: 'Training record', assessment: 'Practice assessment', video: 'Video of the work' }
 const dateOf = (iso?: string) => (iso ? new Date(iso).toLocaleDateString() : '–')
+
+// Loads the clip only when asked: it can be a few MB.
+function ProofClip({ request }: { request: string }) {
+  const [src, setSrc] = useState('')
+  const [failed, setFailed] = useState(false)
+  if (src) return <video className="proof-clip" src={src} controls aria-label="Proof clip" />
+  return <Button design="Transparent" icon="video" onClick={() => value<string>(`/manager/proofClip(request=${request})`).then(setSrc).catch(() => setFailed(true))}>{failed ? "Couldn't load the clip" : 'Watch clip'}</Button>
+}
 
 /** What a manager sees for one person in their own company. Their outside job search is never part of this. */
 export function EmployeeProfile({ worker, names, revision }: { worker: string; names: Record<string, string>; revision: number }) {
@@ -51,7 +60,7 @@ export function EmployeeProfile({ worker, names, revision }: { worker: string; n
             columns={['Skill', 'Level', 'Verified by', 'Proof', 'Date']}
             rows={verified.map((s: any) => [
               skillName(s.skill_ID), s.proficiency, s.verifiedBy ?? '–',
-              [PROOF[s.proofType], s.proofRef].filter(Boolean).join(' · ') || 'On file', dateOf(s.verifiedOn)
+              <>{[PROOF[s.proofType], s.proofRef].filter(Boolean).join(' · ') || 'On file'}{s.clipRequest && <ProofClip request={s.clipRequest} />}</>, dateOf(s.verifiedOn)
             ])}
           />
         )}

@@ -2,7 +2,7 @@
 
 Owner: Vikas. Read the root `CLAUDE.md` first.
 
-`schema.cds` is the source of truth for all 24 tables. CAP creates them on in-memory SQLite locally and on HANA Cloud in production, so don't write database-specific SQL.
+`schema.cds` is the source of truth for all 25 tables. CAP creates them on in-memory SQLite locally and on HANA Cloud in production, so don't write database-specific SQL.
 
 ## Seed data
 

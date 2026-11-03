@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  Button, Card, CardHeader, Input, Label, Link, List, ListItemStandard, MessageStrip, ObjectStatus, Option, Panel, RadioButton, Select,
+  Button, Card, CardHeader, DatePicker, FileUploader, Input, Label, Link, List, ListItemStandard, MessageStrip, ObjectStatus, Option, Panel, RadioButton, Select,
   SideNavigation, SideNavigationGroup, SideNavigationItem, Text, TextArea, Title
 } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/group.js'
@@ -39,16 +39,20 @@ export const SECTIONS = [
 ]
 
 const OUTCOMES = [
+  { id: 'move_to_role', label: 'Move into this role' },
   { id: 'shortlist', label: 'Shortlist for interview' },
   { id: 'request_evidence', label: 'Request more evidence' },
   { id: 'not_yet', label: 'Not yet' }
 ]
 
+// Each kind of proof asks for its own reference.
 const PROOFS = [
   { id: 'ewm_records', label: 'EWM records' },
   { id: 'observed_on_shift', label: 'Observed on shift' },
-  { id: 'training_record', label: 'Training record' }
+  { id: 'training_record', label: 'Training record' },
+  { id: 'video', label: 'Video of the work' }
 ]
+const CLIP_MB = 8
 
 const NOTE_MOCK_SF = 'A table in SAP HANA stands in for SuccessFactors until a customer system is connected. Connecting a real tenant replaces only this one step.'
 
@@ -155,6 +159,9 @@ function Verify({ names, revision, run, busy }: Props) {
   const [proofRef, setProofRef] = useState('')
   const [proficiency, setProficiency] = useState('2')
   const [note, setNote] = useState('')
+  const [shiftDate, setShiftDate] = useState('')
+  const [clip, setClip] = useState<{ name: string; url: string; data: string } | null>(null)
+  const [clipError, setClipError] = useState('')
 
   useEffect(() => {
     parsed<any[]>('/manager/verificationRequests()').then(rows => {
@@ -164,19 +171,42 @@ function Verify({ names, revision, run, busy }: Props) {
   }, [revision])
 
   const open = requests.find(r => r.ID === selected)
+  const ewmRef = open?.ewm ? `EWM-BLR1-${open.ewm.lastDate}` : ''
+  const chooseProof = (type: string) => {
+    setProofType(type)
+    setProofRef(type === 'ewm_records' ? ewmRef : '')
+    setShiftDate('')
+    setClip(null)
+    setClipError('')
+  }
   useEffect(() => {
-    setProofType(open?.ewm?.tasks >= 5 && open.ewm.days >= 2 ? 'ewm_records' : 'observed_on_shift')
-    setProofRef(open?.ewm ? `EWM-BLR1-${open.ewm.lastDate}` : '')
+    chooseProof(open?.ewm?.tasks >= 5 && open.ewm.days >= 2 ? 'ewm_records' : 'observed_on_shift')
     setProficiency('2')
     setNote('')
   }, [open?.ID, open?.ewm])
+
+  const pickClip = (file?: File) => {
+    setClip(null)
+    setClipError('')
+    if (!file) return
+    if (!file.type.startsWith('video/')) return setClipError('Choose a video file.')
+    if (file.size > CLIP_MB * 1024 * 1024) return setClipError(`That clip is ${(file.size / 1048576).toFixed(1)} MB. Keep it under ${CLIP_MB} MB: a few seconds is enough.`)
+    const reader = new FileReader()
+    reader.onload = () => setClip({ name: file.name, url: URL.createObjectURL(file), data: String(reader.result) })
+    reader.readAsDataURL(file)
+  }
+
+  // What gets stored as the reference, built from the fields for the chosen kind of proof.
+  const reference = proofType === 'observed_on_shift'
+    ? (shiftDate && proofRef.trim() ? `${shiftDate}, ${proofRef.trim()}` : '')
+    : proofType === 'video' ? (clip ? clip.name.slice(0, 100) : '') : proofRef.trim()
 
   if (!requests.length) return <Empty title="No verification requests" subtitle="When an employee asks you to confirm a skill, it appears here." />
 
   const decide = (approved: boolean) => {
     const skill = names[open.skill_ID] ?? open.skill_ID
     return run(
-      () => value('/manager/decideVerification', { request: open.ID, approved, proofType, proofRef, proficiency: Number(proficiency), note }),
+      () => value('/manager/decideVerification', { request: open.ID, approved, proofType, proofRef: reference, proficiency: Number(proficiency), note, clip: approved && proofType === 'video' ? clip?.data ?? '' : '' }),
       approved ? `Verified ${skill} for ${open.workerName}: certificate issued and added to the SuccessFactors stand-in.` : `Your answer has gone to ${open.workerName}`
     )
   }
@@ -203,18 +233,37 @@ function Verify({ names, revision, run, busy }: Props) {
                   : <MessageStrip design="Information" hideCloseButton>No EWM records for this skill. You can still confirm it if you have other proof.</MessageStrip>}
 
                 <Title level="H3" size="H6">Your proof</Title>
-                <Text className="fine-print">Proof upload isn't connected yet: only its type and reference are stored.</Text>
                 <Label for="proof-type">Type of proof</Label>
-                <Select id="proof-type" value={proofType} onChange={e => setProofType(e.target.value)}>
-                  {PROOFS.map(p => <Option key={p.id} value={p.id}>{p.label}</Option>)}
+                <Select id="proof-type" value={proofType} onChange={e => chooseProof(e.target.value)}>
+                  {PROOFS.filter(p => p.id !== 'ewm_records' || open.ewm).map(p => <Option key={p.id} value={p.id}>{p.label}</Option>)}
                 </Select>
-                <Label for="proof-ref" required>Proof reference</Label>
-                <Input id="proof-ref" maxlength={100} value={proofRef} onInput={e => setProofRef(e.target.value)} />
+                {proofType === 'ewm_records' && <>
+                  <Label for="proof-ref" required>EWM reference</Label>
+                  <Input id="proof-ref" maxlength={100} value={proofRef} onInput={e => setProofRef(e.target.value)} />
+                  <Text className="fine-print">Filled in from the latest daily EWM upload. The records above must show at least 5 tasks over 2 days.</Text>
+                </>}
+                {proofType === 'observed_on_shift' && <>
+                  <Label for="proof-date" required>Shift you watched</Label>
+                  <DatePicker id="proof-date" formatPattern="yyyy-MM-dd" maxDate={new Date().toISOString().slice(0, 10)} value={shiftDate} onChange={e => setShiftDate(e.detail.valid ? e.detail.value : '')} />
+                  <Label for="proof-ref" required>Where, and what you saw</Label>
+                  <Input id="proof-ref" maxlength={80} placeholder="For example: aisle 4, recounted 3 bins with no errors" value={proofRef} onInput={e => setProofRef(e.target.value)} />
+                </>}
+                {proofType === 'training_record' && <>
+                  <Label for="proof-ref" required>Training certificate number</Label>
+                  <Input id="proof-ref" maxlength={100} placeholder="For example: TRN-2026-0412" value={proofRef} onInput={e => setProofRef(e.target.value)} />
+                </>}
+                {proofType === 'video' && <>
+                  <Label for="proof-clip" required>Short clip of the work</Label>
+                  <FileUploader id="proof-clip" accept="video/*" placeholder="Choose a video" onChange={e => pickClip(e.detail.files?.[0])} />
+                  {clipError && <MessageStrip design="Critical" hideCloseButton>{clipError}</MessageStrip>}
+                  {clip && <video className="proof-clip" src={clip.url} controls muted aria-label={`Clip: ${clip.name}`} />}
+                  <Text className="fine-print">Up to {CLIP_MB} MB. It's kept with this request for your company only, and never goes on the certificate.</Text>
+                </>}
                 <Label for="proof-level">Level</Label>
                 <Select id="proof-level" value={proficiency} onChange={e => setProficiency(e.target.value)}>
                   {['1', '2', '3'].map(l => <Option key={l} value={l}>Level {l}</Option>)}
                 </Select>
-                <Button design="Emphasized" disabled={busy || !proofRef.trim()} onClick={() => decide(true)}>Verify and issue certificate</Button>
+                <Button design="Emphasized" disabled={busy || !reference} onClick={() => decide(true)}>Verify and issue certificate</Button>
 
                 <Title level="H3" size="H6">Not ready yet?</Title>
                 <Label for="not-yet" required>Reason the employee will see</Label>
@@ -253,7 +302,7 @@ function Review({ names, revision, run, busy, canDecide }: Props & { canDecide: 
   if (!queue.length) return <Empty title="No role reviews" subtitle="Employees ask for a review from their Jobs screen. New requests appear here." />
 
   const best = packet?.matches?.[0]
-  const reasonNeeded = outcome !== 'shortlist'
+  const reasonNeeded = outcome !== 'shortlist' && outcome !== 'move_to_role'
 
   return (
     <>
@@ -377,7 +426,7 @@ function EwmUpload({ revision, run, busy }: Props) {
       <Title level="H1" size="H3">EWM daily upload</Title>
       <Text>Each day, someone at the warehouse loads the day's confirmed tasks from EWM. These records are how a skill gets checked against real work. Later, SAP Integration Suite can do this on a schedule.</Text>
       <MessageStrip design="Information" hideCloseButton>Sample data. No live EWM system is connected.</MessageStrip>
-      <Card header={<CardHeader titleText="Load today's extract" subtitleText="CSV: workerId, workDate, taskType, confirmedTasks" />}>
+      <Card header={<CardHeader titleText="Load today's extract" subtitleText="CSV: ewmUser, workDate, taskType, confirmedTasks" />}>
         <div className="card-body">
           <input type="file" accept=".csv,text/csv" aria-label="Choose an EWM extract file" onChange={e => readFile(e.target.files?.[0])} />
           <TextArea accessibleName="EWM extract" rows={5} value={csv} onInput={e => setCsv(e.target.value)} />

@@ -8,7 +8,9 @@ const { randomBytes } = require('node:crypto')
 const { sign, newToken } = require('./lib/credential')
 const { ewmSupport, MIN_TASKS, MIN_DAYS } = require('./lib/ewm')
 
-const PROOF_TYPES = ['ewm_records', 'observed_on_shift', 'training_record']
+const PROOF_TYPES = ['ewm_records', 'observed_on_shift', 'training_record', 'video']
+// ponytail: clips sit in HANA as data URLs; move them to an object store if they grow past a few MB each.
+const CLIP_MAX = 11_500_000 // characters of base64, about 8 MB of video
 
 // These can happen at any point once a profile exists, and none of them move the journey on.
 const stayIn = stage => Object.fromEntries(
@@ -114,7 +116,7 @@ async function addEvidence(worker, skill_ID, type, proficiency, verifier, proof 
 
 async function eraseWorkerData(workerId) {
   const d = db()
-  for (const e of [d.TaskExperiences, d.SkillClaims, d.EvidenceItems, d.RoleMatches, d.LearningPlans, d.SkillCredentials, d.ShareLinks, d.ReviewDecisions, d.VerificationRequests, d.Applications, d.SuccessFactorsSkills, d.HireInterests])
+  for (const e of [d.TaskExperiences, d.SkillClaims, d.EvidenceItems, d.RoleMatches, d.LearningPlans, d.SkillCredentials, d.ShareLinks, d.ReviewDecisions, d.VerificationRequests, d.Applications, d.SuccessFactorsSkills, d.HireInterests, d.ProofClips])
     await DELETE.from(e).where({ worker_ID: workerId })
 }
 
@@ -195,7 +197,7 @@ const HANDLERS = {
   },
 
   // The manager's yes needs proof, and their no needs a reason. Only the service can send this event.
-  async verification_decided(worker, { request, approved, proofType, proofRef, proficiency, note, staff }) {
+  async verification_decided(worker, { request, approved, proofType, proofRef, proficiency, note, clip, staff }) {
     const { VerificationRequests } = db()
     const open = await SELECT.one.from(VerificationRequests).where({ ID: request, worker_ID: worker.ID, status: 'pending' })
     if (!open) fail(404, 'This request is not open')
@@ -207,6 +209,12 @@ const HANDLERS = {
       if (proofType === 'ewm_records') {
         const shown = ewmSupport(await SELECT.from(db().EwmTaskRecords).where({ worker_ID: worker.ID }))[open.skill_ID]
         if (!shown || shown.tasks < MIN_TASKS || shown.days < MIN_DAYS) fail(400, `EWM doesn't show enough of this work yet (${MIN_TASKS} tasks over ${MIN_DAYS} days). Choose another proof, or wait for more records.`)
+      }
+      const mimeType = proofType === 'video' && /^data:(video\/[\w.+-]+);base64,/.exec(clip ?? '')?.[1]
+      if (proofType === 'video') {
+        if (!mimeType) fail(400, 'Attach a short video clip as proof')
+        if (clip.length > CLIP_MAX) fail(400, 'The clip is too large. Keep it under 8 MB.')
+        await INSERT.into(db().ProofClips).entries({ worker_ID: worker.ID, request_ID: request, mimeType, clip })
       }
       await addEvidence(worker, open.skill_ID, 'manager_verification', proficiency, staff, { type: proofType, ref: proofRef })
       await UPDATE(VerificationRequests, request).with({ ...decided, status: 'verified', proofType, proofRef })
@@ -294,11 +302,17 @@ const HANDLERS = {
   },
 
   async manager_decided(worker, { outcome, reasons }, actor) {
-    if (!['shortlist', 'request_evidence', 'not_yet'].includes(outcome)) fail(400, `Unknown outcome ${outcome}`)
-    if (outcome !== 'shortlist' && !reasons?.trim()) fail(400, 'A reason is required for this decision')
+    if (!['move_to_role', 'shortlist', 'request_evidence', 'not_yet'].includes(outcome)) fail(400, `Unknown outcome ${outcome}`)
+    const positive = outcome === 'move_to_role' || outcome === 'shortlist'
+    if (!positive && !reasons?.trim()) fail(400, 'A reason is required for this decision')
     if (reasons?.length > 1000) fail(400, 'Reason must be 1000 characters or fewer')
     await INSERT.into(db().ReviewDecisions).entries({ worker_ID: worker.ID, outcome, reasons, decidedBy: actor })
-    return { contract: 'ReviewDecision', stage: outcome === 'shortlist' ? 'SHORTLISTED' : 'ACTIVE' }
+    // Moving someone into the role updates their job record, as an EmpJob change would in SuccessFactors.
+    if (outcome === 'move_to_role') {
+      const role = await SELECT.one.from(db().Roles).where({ ID: worker.targetRole_ID })
+      if (role) await UPDATE(db().Workers, worker.ID).with({ jobTitle: role.title })
+    }
+    return { contract: 'ReviewDecision', stage: positive ? 'SHORTLISTED' : 'ACTIVE' }
   }
 }
 
@@ -321,9 +335,11 @@ async function resetWorker(workerId) {
   const { ConsentRecords, Workers, HireInterests, Vacancies, RoleMatches } = db()
   await eraseWorkerData(workerId)
   await DELETE.from(ConsentRecords).where({ worker_ID: workerId })
-  await UPDATE(Workers, workerId).with({ stage: 'NOT_STARTED', outsideOptIn: false })
+  // ponytail: only Ravi is ever reset, so his seed job title is restored here after a "move into this role".
+  await UPDATE(Workers, workerId).with({ stage: 'NOT_STARTED', outsideOptIn: false, jobTitle: 'Warehouse Operator' })
   // Also clear what companies did in the demo, so a new run starts clean.
   await DELETE.from(HireInterests)
+  await DELETE.from(db().EwmTaskRecords).where({ importedBy: 'daily-upload' })
   const posted = (await SELECT.from(Vacancies).columns('ID').where({ source: 'posted' })).map(v => v.ID)
   if (posted.length) {
     await DELETE.from(RoleMatches).where({ vacancy_ID: { in: posted } })

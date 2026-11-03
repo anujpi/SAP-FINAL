@@ -328,6 +328,12 @@ const TABS = ['skills', 'learn', 'match', 'requests', 'passport', 'resume'] as c
 
 function Home({ t, run, revision, busy, stage, me, user, lang }: ScreenProps & { stage: string; me: any; user: User; lang: Lang }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('skills')
+  // A notification can open a tab.
+  useEffect(() => {
+    const open = (e: Event) => setTab((e as CustomEvent).detail)
+    addEventListener('worker-tab', open)
+    return () => removeEventListener('worker-tab', open)
+  }, [])
   const [decision, setDecision] = useState<any>(null)
   const [names, setNames] = useState<Record<string, string>>({})
   const [confirming, setConfirming] = useState(false)
@@ -358,8 +364,8 @@ function Home({ t, run, revision, busy, stage, me, user, lang }: ScreenProps & {
   return (
     <>
       {stage === 'AWAITING_MANAGER' && <MessageStrip design="Information" hideCloseButton>{t.waitingManager}</MessageStrip>}
-      {stage === 'SHORTLISTED' && <MessageStrip design="Positive" hideCloseButton>{t.shortlisted}</MessageStrip>}
-      {stage === 'ACTIVE' && decision && decision.outcome !== 'shortlist' && (
+      {stage === 'SHORTLISTED' && <MessageStrip design="Positive" hideCloseButton>{decision?.outcome === 'move_to_role' ? t.movedToRole(me.jobTitle) : t.shortlisted}</MessageStrip>}
+      {stage === 'ACTIVE' && decision && decision.outcome !== 'shortlist' && decision.outcome !== 'move_to_role' && (
         <MessageStrip design="Information" hideCloseButton>
           {decision.outcome === 'not_yet' ? t.decisionNotYet : t.decisionMore} <strong>{decision.reasons}</strong>
         </MessageStrip>

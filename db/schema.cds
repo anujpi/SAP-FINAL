@@ -64,6 +64,14 @@ entity VerificationRequests : cuid, managed {
   decidedAt     : Timestamp;
 }
 
+// A short clip a manager attached as proof. Kept inside the company: it never goes on a certificate or share link.
+entity ProofClips : cuid, managed {
+  worker   : Association to Workers;
+  request  : Association to VerificationRequests;
+  mimeType : String(50);
+  clip     : LargeString;     // data URL, up to about 8 MB of video
+}
+
 // A worker applying to another company with their certificates. The current employer never sees these.
 entity Applications : cuid, managed {
   worker  : Association to Workers;

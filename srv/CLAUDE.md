@@ -17,6 +17,8 @@ All responses from actions and functions that return `LargeString` are JSON stri
 
 **View As.** Logins listed in `DEMO_PRESENTERS` (comma-separated emails), plus the local `presenter` login outside production, can send `x-demo-persona` (`ravi`, `meera`, `arjun`) to show that person on one laptop. Nobody else can switch. A new user object is built per request, because the signed-in one can be shared. Leave `DEMO_PRESENTERS` empty in a real deployment.
 
+**Fixed logins.** `DEMO_LOGINS="a@x.com=meera,b@y.com=ravi"` pins each listed account to one person, with no switch, so two browser windows (one private) show the manager and the worker side by side. A pinned account wins over `DEMO_PRESENTERS`.
+
 **The permission ladder for outside hiring.** Turning on `outsideOptIn` makes a worker visible to other companies through `candidates()`, which returns only an anonymous per-company reference, verified skills and a score. Never add a name, site, employer or verifier to it. `askToConnect` creates a `HireInterest`. A yes (`hire_interest_answered`) creates a share link and an application for the chosen certificates only, and writes a `ConsentRecord`. Cancelling that link takes the name away everywhere: `applicants()` and `outreach()` both check it. Only `resetDemo` deletes all hiring requests and posted roles.
 
 A worker's outside job search is private from their employer: those events stay out of `AuditEvents` in `ManagerService`, and `applicants()` shows only applications to the caller's own vacancies.

@@ -153,7 +153,8 @@ module.exports = cds.service.impl(function () {
         return {
           skill_ID: c.skill_ID, status: c.status, proficiency: c.proficiency, ewm: support[c.skill_ID] ?? null,
           verifiedBy: sf?.verifiedBy, verifiedOn: sf?.syncedAt, proofType: proof?.proofType, proofRef: proof?.proofRef,
-          request: request?.status, requestNote: request?.note
+          request: request?.status, requestNote: request?.note,
+          clipRequest: request?.status === 'verified' && request.proofType === 'video' ? request.ID : undefined
         }
       }),
       tasks: (await SELECT.from(TaskExperiences).where({ worker_ID, confirmed: true })).map(t => ({ ID: t.ID, task: t.task, tool: t.tool, frequency: t.frequency })),
@@ -185,12 +186,20 @@ module.exports = cds.service.impl(function () {
 
   this.on('decideVerification', async req => {
     const { VerificationRequests } = cds.entities('frontline')
-    const { request, approved, proofType, proofRef, proficiency, note } = req.data
+    const { request, approved, proofType, proofRef, proficiency, note, clip } = req.data
     const open = await SELECT.one.from(VerificationRequests).where({ ID: request })
     if (!open) return req.reject(404, 'Request not found')
     const { staff } = await ownWorker(req, open.worker_ID)
     if (req.user.attr?.workerId === open.worker_ID) return req.reject(403, "You can't verify your own skills. Another manager has to.")
-    return JSON.stringify(await handle(open.worker_ID, 'verification_decided', { request, approved, proofType, proofRef, proficiency, note, staff }, req.user.id))
+    return JSON.stringify(await handle(open.worker_ID, 'verification_decided', { request, approved, proofType, proofRef, proficiency, note, clip, staff }, req.user.id))
+  })
+
+  this.on('proofClip', async req => {
+    const { ProofClips } = cds.entities('frontline')
+    const found = await SELECT.one.from(ProofClips).columns('worker_ID', 'clip').where({ request_ID: req.data.request })
+    if (!found) return req.reject(404, 'No clip for this request')
+    await ownWorker(req, found.worker_ID)
+    return found.clip
   })
 
   this.on('importEwmExtract', async req => {
@@ -319,7 +328,7 @@ module.exports = cds.service.impl(function () {
     return JSON.stringify(sent.map(i => {
       const status = withdrawn.has(`${i.worker_ID}|${i.vacancy_ID}`) ? 'withdrawn' : i.status
       return {
-        ID: i.ID, status, sentAt: i.createdAt,
+        ID: i.ID, status, sentAt: i.createdAt, decidedAt: i.decidedAt,
         role: titles.get(vacancies.get(i.vacancy_ID)?.role_ID),
         who: status === 'granted' ? names.get(i.worker_ID) : `Candidate ${anonRef(i.worker_ID, company_ID)}`
       }
