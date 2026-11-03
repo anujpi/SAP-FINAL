@@ -125,7 +125,7 @@ const en = {
     'You choose: share the certificates you pick with that company, or say no.',
     'You can take it back at any time, and they lose access straight away. Your current employer never sees any of this.'
   ],
-  noRequests: 'No company has asked to connect yet.',
+  noRequests: 'No open requests from other companies.',
   wantsToConnect: (company: string) => `${company} wants to connect`,
   chooseCerts: 'Choose what to share',
   onlyThisCompany: (company: string) => `Only ${company} will see your name and these certificates. This is logged.`,
@@ -304,7 +304,7 @@ const hi: typeof en = {
     'आप चुनते हैं: अपने चुने हुए प्रमाणपत्र उस कंपनी के साथ साझा करें, या मना कर दें।',
     'आप इसे कभी भी वापस ले सकते हैं, और उनकी पहुँच तुरंत बंद हो जाती है। आपकी मौजूदा कंपनी यह सब कभी नहीं देखती।'
   ],
-  noRequests: 'अभी किसी कंपनी ने जुड़ने का अनुरोध नहीं किया है।',
+  noRequests: 'दूसरी कंपनियों का कोई खुला अनुरोध नहीं है।',
   wantsToConnect: (company: string) => `${company} आपसे जुड़ना चाहती है`,
   chooseCerts: 'चुनें कि क्या साझा करना है',
   onlyThisCompany: (company: string) => `केवल ${company} आपका नाम और ये प्रमाणपत्र देख पाएगी। यह दर्ज किया जाता है।`,

@@ -6,6 +6,8 @@ The exact steps to show Frontline Shift working. Rehearse from this file. All pe
 
 **The story:** Ravi goes from 0% to 100% for *Digital Supply Chain Coordinator* (requisition REQ-1001 at his own company), and Meera moves him into the role. Every step is live.
 
+**For the full feature walk-through with every input, test case and expected result, use [JUDGES.md](JUDGES.md).**
+
 ## One hour before
 
 1. **Start HANA.** The free tier stops by itself, even within a day, so assume it's stopped. Run `cf update-service frontline-db -c scripts/hana-start.json`. Allow up to 20 minutes, and check `cf service frontline-db` says **HanaService is ready**. Then open the app once and refresh if the first page says "Pool resource could not be acquired".
