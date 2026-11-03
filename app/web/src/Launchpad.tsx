@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Icon, Tag, Text, Title } from '@ui5/webcomponents-react'
+import { Icon, Link, Tag, Text, Title } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/employee.js'
-import '@ui5/webcomponents-icons/dist/hint.js'
+import '@ui5/webcomponents-icons/dist/home.js'
+import '@ui5/webcomponents-icons/dist/person-placeholder.js'
 import '@ui5/webcomponents-icons/dist/add-employee.js'
 import '@ui5/webcomponents-icons/dist/group.js'
 import '@ui5/webcomponents-icons/dist/validate.js'
@@ -57,14 +58,8 @@ export function Launchpad({ user }: { user: User }) {
       <div>
         <Title level="H1" size="H3">Welcome, {user.name}</Title>
         {(user.title || user.company) && <Text>{[user.title, user.company].filter(Boolean).join(', ')}</Text>}
+        <Link href="/welcome.html#how-it-works">New here? See how it works</Link>
       </div>
-
-      <section>
-        <Title level="H2" size="H5">Start here</Title>
-        <div className="tiles">
-          <Tile title="How It Works" subtitle="The whole flow, step by step" icon="hint" href="#/how" />
-        </div>
-      </section>
 
       {is('Worker') && (
         <section>
@@ -79,6 +74,7 @@ export function Launchpad({ user }: { user: User }) {
         <section>
           <Title level="H2" size="H5">My team</Title>
           <div className="tiles">
+            <Tile title="Team Overview" subtitle="What needs you today" icon="home" href="#/manager/overview" />
             <Tile title="My Employees" subtitle="Everyone and their skills" icon="group" href="#/manager/team" kpi={counts.team} />
             {is('Manager', 'Supervisor') && <Tile title="Verification Requests" subtitle="Confirm skills with proof" icon="validate" href="#/manager/verify" kpi={counts.verify} />}
             {is('Manager', 'Supervisor') && <Tile title="EWM Daily Upload" subtitle="Load confirmed warehouse tasks" icon="upload" href="#/manager/ewm" />}
@@ -96,14 +92,15 @@ export function Launchpad({ user }: { user: User }) {
             <Tile title="Outside Applicants" subtitle="Certificates from other companies" icon="customer-briefing" href="#/manager/applicants" kpi={counts.applicants} />
             <Tile title="Audit Log" subtitle="Every agent hand-off" icon="history" href="#/manager/audit" />
             {is('HRAdmin') && <Tile title="Fairness Audit" subtitle="Fictional sample figures" icon="shield" href="#/manager/fairness" />}
-            <Tile title="SAP Landscape" subtitle="How this connects to your SAP systems" icon="connected" href="#/landscape" />
+            {is('HRAdmin') && <Tile title="People and Settings" subtitle="Who can sign in, marketplace" icon="person-placeholder" href="#/manager/people" />}
+            <Tile title="SAP Landscape" subtitle="How this connects to your SAP systems" icon="connected" href="#/manager/landscape" />
           </div>
         </section>
       )}
 
       <section>
         <Title level="H2" size="H5">Alongside your existing SAP apps</Title>
-        <p className="section-note">An example of how Frontline Shift would sit next to the apps people already use. The first three are not connected in this demo.</p>
+        <p className="section-note">An example of how Frontline Shift would sit next to the apps people already use. The first three are not connected yet.</p>
         <div className="tiles">
           <Tile title="Warehouse Tasks" subtitle="SAP S/4HANA EWM" icon="shipping-status" tag="Not connected" />
           <Tile title="Employee Profile" subtitle="SAP SuccessFactors" icon="org-chart" tag="Not connected" />

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Button, Card, CardHeader, Input, Label, Link, List, ListItemStandard, MessageStrip, ObjectStatus, Option, Panel, RadioButton, Select,
-  SideNavigation, SideNavigationItem, Text, TextArea, Title
+  SideNavigation, SideNavigationGroup, SideNavigationItem, Text, TextArea, Title
 } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/group.js'
 import '@ui5/webcomponents-icons/dist/add-employee.js'
@@ -12,22 +12,30 @@ import '@ui5/webcomponents-icons/dist/upload.js'
 import '@ui5/webcomponents-icons/dist/customer-briefing.js'
 import '@ui5/webcomponents-icons/dist/history.js'
 import '@ui5/webcomponents-icons/dist/shield.js'
+import '@ui5/webcomponents-icons/dist/connected.js'
+import { Landscape } from './Landscape'
 import { list, parseJson, parsed, value } from './api'
 import { DataTable, Empty, STAGE, StageStatus } from './ui'
 import { EmployeeProfile } from './Employee'
+import { Overview, People } from './Overview'
+import '@ui5/webcomponents-icons/dist/home.js'
+import '@ui5/webcomponents-icons/dist/person-placeholder.js'
 import { Hiring } from './Hiring'
 import type { User } from './main'
 
 export const SECTIONS = [
-  { id: 'team', label: 'My employees', icon: 'group', roles: ['Manager', 'Supervisor', 'HRAdmin'] },
-  { id: 'verify', label: 'Verification requests', icon: 'validate', roles: ['Manager', 'Supervisor'] },
-  { id: 'review', label: 'Role reviews', icon: 'workflow-tasks', roles: ['Manager', 'HRAdmin'] },
-  { id: 'talent', label: 'Find talent', icon: 'search', roles: ['Manager', 'HRAdmin'] },
-  { id: 'ewm', label: 'EWM daily upload', icon: 'upload', roles: ['Manager', 'Supervisor'] },
-  { id: 'hire', label: 'Hire from outside', icon: 'add-employee', roles: ['Manager', 'HRAdmin'] },
-  { id: 'applicants', label: 'Outside applicants', icon: 'customer-briefing', roles: ['Manager', 'HRAdmin'] },
-  { id: 'audit', label: 'Audit log', icon: 'history', roles: ['Manager', 'HRAdmin'] },
-  { id: 'fairness', label: 'Fairness audit', icon: 'shield', roles: ['HRAdmin'] }
+  { id: 'overview', group: 'Today', label: 'Overview', icon: 'home', roles: ['Manager', 'Supervisor', 'HRAdmin'] },
+  { id: 'verify', group: 'Today', label: 'Verification requests', icon: 'validate', roles: ['Manager', 'Supervisor'] },
+  { id: 'ewm', group: 'Today', label: 'EWM daily upload', icon: 'upload', roles: ['Manager', 'Supervisor'] },
+  { id: 'team', group: 'My team', label: 'My employees', icon: 'group', roles: ['Manager', 'Supervisor', 'HRAdmin'] },
+  { id: 'review', group: 'My team', label: 'Role reviews', icon: 'workflow-tasks', roles: ['Manager', 'HRAdmin'] },
+  { id: 'talent', group: 'My team', label: 'Find talent', icon: 'search', roles: ['Manager', 'HRAdmin'] },
+  { id: 'hire', group: 'Hiring', label: 'Hire from outside', icon: 'add-employee', roles: ['Manager', 'HRAdmin'] },
+  { id: 'applicants', group: 'Hiring', label: 'Outside applicants', icon: 'customer-briefing', roles: ['Manager', 'HRAdmin'] },
+  { id: 'audit', group: 'Compliance', label: 'Audit log', icon: 'history', roles: ['Manager', 'HRAdmin'] },
+  { id: 'fairness', group: 'Compliance', label: 'Fairness audit', icon: 'shield', roles: ['HRAdmin'] },
+  { id: 'people', group: 'Company', label: 'People and settings', icon: 'person-placeholder', roles: ['HRAdmin'] },
+  { id: 'landscape', group: 'Company', label: 'SAP landscape', icon: 'connected', roles: ['Manager', 'HRAdmin'] }
 ]
 
 const OUTCOMES = [
@@ -42,7 +50,7 @@ const PROOFS = [
   { id: 'training_record', label: 'Training record' }
 ]
 
-const NOTE_MOCK_SF = 'Mock SuccessFactors: a table standing in for it, because no customer system is connected. Connecting a real tenant replaces only this one step.'
+const NOTE_MOCK_SF = 'A table in SAP HANA stands in for SuccessFactors until a customer system is connected. Connecting a real tenant replaces only this one step.'
 
 export function ManagerApp({ user, section, detail }: { user: User; section?: string; detail?: string }) {
   const [names, setNames] = useState<Record<string, string>>({})
@@ -80,11 +88,18 @@ export function ManagerApp({ user, section, detail }: { user: User; section?: st
         collapsed={matchMedia('(max-width: 700px)').matches}
         onSelectionChange={e => { location.hash = `#/manager/${e.detail.item.dataset.id}` }}
       >
-        {allowed.map(s => <SideNavigationItem key={s.id} data-id={s.id} text={s.label} icon={s.icon} selected={s.id === current} />)}
+        {[...new Set(allowed.map(s => s.group))].map(group => (
+          <SideNavigationGroup key={group} text={group} expanded>
+            {allowed.filter(s => s.group === group).map(s => <SideNavigationItem key={s.id} data-id={s.id} text={s.label} icon={s.icon} selected={s.id === current} />)}
+          </SideNavigationGroup>
+        ))}
       </SideNavigation>
       <main className="page">
         {error && <MessageStrip design="Negative" onClose={() => setError('')}>{error}</MessageStrip>}
         {message && <MessageStrip design="Positive" onClose={() => setMessage('')}>{message}</MessageStrip>}
+        {current === 'overview' && <Overview {...props} user={user} />}
+        {current === 'landscape' && <Landscape />}
+        {current === 'people' && <People {...props} user={user} />}
         {current === 'team' && !detail && <Team {...props} company={user.company} />}
         {current === 'team' && detail && <EmployeeProfile worker={detail} names={names} revision={revision} />}
         {current === 'verify' && <Verify {...props} />}
@@ -95,7 +110,7 @@ export function ManagerApp({ user, section, detail }: { user: User; section?: st
         {current === 'applicants' && <Applicants {...props} canAnswer={user.roles.includes('Manager')} />}
         {current === 'audit' && <Audit revision={revision} />}
         {current === 'fairness' && <Fairness revision={revision} />}
-        <p className="fine-print">All people, companies and scores are fictional. No live SAP system is connected. The manager decides, not the AI.</p>
+        <p className="fine-print">Sample company data. No customer SAP system is connected yet. The manager decides, not the AI.</p>
       </main>
     </div>
   )
@@ -150,7 +165,7 @@ function Verify({ names, revision, run, busy }: Props) {
 
   const open = requests.find(r => r.ID === selected)
   useEffect(() => {
-    setProofType(open?.ewm ? 'ewm_records' : 'observed_on_shift')
+    setProofType(open?.ewm?.tasks >= 5 && open.ewm.days >= 2 ? 'ewm_records' : 'observed_on_shift')
     setProofRef(open?.ewm ? `EWM-BLR1-${open.ewm.lastDate}` : '')
     setProficiency('2')
     setNote('')
@@ -162,7 +177,7 @@ function Verify({ names, revision, run, busy }: Props) {
     const skill = names[open.skill_ID] ?? open.skill_ID
     return run(
       () => value('/manager/decideVerification', { request: open.ID, approved, proofType, proofRef, proficiency: Number(proficiency), note }),
-      approved ? `Verified ${skill} for ${open.workerName}: certificate issued and added to SuccessFactors (mock).` : `Your answer has gone to ${open.workerName}`
+      approved ? `Verified ${skill} for ${open.workerName}: certificate issued and added to the SuccessFactors stand-in.` : `Your answer has gone to ${open.workerName}`
     )
   }
 
@@ -181,13 +196,14 @@ function Verify({ names, revision, run, busy }: Props) {
           <div className="detail">
             <Card header={<CardHeader titleText={names[open.skill_ID] ?? open.skill_ID} subtitleText={`${open.workerName} · ${open.site}`} />}>
               <div className="card-body">
+                {open.said && <Text>{open.workerName} said: "{open.said}"</Text>}
                 <Title level="H3" size="H6">What EWM shows</Title>
                 {open.ewm
                   ? <MessageStrip design="Positive" hideCloseButton>{open.ewm.tasks} confirmed tasks over {open.ewm.days} days. Latest: {open.ewm.lastDate}. From the daily EWM upload (sample data).</MessageStrip>
                   : <MessageStrip design="Information" hideCloseButton>No EWM records for this skill. You can still confirm it if you have other proof.</MessageStrip>}
 
                 <Title level="H3" size="H6">Your proof</Title>
-                <Text className="fine-print">Proof is mocked for this demo: only its type and reference are stored.</Text>
+                <Text className="fine-print">Proof upload isn't connected yet: only its type and reference are stored.</Text>
                 <Label for="proof-type">Type of proof</Label>
                 <Select id="proof-type" value={proofType} onChange={e => setProofType(e.target.value)}>
                   {PROOFS.map(p => <Option key={p.id} value={p.id}>{p.label}</Option>)}
@@ -252,7 +268,7 @@ function Review({ names, revision, run, busy, canDecide }: Props & { canDecide: 
           <div className="detail">
             <Card header={<CardHeader titleText={packet.worker.name} subtitleText={sap?.requisitions?.[0] ? `${sap.requisitions[0].jobTitle} · ${sap.requisitions[0].jobReqId}` : packet.worker.site} />}>
               <div className="card-body">
-                {best && <p className="score"><strong>{best.score}%</strong> skill match <small>(demo data)</small></p>}
+                {best && <p className="score"><strong>{best.score}%</strong> skill match <small>(sample data)</small></p>}
                 <Title level="H3" size="H6">Verified skills</Title>
                 <ul className="plain">{packet.verified.map((c: any) => <li key={c.ID}>{names[c.skill_ID] ?? c.skill_ID} · level {c.proficiency}</li>)}</ul>
                 <Title level="H3" size="H6">Self-reported or needs evidence</Title>

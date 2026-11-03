@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Before" targetNamespace="https://frontline-shift.example/bpmn">
+  <bpmn:collaboration id="Collaboration_Before">
+    <bpmn:participant id="Pool" name="Filling a better warehouse role today (assumed, to confirm with a customer)" processRef="Process_Before" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Before" name="Filling a better warehouse role today (assumed, to confirm with a customer)" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Before">
+        <bpmn:lane id="Lane_0" name="Warehouse worker">
+          <bpmn:flowNodeRef>Start_W</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Work</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_W</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_1" name="Supervisor">
+          <bpmn:flowNodeRef>T_Memory</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_2" name="HR">
+          <bpmn:flowNodeRef>Start_R</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Ask</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Known</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Interview</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_I</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_3" name="Recruiting agency">
+          <bpmn:flowNodeRef>T_Agency</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Hire</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_E</bpmn:flowNodeRef>
+        </bpmn:lane>
+    </bpmn:laneSet>
+      <bpmn:startEvent id="Start_W" name="Worker builds skills on the job"><bpmn:outgoing>Flow_Start_W_T_Work</bpmn:outgoing></bpmn:startEvent>
+      <bpmn:task id="T_Work" name="Do the work. Nothing records the skills"><bpmn:incoming>Flow_Start_W_T_Work</bpmn:incoming><bpmn:outgoing>Flow_T_Work_End_W</bpmn:outgoing></bpmn:task>
+      <bpmn:endEvent id="End_W" name="Skills stay unproven"><bpmn:incoming>Flow_T_Work_End_W</bpmn:incoming></bpmn:endEvent>
+      <bpmn:startEvent id="Start_R" name="A better role opens"><bpmn:outgoing>Flow_Start_R_T_Ask</bpmn:outgoing></bpmn:startEvent>
+      <bpmn:task id="T_Ask" name="Ask supervisors who could do it"><bpmn:incoming>Flow_Start_R_T_Ask</bpmn:incoming><bpmn:outgoing>Flow_T_Ask_T_Memory</bpmn:outgoing></bpmn:task>
+      <bpmn:task id="T_Memory" name="Suggest someone from memory"><bpmn:incoming>Flow_T_Ask_T_Memory</bpmn:incoming><bpmn:outgoing>Flow_T_Memory_G_Known</bpmn:outgoing></bpmn:task>
+      <bpmn:exclusiveGateway id="G_Known" name="Anyone suggested?"><bpmn:incoming>Flow_T_Memory_G_Known</bpmn:incoming><bpmn:outgoing>Flow_G_Known_T_Interview</bpmn:outgoing><bpmn:outgoing>Flow_G_Known_T_Agency</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:task id="T_Interview" name="Interview the suggested worker"><bpmn:incoming>Flow_G_Known_T_Interview</bpmn:incoming><bpmn:outgoing>Flow_T_Interview_End_I</bpmn:outgoing></bpmn:task>
+      <bpmn:endEvent id="End_I" name="Internal move, if chosen"><bpmn:incoming>Flow_T_Interview_End_I</bpmn:incoming></bpmn:endEvent>
+      <bpmn:task id="T_Agency" name="Brief an agency"><bpmn:incoming>Flow_G_Known_T_Agency</bpmn:incoming><bpmn:outgoing>Flow_T_Agency_T_Hire</bpmn:outgoing></bpmn:task>
+      <bpmn:task id="T_Hire" name="Find and screen outside people"><bpmn:incoming>Flow_T_Agency_T_Hire</bpmn:incoming><bpmn:outgoing>Flow_T_Hire_End_E</bpmn:outgoing></bpmn:task>
+      <bpmn:endEvent id="End_E" name="Outside hire, and ramp-up cost"><bpmn:incoming>Flow_T_Hire_End_E</bpmn:incoming></bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_Start_W_T_Work" sourceRef="Start_W" targetRef="T_Work" />
+      <bpmn:sequenceFlow id="Flow_T_Work_End_W" sourceRef="T_Work" targetRef="End_W" />
+      <bpmn:sequenceFlow id="Flow_Start_R_T_Ask" sourceRef="Start_R" targetRef="T_Ask" />
+      <bpmn:sequenceFlow id="Flow_T_Ask_T_Memory" sourceRef="T_Ask" targetRef="T_Memory" />
+      <bpmn:sequenceFlow id="Flow_T_Memory_G_Known" sourceRef="T_Memory" targetRef="G_Known" />
+      <bpmn:sequenceFlow id="Flow_G_Known_T_Interview" sourceRef="G_Known" targetRef="T_Interview" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_T_Interview_End_I" sourceRef="T_Interview" targetRef="End_I" />
+      <bpmn:sequenceFlow id="Flow_G_Known_T_Agency" sourceRef="G_Known" targetRef="T_Agency" name="No" />
+      <bpmn:sequenceFlow id="Flow_T_Agency_T_Hire" sourceRef="T_Agency" targetRef="T_Hire" />
+      <bpmn:sequenceFlow id="Flow_T_Hire_End_E" sourceRef="T_Hire" targetRef="End_E" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_Before">
+    <bpmndi:BPMNPlane id="Plane_Before" bpmnElement="Collaboration_Before">
+      <bpmndi:BPMNShape id="Pool_di" bpmnElement="Pool" isHorizontal="true"><dc:Bounds x="90" y="40" width="1365" height="600" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0_di" bpmnElement="Lane_0" isHorizontal="true"><dc:Bounds x="120" y="40" width="1335" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true"><dc:Bounds x="120" y="190" width="1335" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_2_di" bpmnElement="Lane_2" isHorizontal="true"><dc:Bounds x="120" y="340" width="1335" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_3_di" bpmnElement="Lane_3" isHorizontal="true"><dc:Bounds x="120" y="490" width="1335" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_W_di" bpmnElement="Start_W"><dc:Bounds x="207" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="170" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Work_di" bpmnElement="T_Work"><dc:Bounds x="345" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_W_di" bpmnElement="End_W"><dc:Bounds x="577" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="540" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_R_di" bpmnElement="Start_R"><dc:Bounds x="207" y="397" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="170" y="437" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Ask_di" bpmnElement="T_Ask"><dc:Bounds x="345" y="380" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Memory_di" bpmnElement="T_Memory"><dc:Bounds x="530" y="230" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Known_di" bpmnElement="G_Known" isMarkerVisible="true"><dc:Bounds x="755" y="390" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="725" y="444" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Interview_di" bpmnElement="T_Interview"><dc:Bounds x="900" y="380" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_I_di" bpmnElement="End_I"><dc:Bounds x="1132" y="397" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1095" y="437" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Agency_di" bpmnElement="T_Agency"><dc:Bounds x="900" y="530" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Hire_di" bpmnElement="T_Hire"><dc:Bounds x="1085" y="530" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_E_di" bpmnElement="End_E"><dc:Bounds x="1317" y="547" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="1280" y="587" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_W_T_Work_di" bpmnElement="Flow_Start_W_T_Work"><di:waypoint x="243" y="115" /><di:waypoint x="345" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Work_End_W_di" bpmnElement="Flow_T_Work_End_W"><di:waypoint x="475" y="115" /><di:waypoint x="577" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Start_R_T_Ask_di" bpmnElement="Flow_Start_R_T_Ask"><di:waypoint x="243" y="415" /><di:waypoint x="345" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Ask_T_Memory_di" bpmnElement="Flow_T_Ask_T_Memory"><di:waypoint x="475" y="415" /><di:waypoint x="508" y="415" /><di:waypoint x="508" y="265" /><di:waypoint x="530" y="265" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Memory_G_Known_di" bpmnElement="Flow_T_Memory_G_Known"><di:waypoint x="660" y="265" /><di:waypoint x="733" y="265" /><di:waypoint x="733" y="415" /><di:waypoint x="755" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Known_T_Interview_di" bpmnElement="Flow_G_Known_T_Interview"><di:waypoint x="805" y="415" /><di:waypoint x="900" y="415" /><bpmndi:BPMNLabel><dc:Bounds x="811" y="395" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Interview_End_I_di" bpmnElement="Flow_T_Interview_End_I"><di:waypoint x="1030" y="415" /><di:waypoint x="1132" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Known_T_Agency_di" bpmnElement="Flow_G_Known_T_Agency"><di:waypoint x="805" y="415" /><di:waypoint x="878" y="415" /><di:waypoint x="878" y="565" /><di:waypoint x="900" y="565" /><bpmndi:BPMNLabel><dc:Bounds x="811" y="395" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Agency_T_Hire_di" bpmnElement="Flow_T_Agency_T_Hire"><di:waypoint x="1030" y="565" /><di:waypoint x="1085" y="565" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Hire_End_E_di" bpmnElement="Flow_T_Hire_End_E"><di:waypoint x="1215" y="565" /><di:waypoint x="1317" y="565" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

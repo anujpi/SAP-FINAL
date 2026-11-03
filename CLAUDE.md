@@ -39,7 +39,7 @@ npm run journey
 - `npm run watch` serves on http://localhost:4004 with hot reload.
 - `npm test` runs the agent and orchestrator tests. No server needed.
 - `npm run journey` runs Ravi's whole journey against the running server. **It must pass before every merge.**
-- Local logins: `ravi` / `ravi` (Worker), `meera` / `meera` (Manager, Supervisor, HRAdmin), `sunil` / `sunil` (Supervisor only), `arjun` / `arjun` (Manager at another company, hires from outside), `presenter` / `presenter` (all roles, for testing View As with `DEMO_WORKER_ID` set). Fictional test users.
+- Local logins: `ravi` / `ravi` (Worker), `meera` / `meera` (Manager, Supervisor, HRAdmin), `sunil` / `sunil` (Supervisor only), `arjun` / `arjun` (Manager at another company, hires from outside), `presenter` / `presenter` (all roles and View As), `stranger` / `stranger` (signs in but isn't registered, so sees the "not registered" page). Fictional test users.
 
 Deploy needs the `mbt` and `cf` tools plus a BTP trial account:
 

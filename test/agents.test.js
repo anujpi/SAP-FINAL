@@ -6,7 +6,7 @@ const pathway = require('../srv/agents/pathway')
 const verify = require('../srv/agents/verify')
 const discover = require('../srv/agents/discover')
 const workerIdOf = require('../srv/lib/worker-id')
-const { applyDemoWorker } = require('../srv/lib/demo-worker')
+const { resolve } = require('../srv/lib/identity')
 const { nextStage, WORKER_EVENTS } = require('../srv/orchestrator')
 
 // Keep these tests offline even if a real key is set on this machine.
@@ -87,14 +87,30 @@ test('worker id: reads both XSUAA lists and mocked plain values', () => {
   assert.equal(workerIdOf({ user: { attr: {} } }), undefined)
 })
 
-test('demo worker: fills in only for a Worker with no attribute, and only when set', () => {
-  const user = (role, attr = {}) => ({ is: r => r === role, attr })
-  const apply = (u, id) => { applyDemoWorker(u, id); return u.attr.workerId }
-  assert.equal(apply(user('Worker'), 'demo-id'), 'demo-id')
-  assert.equal(apply(user('Worker'), undefined), undefined)
-  assert.equal(apply(user('Manager'), 'demo-id'), undefined)
-  assert.equal(apply(user('Worker', { workerId: ['real'] }), 'demo-id')[0], 'real')
-  assert.equal(apply(user('Worker', { workerId: [] }), 'demo-id'), 'demo-id')
+const DIRECTORY = {
+  workers: new Map([['ravi.k@indigohub.example', { ID: 'w-ravi' }]]),
+  staff: new Map([['meera@indigohub.example', { login: 'meera', roles: ['Manager', 'Supervisor', 'HRAdmin'] }]])
+}
+const who = (keys, persona, presenterKeys = ['boss@example.com']) => resolve({ keys, directory: DIRECTORY, persona, presenterKeys, demoWorkerId: 'w-ravi' })
+
+test('sign-in: only registered people get roles', () => {
+  assert.deepEqual(who(['ravi.k@indigohub.example']).roles, ['Worker'])
+  assert.equal(who(['ravi.k@indigohub.example']).workerId, 'w-ravi')
+  assert.equal(who(['meera@indigohub.example']).staffLogin, 'meera')
+  const stranger = who(['someone@gmail.com'])
+  assert.equal(stranger.registered, false)
+  assert.deepEqual(stranger.roles, [])
+})
+
+test('sign-in: only presenters can use View as, and only as known people', () => {
+  assert.deepEqual(who(['boss@example.com'], 'arjun').roles, ['Manager'])
+  assert.equal(who(['boss@example.com'], 'arjun').staffLogin, 'arjun')
+  assert.equal(who(['boss@example.com'], 'ravi').workerId, 'w-ravi')
+  assert.equal(who(['boss@example.com'], 'constructor').persona, '')
+  // A registered worker asking to be Arjun stays exactly who they are.
+  const worker = who(['ravi.k@indigohub.example'], 'arjun')
+  assert.deepEqual(worker.roles, ['Worker'])
+  assert.equal(worker.staffLogin, undefined)
 })
 
 test('orchestrator: invalid events are rejected with 409', () => {

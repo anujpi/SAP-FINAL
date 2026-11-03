@@ -3,8 +3,9 @@ namespace frontline;
 using { cuid, managed } from '@sap/cds/common';
 
 entity Companies {
-  key ID   : String(30);
-      name : String(100);
+  key ID          : String(30);
+      name        : String(100);
+      marketplace : Boolean default false;   // the company lets its people see, and be seen by, other companies
 }
 
 // Who a manager login is and which company they work for. It scopes everything they see.
@@ -13,6 +14,8 @@ entity Staff {
       name    : String(100);
       title   : String(100);
       company : Association to Companies;
+      email   : String(120);
+      roles   : String(100);   // Manager, Supervisor, HRAdmin, comma separated
 }
 
 // Journey stage values live in srv/orchestrator.js, the only code that changes them.
@@ -32,6 +35,11 @@ entity Workers : cuid {
   workShift      : String(20);
   managerName    : String(100);
   joinedOn       : Date;
+  // Who may sign in, and how EWM knows them. Only registered, active people get in.
+  email          : String(120);
+  login          : String(60);
+  ewmUser        : String(20);
+  active         : Boolean default true;
 }
 
 // The daily extract of confirmed warehouse tasks from EWM. Company data, so it stays when a worker withdraws consent.
@@ -111,9 +119,12 @@ entity TaskExperiences : cuid {
 }
 
 entity Skills {
-  key ID      : String(30);
-      name    : String(100);
-      keywords : String(300);    // used only by the offline fallback in agent B
+  key ID          : String(30);
+      name        : String(100);
+      keywords    : String(300);    // used only by the offline fallback in agent B
+      library     : String(20);     // Company | ESCO
+      escoUri     : String(200);    // the ESCO skill, European Commission
+      description : String(1000);
 }
 
 entity SkillClaims : cuid {
@@ -121,8 +132,9 @@ entity SkillClaims : cuid {
   skill       : Association to Skills;
   source      : String(30);
   confidence  : Decimal(3, 2);
-  status      : String(20);      // self_reported | needs_evidence | verified. Never "missing".
+  status      : String(20);      // self_reported | needs_evidence | work_records | verified. Never "missing".
   proficiency : Integer;
+  basis       : String(200);     // the worker's own words behind this skill, if they mentioned it
 }
 
 entity EvidenceItems : cuid, managed {

@@ -1,7 +1,4 @@
 const cds = require('@sap/cds')
-const { applyDemoWorker } = require('./lib/demo-worker')
+const { identify } = require('./lib/identity')
 
-cds.middlewares.add((req, res, next) => {
-  applyDemoWorker(cds.context.user, process.env.DEMO_WORKER_ID)
-  next()
-}, { after: 'auth' })
+cds.middlewares.add(identify, { after: 'auth' })

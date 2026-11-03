@@ -1,0 +1,102 @@
+/* The product front page. Pallet-rack blue, floor-marking yellow and warehouse concrete. One bold idea: the yellow floor lane. */
+:root {
+  --rack: #123c8c;
+  --rack-deep: #0c2a63;
+  --tape: #ffc800;
+  --concrete: #e4e5e1;
+  --paper: #f6f6f3;
+  --ink: #10151c;
+  --quiet: #47505c;
+  --lane: clamp(1rem, 4vw, 3.5rem);
+  --tape-width: clamp(6px, 1vw, 12px);
+  --body: "Noto Sans", "Noto Sans Devanagari", "Segoe UI", system-ui, sans-serif;
+  --sign: "Barlow Condensed", "Arial Narrow", "Noto Sans Devanagari", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--concrete); color: var(--ink); font: 400 1.0625rem/1.6 var(--body); }
+p { margin: 0; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+.product { position: relative; overflow: hidden; }
+
+/* Hero */
+.hero { background: var(--rack); color: #fff; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); align-items: end; padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 6vw, 6rem) clamp(2.5rem, 6vw, 5rem) calc(var(--lane) + var(--tape-width) + clamp(1rem, 3vw, 2.5rem)); }
+.hero :focus-visible { outline-color: var(--tape); }
+.brand { font: 600 1.5rem/1 var(--sign); margin-bottom: clamp(2.5rem, 7vw, 6rem); }
+h1 { font: 700 clamp(3rem, 7.4vw, 6.75rem)/.94 var(--sign); margin: 0 0 1.5rem; letter-spacing: -.01em; max-width: 13ch; }
+.lede { font-size: clamp(1.0625rem, 1.5vw, 1.25rem); max-width: 34rem; margin-bottom: 2rem; color: #e7ecf6; }
+.signin { display: inline-block; padding: .85rem 1.75rem; background: var(--tape); color: var(--ink); font: 700 1.375rem/1.1 var(--sign); text-decoration: none; }
+.signin:hover { background: #fff; }
+.dev-logins { display: flex; flex-wrap: wrap; gap: .5rem; }
+.dev-logins button { padding: .6rem 1rem; font: inherit; font-size: .9375rem; background: var(--tape); color: var(--ink); border: 0; cursor: pointer; }
+
+/* The worker's own words becoming a verified skill */
+.example { margin: 0; background: var(--paper); color: var(--ink); padding: clamp(1.25rem, 2.5vw, 2rem); }
+.example blockquote { margin: 0 0 .5rem; font-size: clamp(1.25rem, 2vw, 1.625rem); line-height: 1.5; font-weight: 500; }
+.translation { color: var(--quiet); font-size: .9375rem; }
+.tape { width: var(--tape-width); height: 3rem; background: var(--tape); margin: 1rem 0 1rem .25rem; }
+.verified { display: grid; gap: .125rem; border-left: var(--tape-width) solid var(--rack); padding-left: 1rem; }
+.verified strong { font: 700 1.75rem/1.1 var(--sign); }
+.verified span { color: var(--quiet); font-size: .9375rem; }
+figcaption { margin-top: 1rem; font-size: .8125rem; color: var(--quiet); }
+
+/* The floor lane runs the length of the page */
+.body { position: relative; padding: clamp(2.5rem, 6vw, 5rem) clamp(1rem, 6vw, 6rem) clamp(2.5rem, 6vw, 5rem) calc(var(--lane) + var(--tape-width) + clamp(1rem, 3vw, 2.5rem)); display: grid; gap: clamp(3rem, 7vw, 6rem); }
+.body::before { content: ""; position: absolute; left: var(--lane); top: 0; bottom: 0; width: var(--tape-width); background: var(--tape); transform-origin: top; animation: lay-tape 1.1s cubic-bezier(.2, .7, .2, 1) both; }
+@keyframes lay-tape { from { transform: scaleY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .body::before { animation: none; }
+  html { scroll-behavior: auto; }
+}
+section { max-width: 62rem; }
+h2 { font: 700 clamp(2rem, 4vw, 3.25rem)/1 var(--sign); margin: 0 0 1.5rem; }
+h3 { font: 700 1.5rem/1.15 var(--sign); margin: 0 0 .25rem; }
+
+.benefits { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1.75rem 3rem; }
+.benefits dt { font: 700 1.5rem/1.15 var(--sign); margin-bottom: .25rem; }
+.benefits dd { margin: 0; color: var(--quiet); max-width: 28rem; }
+
+/* Step markers sit on the lane itself */
+.steps-lane { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.75rem; }
+.steps-lane li { position: relative; max-width: 40rem; }
+.steps-lane p { color: var(--quiet); }
+.marker { position: absolute; left: calc(-1 * (clamp(1rem, 3vw, 2.5rem) + var(--tape-width) / 2) - 1.125rem); top: -.125rem; width: 2.25rem; height: 2.25rem; display: grid; place-items: center; background: var(--ink); color: var(--tape); font: 700 1.25rem/1 var(--sign); border-radius: 50%; }
+
+.promise { background: var(--rack); color: #fff; padding: clamp(1.5rem, 3vw, 2.5rem); max-width: 50rem; }
+.promise p { color: #e7ecf6; }
+
+.fits { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 2rem 3rem; }
+.fits ul { margin: .5rem 0 0; padding: 0; list-style: none; display: grid; gap: .25rem; }
+.note { color: var(--quiet); font-size: .9375rem; margin-top: .75rem; max-width: 34rem; }
+
+.pricing { border-collapse: collapse; width: 100%; max-width: 40rem; }
+.pricing th, .pricing td { text-align: left; padding: .75rem 1rem .75rem 0; border-bottom: 2px solid var(--ink); vertical-align: top; }
+.pricing th { font: 700 1.25rem/1.3 var(--sign); white-space: nowrap; }
+.pilot { font: 700 clamp(1.5rem, 2.6vw, 2rem)/1.15 var(--sign); margin-top: 1.5rem; max-width: 30rem; }
+
+.foot { background: var(--ink); color: #c9ced6; padding: 2rem clamp(1rem, 6vw, 6rem) 2rem calc(var(--lane) + var(--tape-width) + clamp(1rem, 3vw, 2.5rem)); display: grid; gap: 1.25rem; justify-items: start; font-size: .9375rem; }
+.foot :focus-visible { outline-color: var(--tape); }
+.foot p { max-width: 44rem; }
+
+@media (max-width: 800px) {
+  .hero { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .brand { margin-bottom: 2rem; }
+  .pricing th { white-space: normal; }
+}
+
+/* Page links and the How it works detail */
+.topnav { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1.5rem; margin-bottom: clamp(2.5rem, 7vw, 6rem); }
+.topnav .brand { margin: 0 auto 0 0; }
+.topnav a { color: #fff; font-size: 1rem; text-underline-offset: .25em; }
+.start-box { background: var(--paper); border-left: var(--tape-width) solid var(--rack); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem; max-width: 46rem; }
+.start-box p { color: var(--quiet); }
+.step-who { font-size: .875rem; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; display: flex; gap: .75rem; align-items: center; }
+.steps-lane .step-who { color: var(--quiet); }
+.status { text-transform: none; letter-spacing: 0; padding: .05rem .5rem; background: var(--paper); border: 1px solid var(--quiet); font-size: .8125rem; }
+.status.live { background: var(--ink); color: var(--tape); border-color: var(--ink); }
+.steps-lane .try { color: var(--ink); margin-top: .5rem; }
+.behind { font-size: .9375rem; margin-top: .25rem; }
+.table-wrap { overflow-x: auto; }
+.table-wrap .pricing td { font-size: .9375rem; }
+.table-wrap .pricing thead th { font-size: 1.125rem; }

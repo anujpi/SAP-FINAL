@@ -27,7 +27,26 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 
 **Hiring and permissions, live and checked on BTP, 2 Nov:** a company posts a role, sees anonymous candidates and asks to connect. The worker picks certificates or says no, and can take it back. On take-back, the company loses the name on every screen. Ravi's employer sees none of it. Other certificates are sample data that never score.
 
-**Not yet tested on BTP:** sign-out and Hindi. Also untested: voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
+**What we sell:** the public front page (`app/web/src/welcome.tsx`) is live. Its pricing comes from `docs/PLAN.md` section 9 and is labelled as planned.
+
+**Process models:** `docs/signavio/` holds before and after BPMN files. They load cleanly in a BPMN viewer but haven't been imported into Signavio yet. See its README.
+
+**Wording:** the app no longer says "demo" or "mock". The honest labels stay as "sample data", "stand-in" and "not connected yet", and that's on purpose (product rule 10).
+
+**Skill detection, live and checked on BTP, 2 Nov:** the AI reads what the worker said, then plain code checks it against their EWM records in HANA (`applyWorkRecords`). Tested live with real AI in English and Hindi. The EWM records are still sample data.
+
+**Voice:** the built-in browser pane blocks the microphone, so test only in normal Chrome. Failures now show the real reason.
+
+**app-v2 (branch `app-v2`, 3 Nov, local only, not deployed):**
+- Only registered emails get in. Anyone else sees "not registered". HR registers and removes people under People and settings, and registering a removed worker again restores them.
+- The worker home is built around "Record a new skill" (talk or type, any time).
+- The AI matches what was said, by meaning, to a real skills library: 13 company skills plus 185 from ESCO, the EU's free skills library. Anything with no match shows as "Not in the skills library". Plain code then checks the matches against EWM records.
+- Learning now shows, per skill, how to get it verified.
+- Managers get an Overview first.
+- Each company switches outside jobs on or off.
+- Tested locally in a browser (worker recording, Learning, manager Overview, People, not registered, phone width), plus 37 unit tests and the journey with real AI. To deploy it, follow the `DEMO_PRESENTERS` step under "BTP facts" first.
+
+**Not yet tested on BTP:** sign-out, the Hindi screens, and voice in Chrome. Also untested: voice with a real microphone or phone, printing a certificate, and the Hindi wording by a Hindi speaker.
 
 ## BTP facts
 
@@ -43,7 +62,7 @@ Start here. Written Sun 1 Nov 2026, for a new Claude Code session in the termina
 | Apps | `frontline-shift` (Approuter), `frontline-shift-srv`, `frontline-shift-db-deployer` (runs once) |
 | Ravi's worker ID | `00000000-0000-4000-8000-000000000001` (fictional) |
 
-`PASSPORT_SECRET` and `DEMO_WORKER_ID` (Ravi's ID) are already set on `frontline-shift-srv`. With `DEMO_WORKER_ID` set, any Worker login with no `workerId` attribute acts as Ravi, so the `ravi-attribute` role isn't needed for the demo, and any manager login not in `DEMO_STAFF_MAP` acts as Meera. See `srv/lib/demo-worker.js`. `cf`, the `multiapps` plugin, `mbt` and GNU Make are installed.
+`PASSPORT_SECRET` and `DEMO_WORKER_ID` (Ravi's ID) are already set on `frontline-shift-srv`. From app-v2 on, only registered emails get a role (`srv/lib/identity.js`), so before deploying app-v2 add your own SAP login email as a presenter: `cf set-env frontline-shift-srv DEMO_PRESENTERS <your email>`, then restage. Without it your login sees "not registered". `DEMO_STAFF_MAP` is no longer used. `cf`, the `multiapps` plugin, `mbt` and GNU Make are installed.
 
 ## Things that will catch you out
 

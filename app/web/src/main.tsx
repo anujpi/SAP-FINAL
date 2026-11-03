@@ -7,12 +7,10 @@ import { devUser, list, parsed, persona, setPersona, signOut, value } from './ap
 import { WorkerApp } from './Worker'
 import { ManagerApp } from './Manager'
 import { Launchpad } from './Launchpad'
-import { Landscape } from './Landscape'
-import { HowItWorks } from './HowItWorks'
 import { initials } from './ui'
 import './styles.css'
 
-export type User = { name: string; title: string; company: string; roles: string[]; persona: string; canSwitch: boolean }
+export type User = { registered: boolean; name: string; title: string; company: string; roles: string[]; persona: string; canSwitch: boolean }
 
 const PEOPLE = [
   { id: 'ravi', label: 'Ravi K., employee' },
@@ -68,11 +66,17 @@ function App() {
   }
 
   let screen = null
-  if (user) {
+  if (user && !user.registered) {
+    screen = (
+      <IllustratedMessage name="UnableToLoad" titleText="You're not registered yet" subtitleText={`You signed in as ${user.name}, but no company has registered this email. Ask your HR team to add you, then sign in again.`}>
+        <Button design="Emphasized" onClick={signOut}>Sign out</Button>
+      </IllustratedMessage>
+    )
+  } else if (user) {
     if (app === 'worker' && has(user, 'Worker')) screen = <WorkerApp key={resetKey} showTrace={trace} user={user} />
     else if (app === 'manager' && has(user, 'Manager', 'Supervisor', 'HRAdmin')) screen = <ManagerApp key={`${resetKey}-${section}`} user={user} section={section} detail={detail} />
-    else if (app === 'landscape' && has(user, 'Manager', 'HRAdmin')) screen = <Landscape />
-    else if (app === 'how') screen = <HowItWorks user={user} />
+    else if (app === 'landscape') location.replace('#/manager/landscape')
+    else if (app === 'how') location.replace('/welcome.html#how-it-works')
     else if (app === '') screen = <Launchpad user={user} />
     else screen = (
       <IllustratedMessage name="UnableToLoad" titleText="You don't have access to this app" subtitleText="Ask your administrator for the role, or go back to the home page.">
@@ -85,7 +89,7 @@ function App() {
     <ThemeProvider>
       <ShellBar
         primaryTitle="Frontline Shift"
-        secondaryTitle={user?.company || 'Demo tenant'}
+        secondaryTitle={user?.company || ''}
         logo={<Avatar shape="Square" size="XS" initials="FS" colorScheme="Accent6" />}
         onLogoClick={() => { location.hash = '#/' }}
         profile={user ? <Avatar initials={initials(user.name)} /> : undefined}
@@ -100,16 +104,16 @@ function App() {
             {user.title && <Text>{user.title}</Text>}
             {user.company && <Text>{user.company}</Text>}
             <Text className="fine-print">Roles: {user.roles.join(', ') || 'none assigned'}</Text>
-            <Button design="Transparent" onClick={() => { setProfileOpen(false); location.hash = '#/how' }}>How it works</Button>
+            <Button design="Transparent" onClick={() => { setProfileOpen(false); location.href = '/welcome.html#how-it-works' }}>How it works</Button>
             {user.canSwitch && (
               <div className="view-as">
-                <Text className="fine-print">Demo: view as</Text>
+                <Text className="fine-print">View as</Text>
                 {PEOPLE.map(p => (
                   <Button key={p.id} design={persona() === p.id ? 'Emphasized' : 'Default'} onClick={() => setPersona(p.id)}>{p.label}</Button>
                 ))}
               </div>
             )}
-            {has(user, 'HRAdmin') && <Button design="Transparent" onClick={resetDemo}>Reset demo data</Button>}
+            {has(user, 'HRAdmin') && <Button design="Transparent" onClick={resetDemo}>Start over with sample data</Button>}
             <Button onClick={signOut}>Sign out</Button>
           </div>
         )}

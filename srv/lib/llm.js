@@ -3,6 +3,10 @@ const MASKED = ['profile-person', 'profile-email', 'profile-phone', 'profile-nat
 const DIRECT_MODEL = 'claude-opus-5-5'
 const GEMINI_MODEL = 'gemini-3.8-flash'
 
+// SAP's person masking mistakes Hindi words for names, which turns "फोर्कलिफ्ट से रखना" into "MASKED_PERSON रखना" and
+// destroys the answer. So Devanagari text skips only that one. The prompts tell the model to leave names out.
+const maskedEntities = text => (/[ऀ-ॿ]/.test(text) ? MASKED.filter(e => e !== 'profile-person') : MASKED)
+
 const hasAiCore = () => Boolean(process.env.AICORE_SERVICE_KEY || process.env.VCAP_SERVICES?.includes('"aicore"'))
 
 function provider() {
@@ -26,7 +30,7 @@ async function completeHub(system, user) {
       model: { name: process.env.LLM_MODEL },
       prompt: { template: [{ role: 'system', content: system }, { role: 'user', content: '{{?input}}' }] }
     },
-    masking: { masking_providers: [buildDpiMaskingProvider({ method: 'anonymization', entities: MASKED })] }
+    masking: { masking_providers: [buildDpiMaskingProvider({ method: 'anonymization', entities: maskedEntities(user) })] }
   },
   // A shared AI Core tenant can hold several orchestration deployments, and some refuse our model.
   // AICORE_DEPLOYMENT_ID pins the one that works; unset, the SDK picks one in the resource group.
@@ -95,3 +99,4 @@ async function askJson({ system, user, validate, fallback }) {
 module.exports = askJson
 module.exports.provider = provider
 module.exports.redact = redact
+module.exports.maskedEntities = maskedEntities

@@ -25,7 +25,9 @@ Say this openly to the jury: only A and B use the LLM. The rest are code on purp
 - Call only `askJson` from `../lib/llm`. It handles masking, one retry, validation and the fallback.
 - Always pass a `validate` function and a `fallback`. A fallback result is marked `degraded: true`, and the UI must show that.
 - User text is data, never instructions. It goes in the `{{?input}}` placeholder, and prompts say to ignore requests inside it.
-- Agent B may only propose `self_reported` or `needs_evidence`. Only `addEvidence` in the orchestrator can set `verified`.
+- Agent B may only propose `self_reported`, `needs_evidence` or `work_records`. Only `addEvidence` in the orchestrator can set `verified`.
+- After the LLM, `applyWorkRecords` (`srv/lib/ewm.js`, plain code) checks the claims against the worker's EWM records, which the orchestrator reads from HANA. Records back up what was said, find what wasn't said, and mark trackable skills with no records as `needs_evidence`. Skills EWM can't see stay as said. With no records at all, nothing changes. None of this affects the score.
+- SAP's person masking mistakes Hindi words for names, so Devanagari text skips that one entity (`maskedEntities` in `llm.js`). Email, phone and ID masking stay on, and Agent A is told to leave names out.
 - Never let the LLM output a score, ranking or verdict about a person, or infer protected attributes.
 - `LLM_MODEL` comes from the environment. Don't hardcode it. Pick a model available in your AI Launchpad.
 

@@ -6,7 +6,7 @@ const askJson = require('./lib/llm')
 const sapContext = require('./lib/sap-context')
 const { ewmSupport, parseExtract } = require('./lib/ewm')
 const { checkShare, anonRef } = require('./lib/credential')
-const { staffLogin, personaOf, personaHeader } = require('./lib/demo-worker')
+const { forget } = require('./lib/identity')
 
 // A worker's interest in outside jobs is private: managers never see those matches, and they stay out of the audit.
 async function internalMatches(where) {
@@ -19,7 +19,8 @@ async function internalMatches(where) {
 // Who is asking, and for which company. Every read and action below is limited to that company.
 async function staffOf(req) {
   const { Staff } = cds.entities('frontline')
-  const staff = await SELECT.one.from(Staff).where({ login: staffLogin(req.user.id, process.env, personaOf(req.user, personaHeader(req))) })
+  const login = req.user.attr?.staffLogin
+  const staff = login ? await SELECT.one.from(Staff).where({ login }) : null
   return staff ?? req.reject(403, "This login isn't linked to a company. An admin needs to add it.")
 }
 
@@ -44,10 +45,71 @@ module.exports = cds.service.impl(function () {
     req.query.where({ company_ID })
   })
 
+  this.on('people', async req => {
+    const { Workers, Staff, Companies } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const company = await SELECT.one.from(Companies).where({ ID: company_ID })
+    return JSON.stringify({
+      company: { name: company?.name, marketplace: Boolean(company?.marketplace) },
+      staff: (await SELECT.from(Staff).where({ company_ID })).map(s => ({ name: s.name, email: s.email, title: s.title, roles: s.roles })),
+      workers: (await SELECT.from(Workers).where({ company_ID, active: true }).orderBy('name')).map(w => ({ ID: w.ID, name: w.name, email: w.email, jobTitle: w.jobTitle, site: w.site, ewmUser: w.ewmUser }))
+    })
+  })
+
+  this.on('registerPerson', async req => {
+    const { Workers, Staff, AuditEvents } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const { name, email, kind, jobTitle, site, ewmUser } = req.data
+    const mail = String(email ?? '').trim().toLowerCase()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail) || mail.length > 120) return req.reject(400, 'Enter a valid email address')
+    if (!String(name ?? '').trim() || name.length > 100) return req.reject(400, 'Enter a name of up to 100 characters')
+    if (!['Worker', 'Supervisor', 'Manager'].includes(kind)) return req.reject(400, 'Choose Worker, Supervisor or Manager')
+    if (ewmUser && !/^[A-Z0-9-]{3,20}$/i.test(ewmUser)) return req.reject(400, 'The EWM user code can have 3 to 20 letters, numbers or dashes')
+    const taken = (await SELECT.one.from(Workers).where({ email: mail, active: true })) || (await SELECT.one.from(Staff).where({ email: mail }))
+    if (taken) return req.reject(409, 'Someone with this email is already registered')
+    // One EWM user per person, or one person's warehouse records would back up another's skills.
+    if (ewmUser && await SELECT.one.from(Workers).where({ ewmUser: ewmUser.toUpperCase(), company_ID, active: true })) return req.reject(409, 'This EWM user code already belongs to someone else')
+    const removed = kind === 'Worker' && await SELECT.one.from(Workers).columns('ID').where({ email: mail, company_ID, active: false })
+    if (removed) {
+      await UPDATE(Workers, removed.ID).with({ active: true, name: name.trim(), ...(ewmUser && { ewmUser: ewmUser.toUpperCase() }) })
+    } else if (kind === 'Worker') {
+      await INSERT.into(Workers).entries({
+        name: name.trim(), email: mail, company_ID, site: String(site ?? '').slice(0, 50), jobTitle: String(jobTitle ?? '').slice(0, 100),
+        ewmUser: ewmUser ? ewmUser.toUpperCase() : null, stage: 'NOT_STARTED', active: true, employmentType: 'permanent', lang: 'en'
+      })
+    } else {
+      await INSERT.into(Staff).entries({ login: mail, email: mail, name: name.trim(), title: String(jobTitle ?? kind).slice(0, 100), company_ID, roles: kind === 'Manager' ? 'Manager,Supervisor' : 'Supervisor' })
+    }
+    await INSERT.into(AuditEvents).entries({ company_ID, type: 'person_registered', stage: 'n/a', actor: 'hr', contract: kind })
+    forget()
+    return true
+  })
+
+  this.on('removePerson', async req => {
+    const { Workers, Staff, AuditEvents } = cds.entities('frontline')
+    const staffMe = await staffOf(req)
+    const mail = String(req.data.email ?? '').trim().toLowerCase()
+    if (mail && mail === String(staffMe.email ?? '').toLowerCase()) return req.reject(400, "You can't remove yourself")
+    const changed = (await UPDATE(Workers).set({ active: false }).where({ email: mail, company_ID: staffMe.company_ID })) +
+      (await DELETE.from(Staff).where({ email: mail, company_ID: staffMe.company_ID }))
+    if (!changed) return req.reject(404, 'Nobody with this email is registered at your company')
+    await INSERT.into(AuditEvents).entries({ company_ID: staffMe.company_ID, type: 'person_removed', stage: 'n/a', actor: 'hr', contract: 'Access' })
+    forget()
+    return true
+  })
+
+  this.on('setMarketplace', async req => {
+    const { Companies, AuditEvents } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    await UPDATE(Companies, company_ID).with({ marketplace: Boolean(req.data.on) })
+    await INSERT.into(AuditEvents).entries({ company_ID, type: 'marketplace_changed', stage: 'n/a', actor: 'hr', contract: req.data.on ? 'On' : 'Off' })
+    return Boolean(req.data.on)
+  })
+
   this.on('teamSkills', async req => {
     const { Workers, SkillClaims, VerificationRequests, EwmTaskRecords } = cds.entities('frontline')
     const { company_ID } = await staffOf(req)
-    const workers = await SELECT.from(Workers).where({ company_ID }).orderBy('name')
+    const workers = await SELECT.from(Workers).where({ company_ID, active: true }).orderBy('name')
     const worker_ID = { in: workers.map(w => w.ID) }
     const claims = groupBy(await SELECT.from(SkillClaims).where({ worker_ID }), 'worker_ID')
     const pending = groupBy(await SELECT.from(VerificationRequests).where({ worker_ID, status: 'pending' }), 'worker_ID')
@@ -101,13 +163,14 @@ module.exports = cds.service.impl(function () {
   })
 
   this.on('verificationRequests', async req => {
-    const { Workers, VerificationRequests, EwmTaskRecords } = cds.entities('frontline')
+    const { Workers, VerificationRequests, EwmTaskRecords, SkillClaims } = cds.entities('frontline')
     const { company_ID } = await staffOf(req)
     const workers = new Map((await SELECT.from(Workers).where({ company_ID })).map(w => [w.ID, w]))
     if (!workers.size) return '[]'
     const worker_ID = { in: [...workers.keys()] }
     const requests = await SELECT.from(VerificationRequests).where({ worker_ID, status: 'pending' }).orderBy('createdAt')
     const records = groupBy(await SELECT.from(EwmTaskRecords).where({ worker_ID }), 'worker_ID')
+    const said = new Map((await SELECT.from(SkillClaims).where({ worker_ID })).map(c => [`${c.worker_ID}|${c.skill_ID}`, c.basis]))
     return JSON.stringify(requests.map(r => ({
       ID: r.ID,
       worker_ID: r.worker_ID,
@@ -115,7 +178,8 @@ module.exports = cds.service.impl(function () {
       site: workers.get(r.worker_ID).site,
       skill_ID: r.skill_ID,
       requestedAt: r.createdAt,
-      ewm: ewmSupport(records.get(r.worker_ID) ?? [])[r.skill_ID] ?? null
+      ewm: ewmSupport(records.get(r.worker_ID) ?? [])[r.skill_ID] ?? null,
+      said: said.get(`${r.worker_ID}|${r.skill_ID}`) ?? ''
     })))
   })
 
@@ -125,6 +189,7 @@ module.exports = cds.service.impl(function () {
     const open = await SELECT.one.from(VerificationRequests).where({ ID: request })
     if (!open) return req.reject(404, 'Request not found')
     const { staff } = await ownWorker(req, open.worker_ID)
+    if (req.user.attr?.workerId === open.worker_ID) return req.reject(403, "You can't verify your own skills. Another manager has to.")
     return JSON.stringify(await handle(open.worker_ID, 'verification_decided', { request, approved, proofType, proofRef, proficiency, note, staff }, req.user.id))
   })
 
@@ -138,7 +203,13 @@ module.exports = cds.service.impl(function () {
     } catch (e) {
       return req.reject(400, e.message)
     }
-    const own = new Set((await SELECT.from(Workers).columns('ID').where({ company_ID })).map(w => w.ID))
+    const people = await SELECT.from(Workers).columns('ID', 'ewmUser').where({ company_ID })
+    const own = new Set(people.map(w => w.ID))
+    const byEwmUser = new Map(people.filter(w => w.ewmUser).map(w => [w.ewmUser.toUpperCase(), w.ID]))
+    // EWM knows people by their EWM user code, so match each line to the registered person.
+    const unknown = rows.find(r => r.ewmUser && !byEwmUser.has(r.ewmUser))
+    if (unknown) return req.reject(400, `EWM user ${unknown.ewmUser} isn't registered at your company. Add their EWM user code in People first.`)
+    rows = rows.map(({ ewmUser, ...r }) => (ewmUser ? { ...r, worker_ID: byEwmUser.get(ewmUser) } : r))
     const outsider = rows.find(r => !own.has(r.worker_ID))
     if (outsider) return req.reject(403, `Worker ${outsider.worker_ID} is not in your company`)
     // Loading the same day again replaces it, so a corrected file never double counts.
@@ -162,10 +233,12 @@ module.exports = cds.service.impl(function () {
     return JSON.stringify(await SELECT.from(SuccessFactorsSkills).where({ company_ID, skill_ID: req.data.skill }).orderBy('proficiency desc', 'userName'))
   })
 
-  // Everyone at other companies who has chosen to be seen, with at least one verified skill.
+  // Everyone at other companies who has chosen to be seen, with at least one verified skill,
+  // and whose own company has joined the marketplace.
   async function openPeople(company_ID) {
-    const { Workers, SkillClaims } = cds.entities('frontline')
-    const people = await SELECT.from(Workers).where({ outsideOptIn: true, company_ID: { '!=': company_ID } })
+    const { Workers, SkillClaims, Companies } = cds.entities('frontline')
+    const joined = (await SELECT.from(Companies).columns('ID').where({ marketplace: true })).map(c => c.ID)
+    const people = (await SELECT.from(Workers).where({ outsideOptIn: true, active: true, company_ID: { '!=': company_ID } })).filter(w => joined.includes(w.company_ID))
     if (!people.length) return []
     const proven = groupBy(await SELECT.from(SkillClaims).where({ worker_ID: { in: people.map(p => p.ID) }, status: 'verified' }), 'worker_ID')
     return people.filter(p => proven.has(p.ID)).map(p => ({ ...p, proven: proven.get(p.ID), ref: anonRef(p.ID, company_ID) }))

@@ -35,7 +35,7 @@ export function EmployeeProfile({ worker, names, revision }: { worker: string; n
       <div className="kpis">
         <div className="kpi"><strong>{verified.length}</strong><span>Verified skills</span></div>
         <div className="kpi"><strong>{others.length}</strong><span>Not yet verified</span></div>
-        <div className="kpi"><strong>{profile.bestScore === null ? '–' : `${profile.bestScore}%`}</strong><span>Match to {profile.targetRole} (demo data)</span></div>
+        <div className="kpi"><strong>{profile.bestScore === null ? '–' : `${profile.bestScore}%`}</strong><span>Match to {profile.targetRole} (sample data)</span></div>
       </div>
 
       {open > 0 && (
@@ -44,7 +44,7 @@ export function EmployeeProfile({ worker, names, revision }: { worker: string; n
         </MessageStrip>
       )}
 
-      <Card header={<CardHeader titleText="Verified skills" subtitleText="Proven, and added to SuccessFactors (mock)" />}>
+      <Card header={<CardHeader titleText="Verified skills" subtitleText="Proven, and added to the SuccessFactors stand-in" />}>
         {!verified.length && <div className="card-body"><Text>Nothing verified yet.</Text></div>}
         {verified.length > 0 && (
           <DataTable

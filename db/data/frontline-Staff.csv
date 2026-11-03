@@ -1,4 +1,4 @@
-login;name;title;company_ID
-meera;Meera S.;Warehouse Operations Manager;INDIGO
-sunil;Sunil R.;Shift Supervisor;INDIGO
-arjun;Arjun D.;Hiring Manager;MERIDIAN
+login;name;title;company_ID;email;roles
+meera;Meera S.;Warehouse Operations Manager;INDIGO;meera@indigohub.example;Manager,Supervisor,HRAdmin
+sunil;Sunil R.;Shift Supervisor;INDIGO;sunil@indigohub.example;Supervisor
+arjun;Arjun D.;Hiring Manager;MERIDIAN;arjun@meridianfreight.example;Manager,HRAdmin

@@ -16,11 +16,6 @@ strong { font-weight: 700; }
 .score strong { font-size: 2.25rem; color: var(--sapBrandColor, #0070f2); }
 .score small { color: var(--sapContent_LabelColor, #556b82); }
 
-/* Welcome and sign-in */
-.welcome { min-height: 100vh; display: grid; place-items: center; padding: 1rem; background: linear-gradient(160deg, var(--sapShellColor, #fff), var(--sapBackgroundColor, #f5f6f7)); }
-.welcome-card { width: min(100%, 26rem); display: grid; gap: 1rem; background: var(--sapGroup_ContentBackground, #fff); border-radius: 1rem; box-shadow: var(--sapContent_Shadow1, 0 2px 8px rgba(0, 0, 0, .15)); padding: 2rem; }
-.welcome-actions { display: grid; gap: .5rem; }
-.brand-mark { width: 3rem; height: 3rem; display: grid; place-items: center; border-radius: .5rem; background: var(--sapBrandColor, #0070f2); color: #fff; font-weight: 700; }
 
 /* Launchpad */
 .launchpad { padding: 1.5rem clamp(1rem, 4vw, 3rem); display: grid; gap: 1.75rem; }
@@ -118,3 +113,60 @@ a.tile:focus-visible { outline: 2px solid var(--sapContent_FocusColor, #0070f2);
 .how-number { width: 2.25rem; height: 2.25rem; display: grid; place-items: center; border-radius: 50%; background: var(--sapBrandColor, #0070f2); color: #fff; font-weight: 700; }
 .how-head { display: flex; justify-content: space-between; gap: .75rem; flex-wrap: wrap; width: 100%; }
 .how-who { font-size: .8125rem; font-weight: 700; color: var(--sapBrandColor, #0070f2); text-transform: uppercase; letter-spacing: .04em; }
+
+/* Worker home: a branded band with the one action that matters most */
+.worker-hero { display: grid; gap: 1.25rem; padding: 1.25rem; border-radius: 1rem; color: #fff; background: linear-gradient(135deg, #0a2f6e 0%, #123c8c 55%, #1e5bc6 100%); box-shadow: var(--sapContent_Shadow1, 0 2px 8px rgba(0, 0, 0, .15)); }
+.hero-who { display: flex; align-items: center; gap: .875rem; flex-wrap: wrap; }
+.hero-who > div { flex: 1; min-width: 10rem; }
+.hero-hello { font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
+.hero-job { color: #d6e2f7; font-size: .9375rem; }
+.hero-lang { width: 9rem; }
+.hero-record { display: grid; gap: .5rem; padding: 1rem; border-radius: .75rem; background: rgba(255, 255, 255, .1); border-left: 6px solid #ffc800; }
+.hero-record h2 { margin: 0; font-size: 1.375rem; }
+.hero-record p { color: #e2eaf8; max-width: 36rem; }
+.hero-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .25rem; }
+.kpis.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+button.kpi, a.kpi { border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; text-decoration: none; }
+button.kpi:hover, a.kpi:hover { box-shadow: var(--sapContent_Shadow1, 0 2px 8px rgba(0, 0, 0, .15)); }
+.kpi.attention strong { color: var(--sapCriticalTextColor, #b44f00); }
+.skill-group + .skill-group { border-top: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.group-title { margin: 0; padding: .875rem 1rem .25rem; font-size: .875rem; color: var(--sapContent_LabelColor, #556b82); }
+.group-title span { display: inline-block; min-width: 1.5rem; padding: 0 .4rem; margin-left: .25rem; border-radius: 1rem; background: var(--sapNeutralBackground, #eef0f2); text-align: center; }
+.record-dialog::part(content) { padding: 0; }
+.dialog-body { display: grid; gap: .875rem; padding: 1rem; width: min(36rem, 86vw); }
+.mic.live { animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 .5rem rgba(187, 0, 0, .15); } }
+@media (prefers-reduced-motion: reduce) { .mic.live { animation: none; } }
+.found-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.found-list li { display: grid; gap: .25rem; padding: .75rem; border-radius: .5rem; background: var(--sapNeutralBackground, #f5f6f7); }
+.new-tag { margin-left: .375rem; padding: .05rem .45rem; border-radius: 1rem; background: #ffc800; color: #10151c; font-size: .75rem; font-weight: 700; vertical-align: middle; }
+.chips { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.guide-steps { list-style: none; margin: 0; padding: .5rem 1rem 1rem; display: grid; gap: .75rem; counter-reset: step; }
+.guide-steps li { position: relative; display: grid; gap: .25rem; padding-left: 2.25rem; justify-items: start; }
+.guide-steps li ui5-progress-indicator { width: 100%; max-width: 22rem; }
+.guide-steps li::before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 1.5rem; height: 1.5rem; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--sapBrandColor, #0070f2); color: var(--sapBrandColor, #0070f2); font-size: .8125rem; font-weight: 700; }
+.guide-steps li.done::before { content: '✓'; background: var(--sapPositiveColor, #256f3a); border-color: var(--sapPositiveColor, #256f3a); color: #fff; }
+
+/* Manager overview */
+.page-head { display: grid; gap: .25rem; }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1rem; align-items: start; }
+.waiting, .activity, .bars { list-style: none; margin: 0; padding: 0 1rem .75rem; display: grid; gap: .5rem; }
+.waiting li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .5rem 0; border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5); }
+.waiting li div { display: grid; }
+.waiting li span { color: var(--sapContent_LabelColor, #556b82); font-size: .875rem; }
+.bars li { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 2rem; gap: .5rem; align-items: center; font-size: .875rem; }
+.bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar { height: .625rem; border-radius: 1rem; background: var(--sapNeutralBackground, #eef0f2); overflow: hidden; }
+.bar span { display: block; height: 100%; background: var(--sapBrandColor, #0070f2); }
+.bar-value { text-align: right; font-weight: 700; }
+.activity li { display: grid; gap: .125rem; padding: .375rem 0; border-bottom: 1px solid var(--sapList_BorderColor, #e5e5e5); font-size: .875rem; }
+.activity time { color: var(--sapContent_LabelColor, #556b82); font-size: .8125rem; }
+.switch-row { display: flex; align-items: center; gap: .75rem; }
+.form-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); align-items: end; justify-items: stretch; }
+.form-grid > .actions { justify-items: start; }
+.form-grid > div { display: grid; gap: .25rem; }
+.form-grid ui5-input, .form-grid ui5-select { width: 100%; }
+@media (max-width: 700px) {
+  .kpis.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.waiting .overdue { color: var(--sapCriticalTextColor, #b44f00); font-weight: 700; }

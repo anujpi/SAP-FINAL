@@ -6,19 +6,21 @@ const match = require('./agents/match')
 const pathway = require('./agents/pathway')
 const { randomBytes } = require('node:crypto')
 const { sign, newToken } = require('./lib/credential')
+const { ewmSupport, MIN_TASKS, MIN_DAYS } = require('./lib/ewm')
 
 const PROOF_TYPES = ['ewm_records', 'observed_on_shift', 'training_record']
 
 // These can happen at any point once a profile exists, and none of them move the journey on.
 const stayIn = stage => Object.fromEntries(
-  ['verification_requested', 'verification_decided', 'outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered'].map(type => [type, stage])
+  ['verification_requested', 'verification_decided', 'outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered',
+    'input_submitted', 'readback_confirmed', 'recording_cancelled'].map(type => [type, stage])
 )
 
 const TRANSITIONS = {
   NOT_STARTED: { consent_granted: 'DISCOVERING' },
   HALTED: { consent_granted: 'DISCOVERING' },
   DISCOVERING: { input_submitted: 'AWAITING_READBACK' },
-  AWAITING_READBACK: { input_submitted: 'AWAITING_READBACK', readback_confirmed: 'ACTIVE' },
+  AWAITING_READBACK: { input_submitted: 'AWAITING_READBACK', readback_confirmed: 'ACTIVE', recording_cancelled: 'DISCOVERING' },
   ACTIVE: {
     ...stayIn('ACTIVE'),
     assessment_submitted: 'ACTIVE',
@@ -34,7 +36,7 @@ const TRANSITIONS = {
 const WORKER_EVENTS = new Set([
   'consent_granted', 'consent_revoked', 'input_submitted', 'readback_confirmed',
   'assessment_submitted', 'module_completed', 'outside_opt_in', 'review_requested',
-  'verification_requested', 'application_submitted', 'hire_interest_answered'
+  'verification_requested', 'application_submitted', 'hire_interest_answered', 'recording_cancelled'
 ])
 
 const ACTOR_ROLE = type => (WORKER_EVENTS.has(type) ? 'worker' : 'manager')
@@ -130,24 +132,45 @@ const HANDLERS = {
 
   async input_submitted(worker, { text }) {
     if (typeof text !== 'string' || !text.trim() || text.length > 4000) fail(400, 'Answer must be 1 to 4000 characters')
-    const { TaskExperiences } = db()
+    const { TaskExperiences, AuditEvents } = db()
+    // ponytail: a fixed daily cap per worker keeps AI costs bounded; make it a company setting if 20 proves too low.
+    const today = new Date().toISOString().slice(0, 10)
+    const recorded = await SELECT.one.from(AuditEvents).columns('count(1) as n').where({ worker_ID: worker.ID, type: 'input_submitted', occurredAt: { '>=': today } })
+    if (recorded?.n >= 20) fail(429, "That's 20 recordings today. Please try again tomorrow.")
     const { tasks, degraded } = await discover(text)
-    await DELETE.from(TaskExperiences).where({ worker_ID: worker.ID })
+    // Only the recording in progress is replaced. Confirmed work from earlier recordings stays.
+    await DELETE.from(TaskExperiences).where({ worker_ID: worker.ID, confirmed: false })
     await INSERT.into(TaskExperiences).entries(tasks.map(t => ({ ...t, worker_ID: worker.ID, confirmed: false })))
     return { contract: 'TaskExperience[]', degraded, tasks }
   },
 
   async readback_confirmed(worker) {
     const { TaskExperiences, Skills, SkillClaims } = db()
-    await UPDATE(TaskExperiences).set({ confirmed: true }).where({ worker_ID: worker.ID })
-    const tasks = await SELECT.from(TaskExperiences).where({ worker_ID: worker.ID })
-    const { claims, degraded } = await verify(tasks, await SELECT.from(Skills))
-    await DELETE.from(SkillClaims).where({ worker_ID: worker.ID, status: { '!=': 'verified' } })
-    const verified = await SELECT.from(SkillClaims).where({ worker_ID: worker.ID })
-    const fresh = claims.filter(c => !verified.some(v => v.skill_ID === c.skill_ID))
-    if (fresh.length) await INSERT.into(SkillClaims).entries(fresh.map(c => ({ ...c, worker_ID: worker.ID })))
+    const tasks = await SELECT.from(TaskExperiences).where({ worker_ID: worker.ID, confirmed: false })
+    if (!tasks.length) fail(409, 'There is nothing new to confirm')
+    // HANA holds what this person actually did, so the skills get checked against it.
+    const records = await SELECT.from(db().EwmTaskRecords).where({ worker_ID: worker.ID })
+    const { claims, unmatched, degraded } = await verify(tasks, await SELECT.from(Skills), ewmSupport(records))
+    await UPDATE(TaskExperiences).set({ confirmed: true }).where({ worker_ID: worker.ID, confirmed: false })
+    // Add to what they already have. A verified skill is never touched, and a skill they already had is updated.
+    const existing = new Map((await SELECT.from(SkillClaims).where({ worker_ID: worker.ID })).map(c => [c.skill_ID, c]))
+    const found = []
+    for (const c of claims) {
+      const had = existing.get(c.skill_ID)
+      if (had?.status === 'verified') continue
+      // A skill only the records show, which they already had, isn't news.
+      if (had && c.source === 'work_records') continue
+      if (had) await DELETE.from(SkillClaims).where({ ID: had.ID })
+      await INSERT.into(SkillClaims).entries({ ...c, worker_ID: worker.ID })
+      found.push({ skill_ID: c.skill_ID, status: c.status, source: c.source, basis: c.basis ?? '', isNew: !had })
+    }
     await refresh(worker)
-    return { contract: 'SkillClaim[]', degraded }
+    return { contract: 'SkillClaim[]', degraded, found, unmatched }
+  },
+
+  async recording_cancelled(worker) {
+    await DELETE.from(db().TaskExperiences).where({ worker_ID: worker.ID, confirmed: false })
+    return { contract: 'TaskExperience[]' }
   },
 
   // Scored on the server, so a worker cannot simply claim a pass. A wrong answer costs nothing.
@@ -180,6 +203,10 @@ const HANDLERS = {
       if (!PROOF_TYPES.includes(proofType)) fail(400, `Proof must be one of ${PROOF_TYPES.join(', ')}`)
       if (!proofRef?.trim() || proofRef.length > 100) fail(400, 'A proof reference of up to 100 characters is required')
       if (!Number.isInteger(proficiency) || proficiency < 1 || proficiency > 3) fail(400, 'Proficiency must be 1, 2 or 3')
+      if (proofType === 'ewm_records') {
+        const shown = ewmSupport(await SELECT.from(db().EwmTaskRecords).where({ worker_ID: worker.ID }))[open.skill_ID]
+        if (!shown || shown.tasks < MIN_TASKS || shown.days < MIN_DAYS) fail(400, `EWM doesn't show enough of this work yet (${MIN_TASKS} tasks over ${MIN_DAYS} days). Choose another proof, or wait for more records.`)
+      }
       await addEvidence(worker, open.skill_ID, 'manager_verification', proficiency, staff, { type: proofType, ref: proofRef })
       await UPDATE(VerificationRequests, request).with({ ...decided, status: 'verified', proofType, proofRef })
     } else {
@@ -254,6 +281,8 @@ const HANDLERS = {
   },
 
   async outside_opt_in(worker, { optIn }) {
+    const company = await SELECT.one.from(db().Companies).where({ ID: worker.company_ID })
+    if (optIn && !company?.marketplace) fail(409, 'Your company has not joined the job marketplace')
     await UPDATE(db().Workers, worker.ID).with({ outsideOptIn: Boolean(optIn) })
     await refresh({ ...worker, outsideOptIn: Boolean(optIn) })
     return { contract: 'RoleMatch' }

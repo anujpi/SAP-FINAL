@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { Card, CardHeader, Label, Link, MessageStrip, ObjectStatus, Option, Select, Text, Title } from '@ui5/webcomponents-react'
 import { AI_ROUTE, list, parsed } from './api'
 
-type Status = 'Live' | 'Sample data' | 'Mock' | 'Planned'
+type Status = 'Live' | 'Sample data' | 'Stand-in' | 'Planned'
 type System = { id: string; name: string; status: Status; does: string; api?: string; note?: string; data?: (c: any) => unknown }
 
-const STATE: Record<Status, 'Positive' | 'Critical' | 'Information' | 'None'> = { Live: 'Positive', 'Sample data': 'Critical', Mock: 'Information', Planned: 'None' }
+const STATE: Record<Status, 'Positive' | 'Critical' | 'Information' | 'None'> = { Live: 'Positive', 'Sample data': 'Critical', 'Stand-in': 'Information', Planned: 'None' }
 
 const EXISTING: System[] = [
   {
@@ -21,10 +21,10 @@ const EXISTING: System[] = [
     data: c => c.empJob
   },
   {
-    id: 'tih', name: 'SAP SuccessFactors skills', status: 'Mock',
+    id: 'tih', name: 'SAP SuccessFactors skills', status: 'Stand-in',
     does: 'Every skill a manager verifies goes into SuccessFactors, so HR can filter employees for better roles by proven skill. This is why a company that already runs SAP would buy it. Try it in Find Talent.',
     api: 'Talent Intelligence Hub: Growth Portfolio REST API',
-    note: 'SAP limits this API to designated Skills Partners (KBA 3774098). Without that status, the route is a file-based import. In this demo a local table stands in.',
+    note: 'SAP limits this API to designated Skills Partners (KBA 3774098). Without that status, the route is a file-based import. For now, a table in SAP HANA stands in.',
     data: c => c.writeBack.skills
   },
   {
@@ -92,8 +92,9 @@ export function Landscape() {
       <Title level="H1" size="H3">SAP landscape</Title>
       <Text>How Frontline Shift fits around the SAP systems a company already runs. It adds to them and doesn't replace them.</Text>
       <MessageStrip design="Information" hideCloseButton>
-        No customer SAP system is connected in this demo. "Sample data" means our data in that SAP format. "Mock" means a local table stands in for that system.
+        No customer SAP system is connected yet. "Sample data" means our data in that SAP format. "Stand-in" means a table in SAP HANA does that system's job for now.
       </MessageStrip>
+      <LiveData />
 
       <div className="landscape">
         <section aria-label="Existing SAP systems">
@@ -131,5 +132,17 @@ export function Landscape() {
         </div>
       </Card>
     </main>
+  )
+}
+
+function LiveData() {
+  const [source, setSource] = useState<any>(null)
+  useEffect(() => { parsed('/user/dataSource()').then(setSource).catch(() => setSource(null)) }, [])
+  if (!source) return null
+  const counts = Object.entries(source.counts).map(([label, n]) => `${n} ${label}`).join(' · ')
+  return (
+    <MessageStrip design={source.kind === 'hana' ? 'Positive' : 'Critical'} hideCloseButton>
+      <strong>{source.kind === 'hana' ? 'Read live from SAP HANA Cloud just now:' : `Local test database (${source.kind}), not HANA:`}</strong> {counts}
+    </MessageStrip>
   )
 }

@@ -35,6 +35,12 @@ service WorkerService @(path: '/worker', requires: 'Worker') {
   /** Companies asking to connect, and which companies can see this worker's certificates right now. */
   function myHireRequests() returns LargeString;
 
+  /** For each skill they have or need: what EWM shows, what to learn, and what to do next. Plain code. */
+  function skillGuide() returns LargeString;
+
+  /** Whether this worker's company lets them see jobs at other companies. */
+  function marketplace() returns Boolean;
+
   /** What EWM shows for each of this worker's skills. */
   function myEwmSupport() returns LargeString;
 

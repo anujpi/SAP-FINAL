@@ -4,13 +4,28 @@ using { frontline as db } from '../db/schema';
 service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', 'HRAdmin']) {
 
   @readonly entity ReviewQueue as select from db.Workers { ID, name, site, stage, company.ID as company_ID } where stage = 'AWAITING_MANAGER';
-  @readonly entity Team as select from db.Workers { ID, name, site, stage, company.ID as company_ID };
+  @readonly entity Team as select from db.Workers { ID, name, site, stage, ewmUser, company.ID as company_ID } where active = true;
   @readonly entity Skills as projection on db.Skills excluding { keywords };
   @readonly entity Roles as projection on db.Roles;
 
   // A worker's interest in outside jobs is private, so those events never show here.
   @requires: ['Manager', 'HRAdmin']
   @readonly entity AuditEvents as select from db.AuditEvents { * } where type not in ('outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered');
+
+  /** Who is registered at this company, and its settings. */
+  @requires: ['Manager', 'HRAdmin']
+  function people() returns LargeString;
+
+  /** Only registered people can sign in. HR registers them here. */
+  @requires: 'HRAdmin'
+  action registerPerson(name : String, email : String, kind : String, jobTitle : String, site : String, ewmUser : String) returns Boolean;
+
+  @requires: 'HRAdmin'
+  action removePerson(email : String) returns Boolean;
+
+  /** Whether this company's people see, and can be seen by, other companies. */
+  @requires: 'HRAdmin'
+  action setMarketplace(on : Boolean) returns Boolean;
 
   /** Every employee with their skills, EWM support and open requests. */
   function teamSkills() returns LargeString;

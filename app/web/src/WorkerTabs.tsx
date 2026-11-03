@@ -6,14 +6,17 @@ import {
 } from '@ui5/webcomponents-react'
 import { list, parseJson, parsed, sendEvent, value } from './api'
 import type { Texts } from './i18n'
+import { ProfileCard } from './ui'
 import type { Run } from './Worker'
 import type { User } from './main'
 
-type HomeProps = { t: Texts; run: Run; revision: number; busy: boolean; names: Record<string, string>; stage: string; me: any; user: User }
+type HomeProps = { t: Texts; run: Run; revision: number; busy: boolean; names: Record<string, string>; stage: string; me: any; user: User; lang?: string }
 
 // Unverified is never shown as a negative state.
-const CHIP_STATE: Record<string, 'Positive' | 'Information' | 'None'> = { verified: 'Positive', self_reported: 'Information', needs_evidence: 'None' }
-const chipText = (status: string, t: Texts) => t[status as 'verified' | 'self_reported' | 'needs_evidence'] ?? t.needs_evidence
+const CHIP_STATE: Record<string, 'Positive' | 'Information' | 'None' | 'Critical'> = { verified: 'Positive', work_records: 'Positive', self_reported: 'Information', needs_evidence: 'None', missing_for_role: 'Critical' }
+const chipText = (status: string, t: Texts) => t[status as 'verified' | 'work_records' | 'self_reported' | 'needs_evidence' | 'missing_for_role'] ?? t.needs_evidence
+// Strongest first: proven, then what the records show, then what they said.
+const SKILL_ORDER = ['verified', 'work_records', 'self_reported', 'needs_evidence']
 const dateOf = (iso: string) => new Date(iso).toLocaleDateString()
 
 export function Skills({ t, run, revision, busy, names }: HomeProps) {
@@ -27,11 +30,19 @@ export function Skills({ t, run, revision, busy, names }: HomeProps) {
     list('/worker/MyRequests?$orderby=createdAt desc').then(setRequests).catch(() => setRequests([]))
   }, [revision])
 
+  const groups = [
+    { key: 'verified', title: t.groupVerified, rows: skills.filter(s => s.status === 'verified') },
+    { key: 'records', title: t.groupRecords, rows: skills.filter(s => s.status === 'work_records') },
+    { key: 'said', title: t.groupSaid, rows: skills.filter(s => s.status !== 'verified' && s.status !== 'work_records') }
+  ].filter(g => g.rows.length)
   return (
-    <Card header={<CardHeader titleText={t.yourSkills} subtitleText={t.verifiedMeans} />}>
+    <Card header={<CardHeader titleText={t.yourSkills} subtitleText={t.skillsChecked} />}>
       {!skills.length && <div className="card-body"><Text>{t.noSkills}</Text></div>}
+      {groups.map(g => (
+      <section key={g.key} className="skill-group">
+      <h3 className="group-title">{g.title} <span>{g.rows.length}</span></h3>
       <ul className="skill-rows">
-        {skills.map(s => {
+        {[...g.rows].sort((a, b) => SKILL_ORDER.indexOf(a.status) - SKILL_ORDER.indexOf(b.status)).map(s => {
           const latest = requests.find(r => r.skill_ID === s.skill_ID)
           const support = ewm[s.skill_ID]
           return (
@@ -42,6 +53,7 @@ export function Skills({ t, run, revision, busy, names }: HomeProps) {
               </div>
               {s.status !== 'verified' && (
                 <>
+                  {s.basis ? <Text className="fine-print">{t.youSaid(s.basis)}</Text> : s.source === 'work_records' && <Text className="fine-print">{t.notMentioned}</Text>}
                   <Text className="fine-print">{support ? t.ewmFound(support.tasks, support.lastDate) : t.ewmNone}</Text>
                   {latest?.status === 'not_yet' && <MessageStrip design="Information" hideCloseButton>{t.decisionNotYet} <strong>{latest.note}</strong></MessageStrip>}
                   {latest?.status === 'pending'
@@ -53,6 +65,8 @@ export function Skills({ t, run, revision, busy, names }: HomeProps) {
           )
         })}
       </ul>
+      </section>
+      ))}
     </Card>
   )
 }
@@ -65,8 +79,10 @@ export function Jobs({ t, run, revision, busy, names, stage }: HomeProps) {
   const [market, setMarket] = useState<any[]>([])
   const [applications, setApplications] = useState<any[]>([])
   const [certificates, setCertificates] = useState<any[]>([])
+  const [joined, setJoined] = useState(true)
 
   useEffect(() => {
+    value<boolean>('/worker/marketplace()').then(v => setJoined(Boolean(v))).catch(() => setJoined(false))
     list('/worker/MyMatches').then(setMatches).catch(() => setMatches([]))
     list('/worker/Vacancies').then(setVacancies).catch(() => setVacancies([]))
     list('/worker/Roles').then(rows => setRoles(Object.fromEntries(rows.map(r => [r.ID, r.title])))).catch(() => setRoles({}))
@@ -88,11 +104,12 @@ export function Jobs({ t, run, revision, busy, names, stage }: HomeProps) {
       )}
 
       <Title level="H2" size="H5">{t.otherJobs}</Title>
-      <Text className="fine-print">{t.privateNote}</Text>
-      {stage !== 'SHORTLISTED' && (
+      {!joined && <MessageStrip design="Information" hideCloseButton>{t.marketplaceOff}</MessageStrip>}
+      {joined && <Text className="fine-print">{t.privateNote}</Text>}
+      {joined && stage !== 'SHORTLISTED' && (
         <CheckBox wrappingType="Normal" text={t.outsideToggle} checked={optIn} disabled={busy} onChange={e => run(() => sendEvent('outside_opt_in', { optIn: e.target.checked }))} />
       )}
-      {optIn && external.map(m => {
+      {joined && optIn && external.map(m => {
         const application = applications.find(a => a.vacancy_ID === m.vacancy_ID)
         return (
           <MatchCard key={m.ID} m={m} t={t} names={names} title={`${roles[m.vacancy?.role_ID]} · ${m.vacancy?.employer}${m.vacancy?.source === 'posted' ? ` (${t.newRole})` : ''}`}>
@@ -118,7 +135,7 @@ export function Jobs({ t, run, revision, busy, names, stage }: HomeProps) {
           </MatchCard>
         )
       })}
-      {optIn && market.length > 0 && (
+      {joined && optIn && market.length > 0 && (
         <Card header={<CardHeader titleText={t.inDemand} />}>
           <List separators="Inner">
             {market.map(s => <ListItemStandard key={s.skill} additionalText={`${s.demandCount} ${t.jobs}`}>{names[s.skill] ?? s.skill}</ListItemStandard>)}
@@ -221,7 +238,73 @@ export function Requests({ t, run, revision, busy, names }: HomeProps) {
   )
 }
 
-export function Learn({ t, run, revision, busy }: HomeProps) {
+const GUIDE_ORDER = ['missing_for_role', 'needs_evidence', 'self_reported', 'work_records']
+
+/** For each skill not yet verified: show it at work, learn it, then ask the manager. */
+export function Learning(props: HomeProps) {
+  const { t, run, revision, busy, names } = props
+  const [guide, setGuide] = useState<any>(null)
+  useEffect(() => { parsed('/worker/skillGuide()').then(setGuide).catch(() => setGuide(null)) }, [revision])
+  if (!guide) return <Text>{t.working}</Text>
+  const name = (s: any) => names[s.skill_ID] ?? s.name
+  const open = guide.skills.filter((s: any) => s.status !== 'verified').sort((a: any, b: any) => GUIDE_ORDER.indexOf(a.status) - GUIDE_ORDER.indexOf(b.status))
+  const forRole = guide.skills.filter((s: any) => s.neededForRole)
+  return (
+    <>
+      {guide.targetRole && (
+        <Card header={<CardHeader titleText={t.goalRole(guide.targetRole)} subtitleText={t.goalHint} />}>
+          <div className="card-body chips">
+            {forRole.map((s: any) => <ObjectStatus key={s.skill_ID} state={CHIP_STATE[s.status] ?? 'None'}>{name(s)}: {chipText(s.status, t)}</ObjectStatus>)}
+          </div>
+        </Card>
+      )}
+      <Title level="H2" size="H5">{t.guideTitle}</Title>
+      {!open.length && <Text>{t.allVerified}</Text>}
+      {open.map((s: any) => {
+        const ewm = s.ewm ?? { tasks: 0, days: 0 }
+        const shown = s.trackable && ewm.tasks >= guide.threshold.tasks && ewm.days >= guide.threshold.days
+        return (
+          <Card key={s.skill_ID} header={<CardHeader titleText={name(s)} subtitleText={s.neededForRole ? t.neededForRole : chipText(s.status, t)} />}>
+            <ol className="guide-steps">
+              <li className={shown ? 'done' : ''}>
+                <strong>{t.stepShow}</strong>
+                {s.trackable ? (
+                  <>
+                    <Text className="fine-print">{t.ewmProgress(ewm.tasks, ewm.days, guide.threshold.tasks, guide.threshold.days)}</Text>
+                    <ProgressIndicator value={Math.min(100, Math.round((Math.min(ewm.tasks / guide.threshold.tasks, 1) + Math.min(ewm.days / guide.threshold.days, 1)) * 50))} displayValue=" " accessibleName={t.stepShow} />
+                  </>
+                ) : <Text className="fine-print">{t.notTrackable}</Text>}
+              </li>
+              <li>
+                <strong>{t.stepLearn}</strong>
+                {s.module
+                  ? <Link href={s.module.url} target="_blank">{t.openLesson}: {t.moduleText[s.module.ID]?.title ?? s.module.title} ({s.module.durationMin} {t.minutes}, SAP Learning)</Link>
+                  : s.escoUri
+                    ? <>
+                        {s.description && <Text className="fine-print">{s.description}</Text>}
+                        <Link href={s.escoUri} target="_blank">{t.readAbout}</Link>
+                      </>
+                    : <Text className="fine-print">{s.description || t.askManagerHow}</Text>}
+              </li>
+              <li className={s.request === 'pending' ? 'done' : ''}>
+                <strong>{t.stepAsk}</strong>
+                {s.request === 'pending'
+                  ? <ObjectStatus state="Information">{t.requestSent}</ObjectStatus>
+                  : s.status === 'missing_for_role'
+                    ? <Text className="fine-print">{t.recordFirst}</Text>
+                    : <Button disabled={busy} onClick={() => run(() => sendEvent('verification_requested', { skill: s.skill_ID }))}>{t.requestVerify}</Button>}
+              </li>
+            </ol>
+          </Card>
+        )
+      })}
+      <Title level="H2" size="H5">{t.lessonsForRole}</Title>
+      <Learn {...props} />
+    </>
+  )
+}
+
+function Learn({ t, run, revision, busy }: HomeProps) {
   const [plan, setPlan] = useState<any>(null)
   const [modules, setModules] = useState<any[]>([])
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -242,7 +325,6 @@ export function Learn({ t, run, revision, busy }: HomeProps) {
 
   return (
     <>
-      <Title level="H2" size="H4">{t.pathway}</Title>
       {result === true && <MessageStrip design="Positive" hideCloseButton>{t.passed}</MessageStrip>}
       {result === false && <MessageStrip design="Information" hideCloseButton>{t.tryAgain}</MessageStrip>}
       {!order.length && <Text>{t.noGaps}</Text>}
@@ -381,12 +463,14 @@ export function Resume({ t, revision, names, me, user }: HomeProps) {
   const { page, print } = usePrint()
 
   useEffect(() => {
-    list('/worker/MyTasks').then(setTasks).catch(() => setTasks([]))
+    list('/worker/MyTasks?$filter=confirmed eq true').then(setTasks).catch(() => setTasks([]))
     list('/passport/MyCredentials').then(setCertificates).catch(() => setCertificates([]))
     list('/worker/MyOtherCertificates').then(setOthers).catch(() => setOthers([]))
   }, [revision])
 
   return (
+    <>
+    <ProfileCard person={me} company={user.company} labels={t.profile} />
     <article className="resume" ref={page}>
       <Title level="H2" size="H3">{me.name}</Title>
       <Text>{[user.company, me.site].filter(Boolean).join(' · ')}</Text>
@@ -417,5 +501,6 @@ export function Resume({ t, revision, names, me, user }: HomeProps) {
       )}
       <div className="actions"><Button onClick={print}>{t.print}</Button></div>
     </article>
+    </>
   )
 }

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_After" targetNamespace="https://frontline-shift.example/bpmn">
+  <bpmn:collaboration id="Collaboration_After">
+    <bpmn:participant id="Pool" name="Frontline Shift: from daily work to a better role" processRef="Process_After" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_After" name="Frontline Shift: from daily work to a better role" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_After">
+        <bpmn:lane id="Lane_0" name="Worker">
+          <bpmn:flowNodeRef>Start_W</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Consent</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Talk</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Read</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Right</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Ask</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_More</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Use</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Open</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_Stay</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Share</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Share</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_No</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_1" name="Frontline Shift on SAP BTP">
+          <bpmn:flowNodeRef>T_AI</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Skills</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Cert</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Both</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_2" name="Warehouse team">
+          <bpmn:flowNodeRef>Start_D</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Load</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_D</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Reason</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_3" name="Manager">
+          <bpmn:flowNodeRef>T_Review</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Proof</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Verify</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_4" name="HR with SuccessFactors">
+          <bpmn:flowNodeRef>T_SF</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Filter</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_HR</bpmn:flowNodeRef>
+        </bpmn:lane>
+        <bpmn:lane id="Lane_5" name="Other company">
+          <bpmn:flowNodeRef>T_Post</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Connect</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_See</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Invite</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_Hire</bpmn:flowNodeRef>
+        </bpmn:lane>
+    </bpmn:laneSet>
+      <bpmn:startEvent id="Start_W" name="Worker wants to move up"><bpmn:outgoing>Flow_Start_W_T_Consent</bpmn:outgoing></bpmn:startEvent>
+      <bpmn:userTask id="T_Consent" name="Give consent"><bpmn:incoming>Flow_Start_W_T_Consent</bpmn:incoming><bpmn:outgoing>Flow_T_Consent_T_Talk</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Talk" name="Say what you do"><bpmn:incoming>Flow_T_Consent_T_Talk</bpmn:incoming><bpmn:incoming>Flow_G_Right_T_Talk</bpmn:incoming><bpmn:outgoing>Flow_T_Talk_T_AI</bpmn:outgoing></bpmn:userTask>
+      <bpmn:serviceTask id="T_AI" name="Turn words into tasks and skills (SAP Generative AI Hub)"><bpmn:incoming>Flow_T_Talk_T_AI</bpmn:incoming><bpmn:outgoing>Flow_T_AI_T_Read</bpmn:outgoing></bpmn:serviceTask>
+      <bpmn:userTask id="T_Read" name="Check the read-back"><bpmn:incoming>Flow_T_AI_T_Read</bpmn:incoming><bpmn:outgoing>Flow_T_Read_G_Right</bpmn:outgoing></bpmn:userTask>
+      <bpmn:exclusiveGateway id="G_Right" name="Correct?"><bpmn:incoming>Flow_T_Read_G_Right</bpmn:incoming><bpmn:outgoing>Flow_G_Right_T_Talk</bpmn:outgoing><bpmn:outgoing>Flow_G_Right_T_Skills</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:serviceTask id="T_Skills" name="Show skills with EWM task counts"><bpmn:incoming>Flow_G_Right_T_Skills</bpmn:incoming><bpmn:outgoing>Flow_T_Skills_T_Ask</bpmn:outgoing></bpmn:serviceTask>
+      <bpmn:startEvent id="Start_D" name="Each working day"><bpmn:outgoing>Flow_Start_D_T_Load</bpmn:outgoing></bpmn:startEvent>
+      <bpmn:userTask id="T_Load" name="Load confirmed EWM tasks into SAP HANA"><bpmn:incoming>Flow_Start_D_T_Load</bpmn:incoming><bpmn:outgoing>Flow_T_Load_End_D</bpmn:outgoing></bpmn:userTask>
+      <bpmn:endEvent id="End_D" name="Records stored"><bpmn:incoming>Flow_T_Load_End_D</bpmn:incoming></bpmn:endEvent>
+      <bpmn:userTask id="T_Ask" name="Ask manager to verify"><bpmn:incoming>Flow_T_Skills_T_Ask</bpmn:incoming><bpmn:incoming>Flow_T_More_T_Ask</bpmn:incoming><bpmn:outgoing>Flow_T_Ask_T_Review</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Review" name="Review the request and EWM records"><bpmn:incoming>Flow_T_Ask_T_Review</bpmn:incoming><bpmn:outgoing>Flow_T_Review_G_Proof</bpmn:outgoing></bpmn:userTask>
+      <bpmn:exclusiveGateway id="G_Proof" name="Enough proof?"><bpmn:incoming>Flow_T_Review_G_Proof</bpmn:incoming><bpmn:outgoing>Flow_G_Proof_T_Reason</bpmn:outgoing><bpmn:outgoing>Flow_G_Proof_T_Verify</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:userTask id="T_Reason" name="Give a reason"><bpmn:incoming>Flow_G_Proof_T_Reason</bpmn:incoming><bpmn:outgoing>Flow_T_Reason_T_More</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_More" name="Read the reason and build more evidence"><bpmn:incoming>Flow_T_Reason_T_More</bpmn:incoming><bpmn:outgoing>Flow_T_More_T_Ask</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Verify" name="Attach proof and verify"><bpmn:incoming>Flow_G_Proof_T_Verify</bpmn:incoming><bpmn:outgoing>Flow_T_Verify_T_Cert</bpmn:outgoing></bpmn:userTask>
+      <bpmn:serviceTask id="T_Cert" name="Issue signed certificate and update the match"><bpmn:incoming>Flow_T_Verify_T_Cert</bpmn:incoming><bpmn:outgoing>Flow_T_Cert_G_Both</bpmn:outgoing></bpmn:serviceTask>
+      <bpmn:parallelGateway id="G_Both" name=""><bpmn:incoming>Flow_T_Cert_G_Both</bpmn:incoming><bpmn:outgoing>Flow_G_Both_T_SF</bpmn:outgoing><bpmn:outgoing>Flow_G_Both_T_Use</bpmn:outgoing></bpmn:parallelGateway>
+      <bpmn:serviceTask id="T_SF" name="Add verified skill to SuccessFactors"><bpmn:incoming>Flow_G_Both_T_SF</bpmn:incoming><bpmn:outgoing>Flow_T_SF_T_Filter</bpmn:outgoing></bpmn:serviceTask>
+      <bpmn:userTask id="T_Filter" name="Filter people for better roles"><bpmn:incoming>Flow_T_SF_T_Filter</bpmn:incoming><bpmn:outgoing>Flow_T_Filter_End_HR</bpmn:outgoing></bpmn:userTask>
+      <bpmn:endEvent id="End_HR" name="Internal move"><bpmn:incoming>Flow_T_Filter_End_HR</bpmn:incoming></bpmn:endEvent>
+      <bpmn:userTask id="T_Use" name="Add certificate to resume"><bpmn:incoming>Flow_G_Both_T_Use</bpmn:incoming><bpmn:outgoing>Flow_T_Use_G_Open</bpmn:outgoing></bpmn:userTask>
+      <bpmn:exclusiveGateway id="G_Open" name="Open to other companies?"><bpmn:incoming>Flow_T_Use_G_Open</bpmn:incoming><bpmn:outgoing>Flow_G_Open_End_Stay</bpmn:outgoing><bpmn:outgoing>Flow_G_Open_T_Post</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:endEvent id="End_Stay" name="Stays private"><bpmn:incoming>Flow_G_Open_End_Stay</bpmn:incoming></bpmn:endEvent>
+      <bpmn:userTask id="T_Post" name="Post a role and see anonymous candidates"><bpmn:incoming>Flow_G_Open_T_Post</bpmn:incoming><bpmn:outgoing>Flow_T_Post_T_Connect</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Connect" name="Ask to connect"><bpmn:incoming>Flow_T_Post_T_Connect</bpmn:incoming><bpmn:outgoing>Flow_T_Connect_T_Share</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Share" name="Choose what to share"><bpmn:incoming>Flow_T_Connect_T_Share</bpmn:incoming><bpmn:outgoing>Flow_T_Share_G_Share</bpmn:outgoing></bpmn:userTask>
+      <bpmn:exclusiveGateway id="G_Share" name="Share?"><bpmn:incoming>Flow_T_Share_G_Share</bpmn:incoming><bpmn:outgoing>Flow_G_Share_End_No</bpmn:outgoing><bpmn:outgoing>Flow_G_Share_T_See</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:endEvent id="End_No" name="Company never learns who"><bpmn:incoming>Flow_G_Share_End_No</bpmn:incoming></bpmn:endEvent>
+      <bpmn:userTask id="T_See" name="See name and chosen certificates"><bpmn:incoming>Flow_G_Share_T_See</bpmn:incoming><bpmn:outgoing>Flow_T_See_T_Invite</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Invite" name="Invite to interview"><bpmn:incoming>Flow_T_See_T_Invite</bpmn:incoming><bpmn:outgoing>Flow_T_Invite_End_Hire</bpmn:outgoing></bpmn:userTask>
+      <bpmn:endEvent id="End_Hire" name="Interview"><bpmn:incoming>Flow_T_Invite_End_Hire</bpmn:incoming></bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_Start_W_T_Consent" sourceRef="Start_W" targetRef="T_Consent" />
+      <bpmn:sequenceFlow id="Flow_T_Consent_T_Talk" sourceRef="T_Consent" targetRef="T_Talk" />
+      <bpmn:sequenceFlow id="Flow_T_Talk_T_AI" sourceRef="T_Talk" targetRef="T_AI" />
+      <bpmn:sequenceFlow id="Flow_T_AI_T_Read" sourceRef="T_AI" targetRef="T_Read" />
+      <bpmn:sequenceFlow id="Flow_T_Read_G_Right" sourceRef="T_Read" targetRef="G_Right" />
+      <bpmn:sequenceFlow id="Flow_G_Right_T_Talk" sourceRef="G_Right" targetRef="T_Talk" name="No" />
+      <bpmn:sequenceFlow id="Flow_G_Right_T_Skills" sourceRef="G_Right" targetRef="T_Skills" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_T_Skills_T_Ask" sourceRef="T_Skills" targetRef="T_Ask" />
+      <bpmn:sequenceFlow id="Flow_Start_D_T_Load" sourceRef="Start_D" targetRef="T_Load" />
+      <bpmn:sequenceFlow id="Flow_T_Load_End_D" sourceRef="T_Load" targetRef="End_D" />
+      <bpmn:sequenceFlow id="Flow_T_Ask_T_Review" sourceRef="T_Ask" targetRef="T_Review" />
+      <bpmn:sequenceFlow id="Flow_T_Review_G_Proof" sourceRef="T_Review" targetRef="G_Proof" />
+      <bpmn:sequenceFlow id="Flow_G_Proof_T_Reason" sourceRef="G_Proof" targetRef="T_Reason" name="No" />
+      <bpmn:sequenceFlow id="Flow_T_Reason_T_More" sourceRef="T_Reason" targetRef="T_More" />
+      <bpmn:sequenceFlow id="Flow_T_More_T_Ask" sourceRef="T_More" targetRef="T_Ask" />
+      <bpmn:sequenceFlow id="Flow_G_Proof_T_Verify" sourceRef="G_Proof" targetRef="T_Verify" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_T_Verify_T_Cert" sourceRef="T_Verify" targetRef="T_Cert" />
+      <bpmn:sequenceFlow id="Flow_T_Cert_G_Both" sourceRef="T_Cert" targetRef="G_Both" />
+      <bpmn:sequenceFlow id="Flow_G_Both_T_SF" sourceRef="G_Both" targetRef="T_SF" />
+      <bpmn:sequenceFlow id="Flow_T_SF_T_Filter" sourceRef="T_SF" targetRef="T_Filter" />
+      <bpmn:sequenceFlow id="Flow_T_Filter_End_HR" sourceRef="T_Filter" targetRef="End_HR" />
+      <bpmn:sequenceFlow id="Flow_G_Both_T_Use" sourceRef="G_Both" targetRef="T_Use" />
+      <bpmn:sequenceFlow id="Flow_T_Use_G_Open" sourceRef="T_Use" targetRef="G_Open" />
+      <bpmn:sequenceFlow id="Flow_G_Open_End_Stay" sourceRef="G_Open" targetRef="End_Stay" name="No" />
+      <bpmn:sequenceFlow id="Flow_G_Open_T_Post" sourceRef="G_Open" targetRef="T_Post" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_T_Post_T_Connect" sourceRef="T_Post" targetRef="T_Connect" />
+      <bpmn:sequenceFlow id="Flow_T_Connect_T_Share" sourceRef="T_Connect" targetRef="T_Share" />
+      <bpmn:sequenceFlow id="Flow_T_Share_G_Share" sourceRef="T_Share" targetRef="G_Share" />
+      <bpmn:sequenceFlow id="Flow_G_Share_End_No" sourceRef="G_Share" targetRef="End_No" name="No" />
+      <bpmn:sequenceFlow id="Flow_G_Share_T_See" sourceRef="G_Share" targetRef="T_See" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_T_See_T_Invite" sourceRef="T_See" targetRef="T_Invite" />
+      <bpmn:sequenceFlow id="Flow_T_Invite_End_Hire" sourceRef="T_Invite" targetRef="End_Hire" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_After">
+    <bpmndi:BPMNPlane id="Plane_After" bpmnElement="Collaboration_After">
+      <bpmndi:BPMNShape id="Pool_di" bpmnElement="Pool" isHorizontal="true"><dc:Bounds x="90" y="40" width="2845" height="900" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0_di" bpmnElement="Lane_0" isHorizontal="true"><dc:Bounds x="120" y="40" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true"><dc:Bounds x="120" y="190" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_2_di" bpmnElement="Lane_2" isHorizontal="true"><dc:Bounds x="120" y="340" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_3_di" bpmnElement="Lane_3" isHorizontal="true"><dc:Bounds x="120" y="490" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_4_di" bpmnElement="Lane_4" isHorizontal="true"><dc:Bounds x="120" y="640" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_5_di" bpmnElement="Lane_5" isHorizontal="true"><dc:Bounds x="120" y="790" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_W_di" bpmnElement="Start_W"><dc:Bounds x="207" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="170" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Consent_di" bpmnElement="T_Consent"><dc:Bounds x="345" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Talk_di" bpmnElement="T_Talk"><dc:Bounds x="530" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_AI_di" bpmnElement="T_AI"><dc:Bounds x="530" y="230" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Read_di" bpmnElement="T_Read"><dc:Bounds x="715" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Right_di" bpmnElement="G_Right" isMarkerVisible="true"><dc:Bounds x="940" y="90" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="910" y="144" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Skills_di" bpmnElement="T_Skills"><dc:Bounds x="900" y="230" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_D_di" bpmnElement="Start_D"><dc:Bounds x="577" y="397" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="540" y="437" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Load_di" bpmnElement="T_Load"><dc:Bounds x="715" y="380" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_D_di" bpmnElement="End_D"><dc:Bounds x="947" y="397" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="910" y="437" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Ask_di" bpmnElement="T_Ask"><dc:Bounds x="1085" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Review_di" bpmnElement="T_Review"><dc:Bounds x="1085" y="530" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Proof_di" bpmnElement="G_Proof" isMarkerVisible="true"><dc:Bounds x="1310" y="540" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1280" y="594" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Reason_di" bpmnElement="T_Reason"><dc:Bounds x="1270" y="380" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_More_di" bpmnElement="T_More"><dc:Bounds x="1270" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Verify_di" bpmnElement="T_Verify"><dc:Bounds x="1455" y="530" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Cert_di" bpmnElement="T_Cert"><dc:Bounds x="1455" y="230" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Both_di" bpmnElement="G_Both"><dc:Bounds x="1680" y="240" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_SF_di" bpmnElement="T_SF"><dc:Bounds x="1640" y="680" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Filter_di" bpmnElement="T_Filter"><dc:Bounds x="1825" y="680" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_HR_di" bpmnElement="End_HR"><dc:Bounds x="2057" y="697" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2020" y="737" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Use_di" bpmnElement="T_Use"><dc:Bounds x="1640" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Open_di" bpmnElement="G_Open" isMarkerVisible="true"><dc:Bounds x="1865" y="90" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="1835" y="144" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Stay_di" bpmnElement="End_Stay"><dc:Bounds x="2057" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2020" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Post_di" bpmnElement="T_Post"><dc:Bounds x="2010" y="830" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Connect_di" bpmnElement="T_Connect"><dc:Bounds x="2195" y="830" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Share_di" bpmnElement="T_Share"><dc:Bounds x="2195" y="80" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Share_di" bpmnElement="G_Share" isMarkerVisible="true"><dc:Bounds x="2420" y="90" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2390" y="144" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_No_di" bpmnElement="End_No"><dc:Bounds x="2612" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2575" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_See_di" bpmnElement="T_See"><dc:Bounds x="2380" y="830" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Invite_di" bpmnElement="T_Invite"><dc:Bounds x="2565" y="830" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Hire_di" bpmnElement="End_Hire"><dc:Bounds x="2797" y="847" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2760" y="887" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_Start_W_T_Consent_di" bpmnElement="Flow_Start_W_T_Consent"><di:waypoint x="243" y="115" /><di:waypoint x="345" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Consent_T_Talk_di" bpmnElement="Flow_T_Consent_T_Talk"><di:waypoint x="475" y="115" /><di:waypoint x="530" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Talk_T_AI_di" bpmnElement="Flow_T_Talk_T_AI"><di:waypoint x="595" y="150" /><di:waypoint x="595" y="230" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_AI_T_Read_di" bpmnElement="Flow_T_AI_T_Read"><di:waypoint x="660" y="265" /><di:waypoint x="693" y="265" /><di:waypoint x="693" y="115" /><di:waypoint x="715" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Read_G_Right_di" bpmnElement="Flow_T_Read_G_Right"><di:waypoint x="845" y="115" /><di:waypoint x="940" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Right_T_Talk_di" bpmnElement="Flow_G_Right_T_Talk"><di:waypoint x="965" y="90" /><di:waypoint x="965" y="68" /><di:waypoint x="595" y="68" /><di:waypoint x="595" y="80" /><bpmndi:BPMNLabel><dc:Bounds x="971" y="70" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Right_T_Skills_di" bpmnElement="Flow_G_Right_T_Skills"><di:waypoint x="965" y="140" /><di:waypoint x="965" y="230" /><bpmndi:BPMNLabel><dc:Bounds x="971" y="120" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Skills_T_Ask_di" bpmnElement="Flow_T_Skills_T_Ask"><di:waypoint x="1030" y="265" /><di:waypoint x="1063" y="265" /><di:waypoint x="1063" y="115" /><di:waypoint x="1085" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Start_D_T_Load_di" bpmnElement="Flow_Start_D_T_Load"><di:waypoint x="613" y="415" /><di:waypoint x="715" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Load_End_D_di" bpmnElement="Flow_T_Load_End_D"><di:waypoint x="845" y="415" /><di:waypoint x="947" y="415" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Ask_T_Review_di" bpmnElement="Flow_T_Ask_T_Review"><di:waypoint x="1150" y="150" /><di:waypoint x="1150" y="530" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Review_G_Proof_di" bpmnElement="Flow_T_Review_G_Proof"><di:waypoint x="1215" y="565" /><di:waypoint x="1310" y="565" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Proof_T_Reason_di" bpmnElement="Flow_G_Proof_T_Reason"><di:waypoint x="1335" y="540" /><di:waypoint x="1335" y="450" /><bpmndi:BPMNLabel><dc:Bounds x="1341" y="520" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Reason_T_More_di" bpmnElement="Flow_T_Reason_T_More"><di:waypoint x="1335" y="380" /><di:waypoint x="1335" y="150" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_More_T_Ask_di" bpmnElement="Flow_T_More_T_Ask"><di:waypoint x="1335" y="80" /><di:waypoint x="1335" y="58" /><di:waypoint x="1150" y="58" /><di:waypoint x="1150" y="80" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Proof_T_Verify_di" bpmnElement="Flow_G_Proof_T_Verify"><di:waypoint x="1360" y="565" /><di:waypoint x="1455" y="565" /><bpmndi:BPMNLabel><dc:Bounds x="1366" y="545" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Verify_T_Cert_di" bpmnElement="Flow_T_Verify_T_Cert"><di:waypoint x="1520" y="530" /><di:waypoint x="1520" y="300" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Cert_G_Both_di" bpmnElement="Flow_T_Cert_G_Both"><di:waypoint x="1585" y="265" /><di:waypoint x="1680" y="265" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Both_T_SF_di" bpmnElement="Flow_G_Both_T_SF"><di:waypoint x="1705" y="290" /><di:waypoint x="1705" y="680" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_SF_T_Filter_di" bpmnElement="Flow_T_SF_T_Filter"><di:waypoint x="1770" y="715" /><di:waypoint x="1825" y="715" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Filter_End_HR_di" bpmnElement="Flow_T_Filter_End_HR"><di:waypoint x="1955" y="715" /><di:waypoint x="2057" y="715" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Both_T_Use_di" bpmnElement="Flow_G_Both_T_Use"><di:waypoint x="1705" y="240" /><di:waypoint x="1705" y="150" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Use_G_Open_di" bpmnElement="Flow_T_Use_G_Open"><di:waypoint x="1770" y="115" /><di:waypoint x="1865" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Open_End_Stay_di" bpmnElement="Flow_G_Open_End_Stay"><di:waypoint x="1915" y="115" /><di:waypoint x="2057" y="115" /><bpmndi:BPMNLabel><dc:Bounds x="1921" y="95" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Open_T_Post_di" bpmnElement="Flow_G_Open_T_Post"><di:waypoint x="1915" y="115" /><di:waypoint x="1988" y="115" /><di:waypoint x="1988" y="865" /><di:waypoint x="2010" y="865" /><bpmndi:BPMNLabel><dc:Bounds x="1921" y="95" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Post_T_Connect_di" bpmnElement="Flow_T_Post_T_Connect"><di:waypoint x="2140" y="865" /><di:waypoint x="2195" y="865" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Connect_T_Share_di" bpmnElement="Flow_T_Connect_T_Share"><di:waypoint x="2260" y="830" /><di:waypoint x="2260" y="150" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Share_G_Share_di" bpmnElement="Flow_T_Share_G_Share"><di:waypoint x="2325" y="115" /><di:waypoint x="2420" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Share_End_No_di" bpmnElement="Flow_G_Share_End_No"><di:waypoint x="2470" y="115" /><di:waypoint x="2612" y="115" /><bpmndi:BPMNLabel><dc:Bounds x="2476" y="95" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Share_T_See_di" bpmnElement="Flow_G_Share_T_See"><di:waypoint x="2445" y="140" /><di:waypoint x="2445" y="830" /><bpmndi:BPMNLabel><dc:Bounds x="2451" y="120" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_See_T_Invite_di" bpmnElement="Flow_T_See_T_Invite"><di:waypoint x="2510" y="865" /><di:waypoint x="2565" y="865" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Invite_End_Hire_di" bpmnElement="Flow_T_Invite_End_Hire"><di:waypoint x="2695" y="865" /><di:waypoint x="2797" y="865" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

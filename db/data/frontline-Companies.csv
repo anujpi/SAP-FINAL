@@ -1,4 +1,4 @@
-ID;name
-INDIGO;Indigo Hub Logistics
-MERIDIAN;Meridian Freight
-CAUVERY;Cauvery Foods
+ID;name;marketplace
+INDIGO;Indigo Hub Logistics;true
+MERIDIAN;Meridian Freight;true
+CAUVERY;Cauvery Foods;true
