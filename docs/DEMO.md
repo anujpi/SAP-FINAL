@@ -19,9 +19,9 @@ Each person has their own SAP login (set in `DEMO_LOGINS` on BTP):
 
 | Window | Account | Person |
 |---|---|---|
-| Normal Chrome | anujpandita2007@gmail.com | **Meera S.**, manager and HR at Indigo Hub |
-| Incognito | swastiksta@gmail.com | **Ravi K.**, warehouse operator |
-| Another browser or a guest profile | 1NH24CS078@newhorizonindia.edu | **Arjun D.**, manager at Meridian Freight |
+| Normal Chrome | Your own SAP ID | **Meera S.**, manager and HR at Indigo Hub |
+| Incognito | Swastik's SAP ID | **Ravi K.**, warehouse operator |
+| Another browser or a guest profile | The college SAP ID | **Arjun D.**, manager at Meridian Freight |
 
 Sign everyone in before you go on stage. The bell at the top right of each window shows that person's notifications, and checks every 20 seconds.
 
