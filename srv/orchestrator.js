@@ -134,7 +134,8 @@ const HANDLERS = {
     if (typeof text !== 'string' || !text.trim() || text.length > 4000) fail(400, 'Answer must be 1 to 4000 characters')
     const { TaskExperiences, AuditEvents } = db()
     // ponytail: a fixed daily cap per worker keeps AI costs bounded; make it a company setting if 20 proves too low.
-    const today = new Date().toISOString().slice(0, 10)
+    // A full timestamp: HANA rejects a bare date for a TIMESTAMP column.
+    const today = new Date(new Date().toISOString().slice(0, 10)).toISOString()
     const recorded = await SELECT.one.from(AuditEvents).columns('count(1) as n').where({ worker_ID: worker.ID, type: 'input_submitted', occurredAt: { '>=': today } })
     if (recorded?.n >= 20) fail(429, "That's 20 recordings today. Please try again tomorrow.")
     const { tasks, degraded } = await discover(text)

@@ -58,7 +58,7 @@ export function Launchpad({ user }: { user: User }) {
       <div>
         <Title level="H1" size="H3">Welcome, {user.name}</Title>
         {(user.title || user.company) && <Text>{[user.title, user.company].filter(Boolean).join(', ')}</Text>}
-        <Link href="/welcome.html#how-it-works">New here? See how it works</Link>
+        <div><Link href="/welcome.html#how-it-works">New here? See how it works</Link></div>
       </div>
 
       {is('Worker') && (
