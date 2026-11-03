@@ -401,6 +401,7 @@ module.exports = cds.service.impl(function () {
   this.on('decide', async req => {
     const { worker, outcome, reasons } = req.data
     await ownWorker(req, worker)
+    if (req.user.attr?.workerId === worker) return req.reject(403, "You can't decide your own role review. Another manager has to.")
     return JSON.stringify(await handle(worker, 'manager_decided', { outcome, reasons }, req.user.id))
   })
 

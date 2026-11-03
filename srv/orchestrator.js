@@ -339,7 +339,10 @@ async function resetWorker(workerId) {
   await UPDATE(Workers, workerId).with({ stage: 'NOT_STARTED', outsideOptIn: false, jobTitle: 'Warehouse Operator' })
   // Also clear what companies did in the demo, so a new run starts clean.
   await DELETE.from(HireInterests)
-  await DELETE.from(db().EwmTaskRecords).where({ importedBy: 'daily-upload' })
+  // Uploaded EWM days go too, but only at this worker's own company.
+  const { company_ID } = await SELECT.one.from(Workers).columns('company_ID').where({ ID: workerId })
+  const colleagues = (await SELECT.from(Workers).columns('ID').where({ company_ID })).map(w => w.ID)
+  await DELETE.from(db().EwmTaskRecords).where({ importedBy: 'daily-upload', worker_ID: { in: colleagues } })
   const posted = (await SELECT.from(Vacancies).columns('ID').where({ source: 'posted' })).map(v => v.ID)
   if (posted.length) {
     await DELETE.from(RoleMatches).where({ vacancy_ID: { in: posted } })
