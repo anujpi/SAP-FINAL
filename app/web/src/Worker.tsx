@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  Avatar, Button, Card, CardHeader, Dialog, Label, List, ListItemStandard, MessageStrip, ObjectStatus, Option,
+  Avatar, Button, Card, CardHeader, Dialog, Label, Link, List, ListItemStandard, MessageStrip, ObjectStatus, Option,
   Select, Tab, TabContainer, Text, TextArea, Timeline, TimelineItem, Title
 } from '@ui5/webcomponents-react'
 import '@ui5/webcomponents-icons/dist/microphone.js'
@@ -340,9 +340,13 @@ function Home({ t, run, revision, busy, stage, me, user, lang }: ScreenProps & {
   const [score, setScore] = useState<number | null>(null)
   const [counts, setCounts] = useState({ verified: 0, records: 0, certificates: 0 })
   const [waiting, setWaiting] = useState(0)
+  const [move, setMove] = useState<any>(null)
 
   useEffect(() => {
-    parsed<any>('/worker/myHireRequests()').then(r => setWaiting(r.requests.filter((q: any) => q.status === 'pending').length)).catch(() => setWaiting(0))
+    parsed<any>('/worker/myHireRequests()').then(r => {
+      setWaiting(r.requests.filter((q: any) => q.status === 'pending').length)
+      setMove(['joined', 'accepted', 'offered'].map(s => r.access.find((a: any) => a.status === s && !a.cancelled)).find(Boolean) ?? null)
+    }).catch(() => { setWaiting(0); setMove(null) })
     list('/worker/MyDecisions?$orderby=createdAt desc&$top=1').then(rows => setDecision(rows[0] ?? null)).catch(() => setDecision(null))
     list('/worker/Skills').then(rows => setNames(Object.fromEntries(rows.map(s => [s.ID, s.name])))).catch(() => setNames({}))
     Promise.all([list('/worker/MySkills'), list('/passport/MyCredentials')]).then(([skills, certs]) => setCounts({
@@ -370,6 +374,9 @@ function Home({ t, run, revision, busy, stage, me, user, lang }: ScreenProps & {
           {decision.outcome === 'not_yet' ? t.decisionNotYet : t.decisionMore} <strong>{decision.reasons}</strong>
         </MessageStrip>
       )}
+      {move?.status === 'offered' && <MessageStrip design="Information" hideCloseButton><strong>{t.offerFrom(move.company, move.role)}</strong> <Link onClick={() => setTab('requests')}>{t.acceptOffer}</Link></MessageStrip>}
+      {move?.status === 'accepted' && <MessageStrip design="Positive" hideCloseButton>{t.servingNotice(new Date(move.leavesOn).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }), move.company)}</MessageStrip>}
+      {move?.status === 'joined' && <MessageStrip design="Positive" hideCloseButton>{t.joinedCompany(move.company)}</MessageStrip>}
       {waiting > 0 && <MessageStrip design="Information" hideCloseButton><strong>{t.requestsWaiting(waiting)}</strong></MessageStrip>}
       <div className="kpis four">
         {kpi(counts.verified, t.verifiedSkills, 'skills')}

@@ -20,6 +20,7 @@ function ProofClip({ request }: { request: string }) {
 export function EmployeeProfile({ worker, names, revision }: { worker: string; names: Record<string, string>; revision: number }) {
   const [profile, setProfile] = useState<any>(null)
   const [failed, setFailed] = useState('')
+  const [releasing, setReleasing] = useState(false)
 
   useEffect(() => { scrollTo(0, 0) }, [worker])
 
@@ -46,6 +47,16 @@ export function EmployeeProfile({ worker, names, revision }: { worker: string; n
         <div className="kpi"><strong>{others.length}</strong><span>Not yet verified</span></div>
         <div className="kpi"><strong>{profile.bestScore === null ? '–' : `${profile.bestScore}%`}</strong><span>Match to {profile.targetRole} (sample data)</span></div>
       </div>
+
+      {profile.leavesOn && (
+        <MessageStrip design="Critical" hideCloseButton>
+          {profile.worker.name} has resigned to take a job elsewhere. Last day: <strong>{new Date(profile.leavesOn).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.{' '}
+          <Button design="Transparent" disabled={releasing} onClick={() => {
+            setReleasing(true)
+            value('/manager/releaseEarly', { worker }).then(() => { location.hash = '#/manager/team' }).catch(e => { setFailed(e.message); setReleasing(false) })
+          }}>Release early</Button>
+        </MessageStrip>
+      )}
 
       {open > 0 && (
         <MessageStrip design="Critical" hideCloseButton>

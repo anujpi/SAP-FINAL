@@ -80,4 +80,8 @@ function parseExtract(csv) {
   })
 }
 
-module.exports = { ewmSupport, applyWorkRecords, parseExtract, TASK_SKILL, HEADER, MIN_TASKS, MIN_DAYS }
+// A worker who moved company keeps their old employer's EWM records out of the new employer's view.
+// The day of the move is the last day at the old company, so only later days count.
+const sinceJoining = (records, joinedOn) => records.filter(r => r.workDate > (joinedOn(r.worker_ID) ?? ''))
+
+module.exports = { sinceJoining, ewmSupport, applyWorkRecords, parseExtract, TASK_SKILL, HEADER, MIN_TASKS, MIN_DAYS }

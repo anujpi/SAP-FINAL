@@ -22,6 +22,8 @@ async function workerNotes(): Promise<Note[]> {
       : { id: r.ID, at: r.decidedAt, href: '#/worker', tab: 'requests', text: `${r.decidedByName} answered "not yet" on ${name(r.skill_ID)}${r.note ? `: ${r.note}` : '.'}` }),
     ...hire.requests.filter((i: any) => i.status === 'pending').map((i: any) => ({ id: i.ID, at: i.at, href: '#/worker', tab: 'match', text: `${i.company} would like to connect about a ${i.role} role.` })),
     ...hire.access.filter((a: any) => a.status === 'interview').map((a: any) => ({ id: a.ID, at: a.at, href: '#/worker', tab: 'match', text: `${a.company} invited you to an interview for ${a.role}.` })),
+    ...hire.access.filter((a: any) => a.status === 'offered').map((a: any) => ({ id: `${a.ID}-offer`, at: a.at, href: '#/worker', tab: 'requests', text: `${a.company} offered you the ${a.role} job.` })),
+    ...hire.access.filter((a: any) => a.status === 'joined').map((a: any) => ({ id: `${a.ID}-joined`, at: a.at, href: '#/worker', tab: 'passport', text: `Welcome to ${a.company}! Your certificates came with you.` })),
     ...decisions.map(d => ({ id: d.ID, at: d.createdAt, href: '#/worker', tab: 'match', text: d.outcome === 'move_to_role' ? 'Congratulations! Your manager moved you into the new role.' : d.outcome === 'shortlist' ? 'You were shortlisted in your role review.' : d.outcome === 'request_evidence' ? 'Your manager asked for more evidence in your role review.' : 'Your role review was answered: not yet.' }))
   ]
 }
@@ -29,15 +31,18 @@ async function workerNotes(): Promise<Note[]> {
 async function managerNotes(user: User): Promise<Note[]> {
   const verifies = user.roles.includes('Manager') || user.roles.includes('Supervisor')
   const hires = user.roles.includes('Manager') || user.roles.includes('HRAdmin')
-  const [skills, requests, applicants, outreach] = await Promise.all([
+  const [skills, requests, applicants, outreach, leavers] = await Promise.all([
     list('/manager/Skills?$select=ID,name'),
     verifies ? parsed<any[]>('/manager/verificationRequests()') : [],
     hires ? parsed<any[]>('/manager/applicants()') : [],
-    hires ? parsed<any[]>('/manager/outreach()') : []
+    hires ? parsed<any[]>('/manager/outreach()') : [],
+    hires ? parsed<any[]>('/manager/leavers()') : []
   ])
   const name = (id: string) => skills.find(s => s.ID === id)?.name ?? id
   return [
     ...requests.map(r => ({ id: r.ID, at: r.requestedAt, href: '#/manager/verify', text: `${r.workerName} asked you to verify ${name(r.skill_ID)}.` })),
+    ...leavers.map(l => ({ id: `${l.ID}-leaving`, at: l.at, href: `#/manager/team/${l.worker}`, text: `${l.name} has resigned. Last day: ${new Date(l.leavesOn).toLocaleDateString()}.` })),
+    ...applicants.filter(a => a.status === 'accepted' || a.status === 'declined').map(a => ({ id: `${a.ID}-${a.status}`, at: a.changedAt, href: '#/manager/applicants', text: `${a.applicant} ${a.status === 'accepted' ? 'accepted' : 'declined'} your offer for ${a.role}.` })),
     ...applicants.filter(a => a.status === 'applied').map(a => ({ id: a.ID, at: a.appliedAt, href: '#/manager/applicants', text: `${a.applicant} applied for ${a.role}.` })),
     ...outreach.filter(o => o.status === 'granted' || o.status === 'declined').map(o => ({
       id: o.ID, at: o.decidedAt, href: '#/manager/hire',

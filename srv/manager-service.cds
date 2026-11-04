@@ -11,7 +11,7 @@ service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', '
 
   // A worker's interest in outside jobs is private, so those events never show here.
   @requires: ['Manager', 'HRAdmin']
-  @readonly entity AuditEvents as select from db.AuditEvents { * } where type not in ('outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered');
+  @readonly entity AuditEvents as select from db.AuditEvents { * } where type not in ('outside_opt_in', 'application_submitted', 'application_answered', 'hire_interest_sent', 'hire_interest_answered', 'offer_answered');
 
   /** Who is registered at this company, and its settings. */
   @requires: ['Manager', 'HRAdmin']
@@ -78,7 +78,16 @@ service ManagerService @(path: '/manager', requires: ['Manager', 'Supervisor', '
   function applicants() returns LargeString;
 
   @requires: 'Manager'
-  action answerApplication(application : UUID, status : String, message : String) returns LargeString;
+  /** status interview, offered (with noticeDays, 0 to 90) or closed. */
+  action answerApplication(application : UUID, status : String, message : String, noticeDays : Integer) returns LargeString;
+
+  /** Employees who accepted a job elsewhere and are serving notice: name and last day only, never where they are going. */
+  @requires: ['Manager', 'HRAdmin']
+  function leavers() returns LargeString;
+
+  /** Ends an employee's notice period today, so they move to their new company now. */
+  @requires: ['Manager', 'HRAdmin']
+  action releaseEarly(worker : UUID) returns LargeString;
 
   @requires: ['Manager', 'HRAdmin']
   function reviewPacket(worker : UUID) returns LargeString;

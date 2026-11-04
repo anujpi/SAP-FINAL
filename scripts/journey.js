@@ -295,6 +295,26 @@ const step = name => console.log('ok  ', name)
   assert.ok(trail.length >= 9)   // the accepted events above, minus the private ones, plus any from earlier runs
   step(`audit trail has ${trail.length} hand-offs`)
 
+  const job = applicants[0].ID
+  const offer = body => call('/manager/answerApplication', { user: 'arjun', body: { application: job, status: 'offered', message: '', ...body } })
+  assert.equal((await call('/manager/answerApplication', { user: 'meera', body: { application: job, status: 'offered', noticeDays: 0 } })).status, 403)
+  assert.equal((await offer({ noticeDays: -1 })).status, 400)
+  parsed(await offer({ noticeDays: 0 }))
+  assert.equal((await call('/manager/releaseEarly', { user: 'meera', body: { worker: RAVI } })).status, 409)
+  parsed(await send('offer_answered', { application: job, accept: true }))
+  assert.equal((await send('offer_answered', { application: job, accept: true })).status, 404)
+  assert.equal((await offer({ noticeDays: 30 })).status, 409)
+  step('the other company offered the job, and Ravi accepted with no notice period')
+
+  assert.equal(parsed(await call('/user/me()', { user: 'meera' })).company, 'Indigo Hub Logistics')
+  const movedRavi = parsed(await call('/worker/Me', { user: 'ravi' }))[0]
+  assert.deepEqual([movedRavi.company_ID, movedRavi.formerCompany_ID, movedRavi.site], ['MERIDIAN', 'INDIGO', 'Hosur'])
+  assert.equal((await call(`/manager/employeeProfile(worker=${RAVI})`, { user: 'meera' })).status, 403)
+  assert.ok(parsed(await call('/manager/Team', { user: 'arjun' })).some(w => w.ID === RAVI))
+  assert.equal(parsed(await call('/worker/MyDecisions', { user: 'ravi' })).length, 0, "Indigo's role decisions stay at Indigo")
+  assert.ok(parsed(await call('/passport/MyCredentials', { user: 'ravi' })).length >= 2)
+  step('the next page load moved him to the new company, with his certificates and without Indigo\'s records')
+
   parsed(await send('consent_revoked'))
   assert.equal(parsed(await call('/worker/MySkills', { user: 'ravi' })).length, 0)
   step('consent revoked, Ravi\'s data erased')

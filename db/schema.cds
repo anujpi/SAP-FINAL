@@ -40,6 +40,7 @@ entity Workers : cuid {
   login          : String(60);
   ewmUser        : String(20);
   active         : Boolean default true;
+  formerCompany  : Association to Companies;  // set when the worker moves to a company that hired them
 }
 
 // The daily extract of confirmed warehouse tasks from EWM. Company data, so it stays when a worker withdraws consent.
@@ -77,8 +78,10 @@ entity Applications : cuid, managed {
   worker  : Association to Workers;
   vacancy : Association to Vacancies;
   token   : String(64);          // the share link holding the certificates they chose
-  status  : String(20);          // applied | interview | closed
+  status  : String(20);          // applied | interview | offered | accepted | declined | joined | closed
   message : String(500);
+  noticeDays : Integer;          // set with an offer: how long the worker stays at their employer after accepting
+  leavesOn   : Date;             // set on accepting: the last day at the current employer
 }
 
 // A company asking to connect with an anonymous candidate. Nothing about the person is shared until they say yes.

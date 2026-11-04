@@ -38,7 +38,7 @@ module.exports = cds.service.impl(function () {
         ID: i.ID, status: i.status, message: i.message, at: i.createdAt, score: scores.get(i.vacancy_ID) ?? 0, ...job(i.vacancy_ID)
       })),
       access: (await SELECT.from(Applications).where({ worker_ID }).orderBy('createdAt desc')).map(a => ({
-        ID: a.ID, status: a.status, at: a.modifiedAt, token: a.token, cancelled: Boolean(links.get(a.token)?.revokedAt),
+        ID: a.ID, status: a.status, at: a.modifiedAt, token: a.token, message: a.message, noticeDays: a.noticeDays, leavesOn: a.leavesOn, cancelled: Boolean(links.get(a.token)?.revokedAt),
         skills: JSON.parse(links.get(a.token)?.skills ?? '[]'), ...job(a.vacancy_ID)
       }))
     })

@@ -446,15 +446,20 @@ function EwmUpload({ revision, run, busy }: Props) {
   )
 }
 
-const APPLICATION_STATUS: Record<string, string> = { applied: 'New', interview: 'Invited to interview', closed: 'Closed' }
+const APPLICATION_STATUS: Record<string, string> = {
+  applied: 'New', interview: 'Invited to interview', offered: 'Offer sent', accepted: 'Offer accepted, serving notice', declined: 'Offer declined', joined: 'Joined your company', closed: 'Closed'
+}
+const NOTICE = [{ days: 30, label: '30 days' }, { days: 60, label: '60 days' }, { days: 7, label: '7 days' }, { days: 0, label: 'Can start now' }]
 
 function Applicants({ revision, run, busy, canAnswer }: Props & { canAnswer: boolean }) {
   const [applicants, setApplicants] = useState<any[]>([])
   const [messages, setMessages] = useState<Record<string, string>>({})
+  const [notice, setNotice] = useState<Record<string, number>>({})
 
   useEffect(() => { parsed<any[]>('/manager/applicants()').then(setApplicants).catch(() => setApplicants([])) }, [revision])
 
-  const answer = (id: string, status: string, done: string) => run(() => value('/manager/answerApplication', { application: id, status, message: messages[id] ?? '' }), done)
+  const answer = (id: string, status: string, done: string) =>
+    run(() => value('/manager/answerApplication', { application: id, status, message: messages[id] ?? '', noticeDays: status === 'offered' ? notice[id] ?? 30 : null }), done)
 
   if (!applicants.length) return <Empty title="No outside applicants" subtitle="People at other companies who apply, or say yes to your request, appear here." />
 
@@ -465,7 +470,9 @@ function Applicants({ revision, run, busy, canAnswer }: Props & { canAnswer: boo
       {applicants.map(a => (
         <Card key={a.ID} header={<CardHeader titleText={a.applicant} subtitleText={`${a.role} · ${a.site}`} />}>
           <div className="card-body">
-            <ObjectStatus state={a.status === 'interview' ? 'Positive' : 'Information'}>{APPLICATION_STATUS[a.status] ?? a.status}</ObjectStatus>
+            <ObjectStatus state={['interview', 'offered', 'accepted', 'joined'].includes(a.status) ? 'Positive' : 'Information'}>{APPLICATION_STATUS[a.status] ?? a.status}</ObjectStatus>
+            {a.status === 'accepted' && <MessageStrip design="Positive" hideCloseButton>{a.applicant} accepted. They join you after their notice period, on {new Date(a.leavesOn).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}.</MessageStrip>}
+            {a.status === 'joined' && <MessageStrip design="Positive" hideCloseButton>{a.applicant} now works here. Find them under My employees.</MessageStrip>}
             {a.certificates.status === 'genuine'
               ? <MessageStrip design="Positive" hideCloseButton>Certificates are genuine and not altered.</MessageStrip>
               : <MessageStrip design="Critical" hideCloseButton>The applicant has cancelled these certificates, or they could not be verified.</MessageStrip>}
@@ -476,12 +483,22 @@ function Applicants({ revision, run, busy, canAnswer }: Props & { canAnswer: boo
               />
             )}
             {a.message && <Text>Your message: {a.message}</Text>}
-            {canAnswer && a.status === 'applied' && a.certificates.status === 'genuine' && (
+            {canAnswer && ['applied', 'interview'].includes(a.status) && a.certificates.status === 'genuine' && (
               <>
                 <Label for={`msg-${a.ID}`}>Message to the applicant</Label>
                 <TextArea id={`msg-${a.ID}`} rows={2} maxlength={500} value={messages[a.ID] ?? ''} onInput={e => { const next = e.target.value; setMessages(m => ({ ...m, [a.ID]: next })) }} />
+                {a.status === 'interview' && (
+                  <>
+                    <Label for={`notice-${a.ID}`}>Notice period at their current employer</Label>
+                    <Select id={`notice-${a.ID}`} onChange={e => { const days = Number(e.detail.selectedOption.dataset.days); setNotice(n => ({ ...n, [a.ID]: days })) }}>
+                      {NOTICE.map(n => <Option key={n.days} data-days={n.days} selected={(notice[a.ID] ?? 30) === n.days}>{n.label}</Option>)}
+                    </Select>
+                  </>
+                )}
                 <div className="actions">
-                  <Button design="Emphasized" disabled={busy} onClick={() => answer(a.ID, 'interview', `${a.applicant} invited to interview.`)}>Invite to interview</Button>
+                  {a.status === 'applied'
+                    ? <Button design="Emphasized" disabled={busy} onClick={() => answer(a.ID, 'interview', `${a.applicant} invited to interview.`)}>Invite to interview</Button>
+                    : <Button design="Emphasized" disabled={busy} onClick={() => answer(a.ID, 'offered', `${a.applicant} has your offer.`)}>Make offer</Button>}
                   <Button disabled={busy} onClick={() => answer(a.ID, 'closed', 'Application closed.')}>Close</Button>
                 </div>
               </>

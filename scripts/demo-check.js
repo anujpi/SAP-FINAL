@@ -1,6 +1,6 @@
 // Runs the judges' story from docs/JUDGES.md against a running server and stops at the first step that breaks.
 // npm run watch, then node scripts/demo-check.js. Leaves Ravi reset, so the live run starts clean.
-// READY=1 stops before outside hiring instead, with Ravi at 100% and open to other companies, to rehearse the screens.
+// UNTIL=13 stops after that step without a reset. READY=1 stops before outside hiring instead, with Ravi at 100% and open to other companies, to rehearse the screens.
 const assert = require('node:assert')
 const fs = require('node:fs')
 const path = require('node:path')
@@ -21,7 +21,10 @@ const ok = r => {
 }
 const send = (type, payload) => call('/worker/sendEvent', { user: 'ravi', body: { type, payload: payload && JSON.stringify(payload) } })
 const score = async vacancy => (ok(await call('/worker/MyMatches', { user: 'ravi' })).find(m => m.vacancy_ID === vacancy)?.score ?? 0)
-const step = s => console.log('ok  ', s)
+const step = s => {
+  console.log('ok  ', s)
+  if (process.env.UNTIL && s.startsWith(`${process.env.UNTIL} `)) { console.log(`Stopped after step ${process.env.UNTIL}, without a reset.`); process.exit(0) }
+}
 const ROLE = ['CYCLE-COUNT', 'STOCK-DISC', 'DISPATCH', 'INV-TRANS', 'DIGI-REPORT']
 const ANSWER = process.env.LANG_HI
   ? 'मैं हर हफ्ते बिन की गिनती करता हूँ और स्टॉक के फर्क को एडजस्टमेंट से ठीक करता हूँ। मैं डिस्पैच के लिए ट्रक लोड करता हूँ, स्कैनर पर सिस्टम एंट्री करता हूँ, और डैशबोर्ड पर रोज़ की स्टॉक रिपोर्ट अपडेट करता हूँ।'
@@ -124,14 +127,39 @@ const ANSWER = process.env.LANG_HI
 
   const token = ok(await call('/worker/myHireRequests()', { user: 'ravi' })).access[0].token
   assert.equal(ok(await call(`/passport/check(token='${token}')`, { user: 'arjun' })).status, 'genuine')
-  ok(await call('/passport/cancelLink', { user: 'ravi', body: { token } }))
-  assert.equal(ok(await call('/manager/applicants()', { user: 'arjun' }))[0].applicant, 'Permission withdrawn')
-  step('14 public check says genuine; Ravi took permission back and his name is gone from Meridian')
-
   assert.ok(ok(await call('/manager/AuditEvents', { user: 'meera' })).length > 5)
   assert.ok(ok(await call('/manager/fairnessReport()', { user: 'meera' })))
   assert.ok(ok(await call('/user/dataSource()', { user: 'meera' })).counts.employees >= 24)
-  step('15 audit log, fairness audit and SAP landscape answer')
+  step('14 public check says genuine; audit log, fairness audit and SAP landscape answer')
+
+  // The offer, the notice period and the move
+  assert.equal((await call('/manager/answerApplication', { user: 'arjun', body: { application: app.ID, status: 'offered', message: '', noticeDays: 120 } })).status, 400)
+  ok(await call('/manager/answerApplication', { user: 'arjun', body: { application: app.ID, status: 'offered', message: 'We would like you to join us in Chennai.', noticeDays: 30 } }))
+  const offer = ok(await call('/worker/myHireRequests()', { user: 'ravi' })).access.find(a => a.ID === app.ID)
+  assert.equal(offer.status, 'offered')
+  assert.equal(offer.noticeDays, 30)
+  ok(await send('offer_answered', { application: app.ID, accept: true }))
+  assert.equal((await send('offer_answered', { application: app.ID, accept: true })).status, 404)
+  const leavers = ok(await call('/manager/leavers()', { user: 'meera' }))
+  assert.equal(leavers[0].name, 'Ravi K.')
+  assert.ok(!/Meridian|Chennai|EXT-/.test(JSON.stringify(leavers)), 'the employer must not learn where he is going')
+  assert.ok(ok(await call(`/manager/employeeProfile(worker=${RAVI})`, { user: 'meera' })).leavesOn)
+  assert.equal((ok(await call('/worker/Me', { user: 'ravi' }))[0]).company_ID, 'INDIGO')
+  step(`15 Arjun offered the job with 30 days' notice, Ravi accepted: Meera sees "resigned, last day ${leavers[0].leavesOn}", not where he is going`)
+
+  assert.equal((await call('/manager/releaseEarly', { user: 'arjun', body: { worker: RAVI } })).status, 403)
+  ok(await call('/manager/releaseEarly', { user: 'meera', body: { worker: RAVI } }))
+  const moved = ok(await call('/worker/Me', { user: 'ravi' }))[0]
+  assert.deepEqual([moved.company_ID, moved.jobTitle, moved.site, moved.managerName], ['MERIDIAN', 'Digital Supply Chain Coordinator', 'Chennai', 'Arjun D.'])
+  assert.equal(ok(await call('/user/me()', { user: 'ravi' })).company, 'Meridian Freight')
+  assert.ok(ok(await call('/manager/Team', { user: 'arjun' })).some(w => w.ID === RAVI))
+  assert.ok(!ok(await call('/manager/Team', { user: 'meera' })).some(w => w.ID === RAVI))
+  assert.equal(ok(await call('/passport/MyCredentials', { user: 'ravi' })).length, 5)
+  const atMeridian = ok(await call(`/manager/employeeProfile(worker=${RAVI})`, { user: 'arjun' }))
+  assert.ok(!atMeridian.skills.some(s => s.clipRequest || s.requestNote), "Indigo's clips and notes stay at Indigo")
+  assert.equal(atMeridian.ewmRecords.length, 0, "Indigo's EWM records stay at Indigo")
+  assert.ok(ok(await call(`/manager/findTalent(skill='CYCLE-COUNT')`, { user: 'arjun' })).some(p => /Ravi/.test(JSON.stringify(p))))
+  step('16 Meera released him early: Ravi is now at Meridian under Arjun, with his 5 certificates; Indigo\'s records stayed behind')
 
   ok(await call('/manager/resetDemo', { user: 'meera', body: { worker: RAVI } }))
   console.log('\nThe whole judges\' story works. Ravi is reset for the live run.')

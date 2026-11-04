@@ -116,7 +116,7 @@ export function Jobs({ t, run, revision, busy, names, stage }: HomeProps) {
           <MatchCard key={m.ID} m={m} t={t} names={names} title={`${roles[m.vacancy?.role_ID]} · ${m.vacancy?.employer}${m.vacancy?.source === 'posted' ? ` (${t.newRole})` : ''}`}>
             {application && (
               <>
-                <ObjectStatus state={application.status === 'interview' ? 'Positive' : 'Information'}>{t[application.status as 'applied' | 'interview' | 'closed'] ?? application.status}</ObjectStatus>
+                <ObjectStatus state={application.status === 'interview' ? 'Positive' : 'Information'}>{t[application.status as 'applied' | 'interview' | 'closed' | 'offered' | 'accepted' | 'declined' | 'joined'] ?? application.status}</ObjectStatus>
                 {application.message && <MessageStrip design="Information" hideCloseButton><strong>{m.vacancy?.employer}:</strong> {application.message}</MessageStrip>}
               </>
             )}
@@ -185,6 +185,7 @@ export function Requests({ t, run, revision, busy, names }: HomeProps) {
   }, [revision])
 
   const pending = data.requests.filter(r => r.status === 'pending')
+  const offers = data.access.filter(a => a.status === 'offered' && !a.cancelled)
   const toggle = (id: string, skill: string) => setChosen(old => {
     const now = old[id] ?? []
     return { ...old, [id]: now.includes(skill) ? now.filter(s => s !== skill) : [...now, skill] }
@@ -200,7 +201,20 @@ export function Requests({ t, run, revision, busy, names }: HomeProps) {
         </div>
       </Card>
 
-      {!pending.length && <Text>{t.noRequests}</Text>}
+      {offers.map(o => (
+        <Card key={o.ID} header={<CardHeader titleText={t.offerFrom(o.company, o.role)} subtitleText={`${o.role} · ${o.site}`} />}>
+          <div className="card-body">
+            {o.message && <MessageStrip design="Information" hideCloseButton><strong>{o.company}:</strong> {o.message}</MessageStrip>}
+            <Text>{t.noticeLine(o.noticeDays ?? 0)}</Text>
+            <div className="actions">
+              <Button design="Emphasized" disabled={busy} onClick={() => run(() => sendEvent('offer_answered', { application: o.ID, accept: true }))}>{t.acceptOffer}</Button>
+              <Button disabled={busy} onClick={() => run(() => sendEvent('offer_answered', { application: o.ID, accept: false }))}>{t.declineOffer}</Button>
+            </div>
+          </div>
+        </Card>
+      ))}
+
+      {!pending.length && !offers.length && <Text>{t.noRequests}</Text>}
       {pending.map(r => (
         <Card key={r.ID} header={<CardHeader titleText={t.wantsToConnect(r.company)} subtitleText={`${r.role} · ${r.site}`} />}>
           <div className="card-body">
@@ -227,10 +241,10 @@ export function Requests({ t, run, revision, busy, names }: HomeProps) {
             <li key={a.ID}>
               <div className="skill-row-head">
                 <span>{a.company} · {a.role}</span>
-                <ObjectStatus state={a.cancelled ? 'None' : 'Positive'}>{a.cancelled ? t.accessCancelled : t.canSee}</ObjectStatus>
+                <ObjectStatus state={a.cancelled ? 'None' : 'Positive'}>{a.cancelled ? t.accessCancelled : a.status === 'accepted' || a.status === 'joined' ? t[a.status as 'accepted' | 'joined'] : t.canSee}</ObjectStatus>
               </div>
               <Text className="fine-print">{a.skills.map((s: string) => names[s] ?? s).join(', ')}</Text>
-              {!a.cancelled && <Button design="Negative" disabled={busy} onClick={() => run(() => value('/passport/cancelLink', { token: a.token }))}>{t.takeBack}</Button>}
+              {!a.cancelled && !['accepted', 'joined'].includes(a.status) && <Button design="Negative" disabled={busy} onClick={() => run(() => value('/passport/cancelLink', { token: a.token }))}>{t.takeBack}</Button>}
             </li>
           ))}
         </ul>

@@ -21,6 +21,8 @@ All responses from actions and functions that return `LargeString` are JSON stri
 
 **The permission ladder for outside hiring.** Turning on `outsideOptIn` makes a worker visible to other companies through `candidates()`, which returns only an anonymous per-company reference, verified skills and a score. Never add a name, site, employer or verifier to it. `askToConnect` creates a `HireInterest`. A yes (`hire_interest_answered`) creates a share link and an application for the chosen certificates only, and writes a `ConsentRecord`. Cancelling that link takes the name away everywhere: `applicants()` and `outreach()` both check it. Only `resetDemo` deletes all hiring requests and posted roles.
 
+**Offers and moving company.** After an interview the hiring manager sends `answerApplication` with `status: 'offered'` and `noticeDays` (0 to 90). The worker's `offer_answered` accepts or declines; accepting sets `leavesOn`. The current employer sees only the name and last day through `leavers()` and `employeeProfile.leavesOn`, never the new company, and can `releaseEarly`. On the last day `dueTransfers()` (run from `UserService.me`, so no scheduler) sends `transfer_done`, and `joinNewCompany` moves the worker: new company, role, site and manager, `formerCompany` set, signed certificates and SuccessFactors skills kept. The old company's requests, decisions, clips and evidence are deleted, and its EWM records stay out of the new employer's view (`sinceJoining`). `resetDemo` also works from the former employer.
+
 A worker's outside job search is private from their employer: those events stay out of `AuditEvents` in `ManagerService`, and `applicants()` shows only applications to the caller's own vacancies.
 
 `addEvidence` in the orchestrator is the one place a skill becomes verified. It signs the certificate and writes to `SuccessFactorsSkills`, a local stand-in. Swap that one step for a Destination call when a tenant exists.
@@ -35,7 +37,8 @@ AWAITING_READBACK -> input_submitted (redo) | readback_confirmed -> ACTIVE
 ACTIVE -> assessment_submitted | module_completed (stay ACTIVE)
 ACTIVE -> review_requested -> AWAITING_MANAGER
 AWAITING_MANAGER -> manager_decided -> ACTIVE (not_yet, request_evidence) | SHORTLISTED (shortlist)
-ACTIVE, AWAITING_MANAGER, SHORTLISTED -> verification_requested | verification_decided | outside_opt_in | application_submitted | application_answered (stay put)
+ACTIVE, AWAITING_MANAGER, SHORTLISTED -> verification_requested | verification_decided | outside_opt_in | application_submitted | application_answered | offer_answered (stay put)
+Any of those -> released_early | transfer_done -> ACTIVE at the new company
 Any stage -> consent_revoked -> HALTED
 ```
 

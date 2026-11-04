@@ -1,6 +1,7 @@
 const cds = require('@sap/cds')
 const workerIdOf = require('./lib/worker-id')
 const { ALL_ROLES } = require('./lib/identity')
+const { dueTransfers } = require('./orchestrator')
 
 const COUNTED = { Workers: 'employees', SkillClaims: 'skills', Skills: 'skills in the library', EwmTaskRecords: 'EWM records', SkillCredentials: 'certificates', Vacancies: 'open roles', HireInterests: 'hiring requests', AuditEvents: 'audit events' }
 
@@ -14,6 +15,8 @@ module.exports = cds.service.impl(function () {
 
   this.on('me', async req => {
     const { Staff, Workers, Companies } = cds.entities('frontline')
+    // Every page load asks who is signed in, so anyone whose notice has ended moves to their new company here.
+    await dueTransfers()
     const attr = req.user.attr ?? {}
     // Only registered people get a role. Anyone else is signed in to SAP but not to this app.
     if (!attr.registered) return JSON.stringify({ registered: false, name: req.user.id, title: '', company: '', roles: [], persona: '', canSwitch: false })

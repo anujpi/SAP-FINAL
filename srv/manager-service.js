@@ -4,7 +4,7 @@ const review = require('./agents/review')
 const audit = require('./agents/audit')
 const askJson = require('./lib/llm')
 const sapContext = require('./lib/sap-context')
-const { ewmSupport, parseExtract } = require('./lib/ewm')
+const { ewmSupport, parseExtract, sinceJoining } = require('./lib/ewm')
 const { checkShare, anonRef } = require('./lib/credential')
 const { forget } = require('./lib/identity')
 
@@ -113,7 +113,8 @@ module.exports = cds.service.impl(function () {
     const worker_ID = { in: workers.map(w => w.ID) }
     const claims = groupBy(await SELECT.from(SkillClaims).where({ worker_ID }), 'worker_ID')
     const pending = groupBy(await SELECT.from(VerificationRequests).where({ worker_ID, status: 'pending' }), 'worker_ID')
-    const records = groupBy(await SELECT.from(EwmTaskRecords).where({ worker_ID }), 'worker_ID')
+    const joined = new Map(workers.map(w => [w.ID, w.joinedOn]))
+    const records = groupBy(sinceJoining(await SELECT.from(EwmTaskRecords).where({ worker_ID }), id => joined.get(id)), 'worker_ID')
     return JSON.stringify(workers.map(w => ({
       ID: w.ID,
       name: w.name,
@@ -135,7 +136,7 @@ module.exports = cds.service.impl(function () {
     const synced = await SELECT.from(SuccessFactorsSkills).where({ worker_ID })
     const evidence = await SELECT.from(EvidenceItems).where({ worker_ID }).orderBy('createdAt desc')
     const requests = await SELECT.from(VerificationRequests).where({ worker_ID }).orderBy('createdAt desc')
-    const records = await SELECT.from(EwmTaskRecords).where({ worker_ID }).orderBy('workDate desc')
+    const records = sinceJoining(await SELECT.from(EwmTaskRecords).where({ worker_ID }).orderBy('workDate desc'), () => worker.joinedOn)
     const support = ewmSupport(records)
     const scores = (await internalMatches({ worker_ID })).map(m => m.score)
     return JSON.stringify({
@@ -159,7 +160,8 @@ module.exports = cds.service.impl(function () {
       }),
       tasks: (await SELECT.from(TaskExperiences).where({ worker_ID, confirmed: true })).map(t => ({ ID: t.ID, task: t.task, tool: t.tool, frequency: t.frequency })),
       otherCertificates: await SELECT.from(OtherCertificates).where({ worker_ID }).orderBy('issuedOn desc'),
-      ewmRecords: records.slice(0, 8).map(r => ({ ID: r.ID, workDate: r.workDate, taskType: r.taskType, confirmedTasks: r.confirmedTasks }))
+      ewmRecords: records.slice(0, 8).map(r => ({ ID: r.ID, workDate: r.workDate, taskType: r.taskType, confirmedTasks: r.confirmedTasks })),
+      leavesOn: (await SELECT.one.from(cds.entities('frontline').Applications).where({ worker_ID, status: 'accepted' }))?.leavesOn ?? null
     })
   })
 
@@ -170,7 +172,7 @@ module.exports = cds.service.impl(function () {
     if (!workers.size) return '[]'
     const worker_ID = { in: [...workers.keys()] }
     const requests = await SELECT.from(VerificationRequests).where({ worker_ID, status: 'pending' }).orderBy('createdAt')
-    const records = groupBy(await SELECT.from(EwmTaskRecords).where({ worker_ID }), 'worker_ID')
+    const records = groupBy(sinceJoining(await SELECT.from(EwmTaskRecords).where({ worker_ID }), id => workers.get(id)?.joinedOn), 'worker_ID')
     const said = new Map((await SELECT.from(SkillClaims).where({ worker_ID })).map(c => [`${c.worker_ID}|${c.skill_ID}`, c.basis]))
     return JSON.stringify(requests.map(r => ({
       ID: r.ID,
@@ -231,9 +233,9 @@ module.exports = cds.service.impl(function () {
   this.on('ewmRecent', async req => {
     const { Workers, EwmTaskRecords } = cds.entities('frontline')
     const { company_ID } = await staffOf(req)
-    const workers = new Map((await SELECT.from(Workers).where({ company_ID })).map(w => [w.ID, w.name]))
-    const records = await SELECT.from(EwmTaskRecords).where({ worker_ID: { in: [...workers.keys()] } }).orderBy('workDate desc').limit(25)
-    return JSON.stringify(records.map(r => ({ ...r, workerName: workers.get(r.worker_ID) })))
+    const workers = new Map((await SELECT.from(Workers).where({ company_ID })).map(w => [w.ID, w]))
+    const records = sinceJoining(await SELECT.from(EwmTaskRecords).where({ worker_ID: { in: [...workers.keys()] } }).orderBy('workDate desc').limit(25), id => workers.get(id)?.joinedOn)
+    return JSON.stringify(records.map(r => ({ ...r, workerName: workers.get(r.worker_ID)?.name })))
   })
 
   this.on('findTalent', async req => {
@@ -347,7 +349,7 @@ module.exports = cds.service.impl(function () {
       const worker = await SELECT.one.from(Workers).columns('name').where({ ID: a.worker_ID })
       const certificates = await checkShare(a.token)
       return {
-        ID: a.ID, status: a.status, message: a.message, appliedAt: a.createdAt,
+        ID: a.ID, status: a.status, message: a.message, appliedAt: a.createdAt, changedAt: a.modifiedAt, noticeDays: a.noticeDays, leavesOn: a.leavesOn,
         // Taking back permission takes back the name too.
         applicant: certificates.status === 'cancelled' ? 'Permission withdrawn' : worker?.name,
         role: roles.get(vacancy.role_ID), site: vacancy.site, certificates
@@ -358,13 +360,28 @@ module.exports = cds.service.impl(function () {
   this.on('answerApplication', async req => {
     const { Applications, Vacancies } = cds.entities('frontline')
     const { company_ID } = await staffOf(req)
-    const { application, status, message } = req.data
+    const { application, status, message, noticeDays } = req.data
     const found = await SELECT.one.from(Applications).where({ ID: application })
     const vacancy = found && await SELECT.one.from(Vacancies).where({ ID: found.vacancy_ID })
     if (!vacancy) return req.reject(404, 'Application not found')
     if (vacancy.company_ID !== company_ID) return req.reject(403, 'This application is not for your company')
     if ((await checkShare(found.token)).status === 'cancelled') return req.reject(409, 'This person has taken back permission')
-    return JSON.stringify(await handle(found.worker_ID, 'application_answered', { application, status, message }, req.user.id))
+    return JSON.stringify(await handle(found.worker_ID, 'application_answered', { application, status, message, noticeDays }, req.user.id))
+  })
+
+  // Resigned, and the last day. The employer is never told which company they are going to.
+  this.on('leavers', async req => {
+    const { Workers, Applications } = cds.entities('frontline')
+    const { company_ID } = await staffOf(req)
+    const people = new Map((await SELECT.from(Workers).columns('ID', 'name').where({ company_ID })).map(w => [w.ID, w.name]))
+    if (!people.size) return '[]'
+    const leaving = await SELECT.from(Applications).where({ worker_ID: { in: [...people.keys()] }, status: 'accepted' })
+    return JSON.stringify(leaving.map(a => ({ ID: a.ID, worker: a.worker_ID, name: people.get(a.worker_ID), leavesOn: a.leavesOn, at: a.modifiedAt })))
+  })
+
+  this.on('releaseEarly', async req => {
+    await ownWorker(req, req.data.worker)
+    return JSON.stringify(await handle(req.data.worker, 'released_early', {}, req.user.id))
   })
 
   this.on('reviewPacket', async req => {
@@ -393,7 +410,7 @@ module.exports = cds.service.impl(function () {
       claims: await SELECT.from(SkillClaims).where({ worker_ID }),
       skillNames: Object.fromEntries(names.map(s => [s.ID, s.name])),
       decision: await SELECT.one.from(ReviewDecisions).where({ worker_ID }).orderBy('createdAt desc'),
-      ewmRecords: await SELECT.from(EwmTaskRecords).where({ worker_ID }).orderBy('workDate desc').limit(5),
+      ewmRecords: sinceJoining(await SELECT.from(EwmTaskRecords).where({ worker_ID }).orderBy('workDate desc').limit(5), () => worker.joinedOn),
       aiRoute: askJson.provider()
     }))
   })
@@ -417,7 +434,10 @@ module.exports = cds.service.impl(function () {
   })
 
   this.on('resetDemo', async req => {
-    await ownWorker(req, req.data.worker)
+    // Someone this company let go to another company can still be reset by their old employer.
+    const { Workers } = cds.entities('frontline')
+    const moved = await SELECT.one.from(Workers).where({ ID: req.data.worker, formerCompany_ID: (await staffOf(req)).company_ID })
+    if (!moved) await ownWorker(req, req.data.worker)
     await resetWorker(req.data.worker)
     return true
   })

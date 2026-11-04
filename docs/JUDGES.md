@@ -54,7 +54,7 @@ EWM task → skill: `STOCK_TRANSFER` → Inventory system transactions, `PHYSICA
 
 ---
 
-## 3. The run (about 9 minutes)
+## 3. The run (about 11 minutes)
 
 ### Part A: Ravi gets ready for the job
 
@@ -101,17 +101,24 @@ Notice that the reference box changes with the proof type: EWM is prefilled, *Ob
 | 22 | Arjun | **Outside applicants** | **Ravi K.**, "Certificates are genuine and not altered", the 3 skills with Meera's name and company | "Now they see his name, because he said yes." |
 | 23 | Arjun | Message `Can you come to Chennai on Monday at 10?` → **Invite to interview** | "Ravi K. invited to interview" | |
 | 24 | Ravi | Bell: "Meridian Freight invited you to an interview…" | | |
-| 25 | Ravi | **Requests** → **Take back permission** (optional) | Arjun's applicants page now says "Permission withdrawn", and the name is gone | "He can take it back any time." |
+| 25 | Arjun | **Outside applicants** → *Notice period*: **30 days** → message `We would like you to join us in Chennai.` → **Make offer** | "Ravi K. has your offer." Status: *Offer sent* | "After the interview, a real offer." |
+| 26 | Ravi | Home banner: "Meridian Freight offered you the … job" → **Accept offer** (opens Requests) → **Accept offer** | Banner: "You accepted… Your last day at your current employer is <30 days from today>. Your employer is told you are leaving, not where you are going." | "He accepts, and serves his notice period." |
+| 27 | Meera | Bell: "Ravi K. has resigned. Last day: …" → opens his profile | Red strip: resigned, last day. **Nothing says where he is going** | "His employer learns he is leaving, never where to." |
+| 28 | Meera | **Release early** on that strip | Back on My employees, and Ravi is no longer in the list | "HR can end the notice early. Otherwise he moves by himself on his last day." |
+| 29 | Ravi | Refresh | Header: **Digital Supply Chain Coordinator, Meridian Freight**. Bell: "Welcome to Meridian Freight! Your certificates came with you." **Certificates**: still 5, still signed by Meera at Indigo | "His proof moved with him. That's the passport." |
+| 30 | Arjun | **My employees** | Ravi K. is now one of his people, with his 5 verified skills. Indigo's EWM records, clips and notes did not come with him | "The new employer gets the certificates, not the old company's internal records." |
+
+Optional instead of 25–30: Ravi **Requests** → **Take back permission**. Arjun's page then says "Permission withdrawn", and the name is gone.
 
 ### Part E: trust and control (Q&A or the last minute)
 
 | # | Who | Do | You should see |
 |---|---|---|---|
-| 26 | Meera | **Audit log** | Every hand-off, with no personal content. Ravi's outside-job activity is not there |
-| 27 | Meera | **Fairness audit** | Figures by language and contract type, labelled fictional |
-| 28 | Meera | **SAP landscape** | Live HANA counts. What's connected and what's a stand-in |
-| 29 | Meera | **People and settings** → register `Kavya N.`, `kavya.n@indigohub.example`, Worker, *Picker Packer*, *Bengaluru Hub*, EWM user `BLR1-OP009` | "Registered Kavya N." Only registered emails can sign in |
-| 30 | Meera | your initials → **Start over with sample data** | Ravi is back to 0%, ready for the next run |
+| 31 | Meera | **Audit log** | Every hand-off, with no personal content. Ravi's outside-job activity is not there |
+| 32 | Meera | **Fairness audit** | Figures by language and contract type, labelled fictional |
+| 33 | Meera | **SAP landscape** | Live HANA counts. What's connected and what's a stand-in |
+| 34 | Meera | **People and settings** → register `Kavya N.`, `kavya.n@indigohub.example`, Worker, *Picker Packer*, *Bengaluru Hub*, EWM user `BLR1-OP009` | "Registered Kavya N." Only registered emails can sign in |
+| 35 | Meera | your initials → **Start over with sample data** | Ravi is back at Indigo as Warehouse Operator, 0%, ready for the next run (works even after he moved to Meridian) |
 
 ---
 
@@ -133,6 +140,10 @@ Each one is covered by `npm test`, `npm run journey` or `scripts/demo-check.js`.
 | A stranger signs in with a valid SAP ID? | "Not registered" page, no data |
 | Ravi revokes consent? | **Delete my data** erases his records |
 | Ravi's company leaves the marketplace? | He can't opt in, and outside companies can't find him |
+| Ravi accepts two offers? | Refused: "You have already accepted another offer" |
+| Arjun changes the offer after Ravi accepted? | Refused: "This person has already answered your offer" |
+| Arjun tries to release Meera's employee? | Blocked (403). Only the current employer can |
+| Nobody presses Release early? | On his last day, the next page load moves him by himself |
 | The AI service is down? | The next route takes over, or a marked offline fallback. The footer says which |
 
 ## 5. If something goes wrong
@@ -155,4 +166,4 @@ npm run watch
 node scripts/demo-check.js
 ```
 
-This runs Parts A to E against the local server in about a minute, stops at the first step that breaks, and leaves Ravi reset. `LANG_HI=1` runs it in Hindi. `READY=1` stops with Ravi at 100% and open to other companies, which is handy to rehearse Part D on screen. It uses local test logins, so it doesn't run against the BTP site.
+This runs Parts A to E, including the offer and the move to Meridian, against the local server in about a minute, stops at the first step that breaks, and leaves Ravi reset. `LANG_HI=1` runs it in Hindi. `READY=1` stops with Ravi at 100% and open to other companies, which is handy to rehearse Part D on screen. It uses local test logins, so it doesn't run against the BTP site.
