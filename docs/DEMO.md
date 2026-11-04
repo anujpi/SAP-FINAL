@@ -64,7 +64,7 @@ If the AI misses a role skill at step 3, record again with just that sentence: R
 |---|---|
 | App, login and database | Live on SAP BTP with HANA Cloud and XSUAA |
 | Voice | Works only in normal Google Chrome, because the built-in browser pane blocks the microphone. Test it there before relying on it. |
-| AI | The footer and Agent activity show the route. Say which one it is: SAP Generative AI Hub (a shared AI Core tenant, with SAP data masking. For Hindi, name masking is off because it mistakes Hindi words for names, while email, phone and ID masking stay on), or the backups: Anthropic API, Google Gemini (not SAP), or the offline fallback. |
+| AI | The screens say "AI-assisted" without naming the provider. If asked, say which route is active (`cf logs` shows it): SAP Generative AI Hub (a shared AI Core tenant, with SAP data masking. For Hindi, name masking is off because it mistakes Hindi words for names, while email, phone and ID masking stay on), or the backups: Anthropic API, Google Gemini (not SAP), or the offline fallback. |
 | Data | Everything on screen is read live from HANA Cloud. **SAP landscape** shows live counts and says so. On a local test copy it says it isn't HANA. |
 | Hiring, roles and certificates | Companies, candidates, jobs and "other certificates" are fictional sample data, but posting, requests, permission and take-back really run and are stored in HANA. |
 | EWM | The upload and the HANA records are real. The records themselves are sample data, and no EWM system is connected. |

@@ -67,7 +67,8 @@ export function Hiring({ names, revision, run, busy, canAct }: Props) {
             <Button
               design="Emphasized"
               disabled={busy || !role || !site.trim()}
-              onClick={() => run(() => value('/manager/postRole', { role, site }), 'Role posted.').then(() => setSite(''))}
+              // Show the candidates for the role just posted, so the manager sees who matches straight away.
+              onClick={() => run(async () => setSelected(await value<string>('/manager/postRole', { role, site })), 'Role posted. Candidates for it are shown below.').then(() => setSite(''))}
             >
               Post role
             </Button>

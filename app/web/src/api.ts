@@ -107,10 +107,5 @@ export const parseJson = <T,>(text: string | null | undefined, fallback: T): T =
   try { return text ? JSON.parse(text) : fallback } catch { return fallback }
 }
 
-export const AI_ROUTE: Record<string, string> = {
-  'generative-ai-hub': 'SAP Generative AI Hub',
-  'direct-anthropic': 'Anthropic API (not SAP)',
-  'direct-gemini': 'Google Gemini (not SAP)',
-  'direct-meta': 'Meta Muse (not SAP)',
-  offline: 'Offline backup (no AI)'
-}
+// What the screens say about the AI: that it is used, or that the offline backup is, without naming a provider.
+export const aiLabel = (route?: string) => !route ? '' : route === 'offline' ? 'Offline backup (no AI)' : 'AI-assisted'

@@ -7,7 +7,7 @@ import '@ui5/webcomponents-icons/dist/microphone.js'
 import '@ui5/webcomponents-icons/dist/edit.js'
 import '@ui5/webcomponents-icons/dist/sys-enter-2.js'
 import '@ui5/webcomponents-icons/dist/ai.js'
-import { AI_ROUTE, list, parsed, sendEvent, value } from './api'
+import { aiLabel, list, parsed, sendEvent, value } from './api'
 import { Lang, speechLang, texts, Texts } from './i18n'
 import { Certificates, Jobs, Learning, Requests, Resume, Skills } from './WorkerTabs'
 import { initials } from './ui'
@@ -134,7 +134,7 @@ export function WorkerApp({ showTrace, user }: { showTrace: boolean; user: User 
         {degraded && <MessageStrip design="Critical" hideCloseButton>{t.degraded}</MessageStrip>}
         {!started && me && <Consent {...props} />}
         {started && <Home {...props} stage={stage} me={me} user={user} lang={lang} />}
-        <p className="fine-print">{t.sampleNote} {AI_ROUTE[route] ? `AI: ${AI_ROUTE[route]}.` : ''} {t.libraryNote}</p>
+        <p className="fine-print">{t.sampleNote} {aiLabel(route) ? `${aiLabel(route)}.` : ''} {t.libraryNote}</p>
       </main>
 
       {started && (
@@ -155,7 +155,7 @@ export function WorkerApp({ showTrace, user }: { showTrace: boolean; user: User 
       {showTrace && (
         <aside className="trace" aria-label="Agent activity">
           <Title level="H2" size="H5">Agent activity</Title>
-          <Text>AI route: <strong>{AI_ROUTE[route] ?? '…'}</strong></Text>
+          <Text>AI: <strong>{aiLabel(route) || '…'}</strong></Text>
           {!thisRun.length && <Text>Each step of the journey appears here.</Text>}
           <Timeline>
             {thisRun.map(e => (

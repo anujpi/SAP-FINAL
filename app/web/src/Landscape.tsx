@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, CardHeader, Label, Link, MessageStrip, ObjectStatus, Option, Select, Text, Title } from '@ui5/webcomponents-react'
-import { AI_ROUTE, list, parsed } from './api'
+import { list, parsed } from './api'
 
 type Status = 'Live' | 'Sample data' | 'Stand-in' | 'Planned'
 type System = { id: string; name: string; status: Status; does: string; api?: string; note?: string; data?: (c: any) => unknown }
@@ -52,7 +52,7 @@ const ours = (c: any): System[] => [
   { id: 'xsuaa', name: 'SAP Authorization and Trust Management (XSUAA)', status: 'Live', does: 'Sign-in and roles. Worker, Supervisor, Manager and HR Admin each see only their own apps.' },
   {
     id: 'ai', name: 'SAP Generative AI Hub', status: c?.aiRoute === 'generative-ai-hub' ? 'Live' : 'Planned',
-    does: `Turns what workers say into tasks and skills, with SAP data masking. Active AI route right now: ${AI_ROUTE[c?.aiRoute] ?? 'checking…'}.`
+    does: 'Turns what workers say into tasks and skills, with SAP data masking.'
   }
 ]
 

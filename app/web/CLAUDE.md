@@ -42,7 +42,7 @@ Open http://localhost:5173. In development the app logs in as `ravi` on worker s
 
 - Never render "Missing". Use "Needs evidence".
 - Unverified skills must never read as a negative. Scores are labelled as sample data.
-- Keep saying "sample data" and "No customer SAP system is connected yet" until that changes. Say "sample data", "stand-in" or "not connected yet", not "demo" or "mock". Show the active AI route from `/worker/aiStatus()` and a notice when a result is `degraded`.
+- Keep saying "sample data" and "No customer SAP system is connected yet" until that changes. Say "sample data", "stand-in" or "not connected yet", not "demo" or "mock". Screens say "AI-assisted", or "Offline backup (no AI)" when no AI route is set (`aiLabel` in `api.ts`), without naming the provider, and show a notice when a result is `degraded`. The server logs and `/worker/aiStatus()` still name the route.
 - Never show managers a worker's outside job matches.
 - Voice is optional, and typing is always available. Mic access needs HTTPS or localhost. Chrome sends speech audio to Google, and the consent text says so.
 - Tap targets 48px or larger, type 16px or larger, visible focus, labelled controls.

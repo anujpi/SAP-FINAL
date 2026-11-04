@@ -107,7 +107,7 @@ export function Jobs({ t, run, revision, busy, names, stage }: HomeProps) {
       <Title level="H2" size="H5">{t.otherJobs}</Title>
       {!joined && <MessageStrip design="Information" hideCloseButton>{t.marketplaceOff}</MessageStrip>}
       {joined && <Text className="fine-print">{t.privateNote}</Text>}
-      {joined && stage !== 'SHORTLISTED' && (
+      {joined && (
         <CheckBox wrappingType="Normal" text={t.outsideToggle} checked={optIn} disabled={busy} onChange={e => run(() => sendEvent('outside_opt_in', { optIn: e.target.checked }))} />
       )}
       {joined && optIn && external.map(m => {
