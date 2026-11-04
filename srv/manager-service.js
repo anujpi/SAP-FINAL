@@ -6,7 +6,7 @@ const askJson = require('./lib/llm')
 const sapContext = require('./lib/sap-context')
 const { ewmSupport, parseExtract, sinceJoining } = require('./lib/ewm')
 const { checkShare, anonRef } = require('./lib/credential')
-const { forget } = require('./lib/identity')
+const { forget, RAVI: DEMO_WORKER } = require('./lib/identity')
 
 // A worker's interest in outside jobs is private: managers never see those matches, and they stay out of the audit.
 async function internalMatches(where) {
@@ -434,9 +434,11 @@ module.exports = cds.service.impl(function () {
   })
 
   this.on('resetDemo', async req => {
-    // Someone this company let go to another company can still be reset by their old employer.
+    // Only the demo worker can be reset: the reset restores his sample job record, so on anyone else it would overwrite theirs.
+    // His old employer can still reset him after he moved, so a run can start again.
+    if (req.data.worker !== DEMO_WORKER) return req.reject(400, 'Only the sample worker can be reset')
     const { Workers } = cds.entities('frontline')
-    const moved = await SELECT.one.from(Workers).where({ ID: req.data.worker, formerCompany_ID: (await staffOf(req)).company_ID })
+    const moved = await SELECT.one.from(Workers).where({ ID: DEMO_WORKER, formerCompany_ID: (await staffOf(req)).company_ID })
     if (!moved) await ownWorker(req, req.data.worker)
     await resetWorker(req.data.worker)
     return true

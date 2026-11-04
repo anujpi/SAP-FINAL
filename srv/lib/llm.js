@@ -1,7 +1,8 @@
-// One door to the LLM. Order: Generative AI Hub, then direct Anthropic, then Google Gemini (free tier), then a marked offline fallback.
+// One door to the LLM. Order: Generative AI Hub, then direct Anthropic, then Google Gemini (free tier), then Meta's Model API, then a marked offline fallback.
 const MASKED = ['profile-person', 'profile-email', 'profile-phone', 'profile-nationalid']
 const DIRECT_MODEL = 'claude-opus-5-5'
 const GEMINI_MODEL = 'gemini-3.8-flash'
+const META_MODEL = 'muse-spark-1.3' // set META_MODEL to the ID in your Meta dashboard
 
 // SAP's person masking mistakes Hindi words for names, which turns "फोर्कलिफ्ट से रखना" into "MASKED_PERSON रखना" and
 // destroys the answer. So Devanagari text skips only that one. The prompts tell the model to leave names out.
@@ -13,6 +14,7 @@ function provider() {
   if (hasAiCore() && process.env.LLM_MODEL) return 'generative-ai-hub'
   if (process.env.ANTHROPIC_API_KEY) return 'direct-anthropic'
   if (process.env.GEMINI_API_KEY) return 'direct-gemini'
+  if (process.env.META_API_KEY) return 'direct-meta'
   return 'offline'
 }
 
@@ -75,9 +77,40 @@ async function completeGemini(system, user) {
   return data.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? ''
 }
 
-const COMPLETE = { 'generative-ai-hub': completeHub, 'direct-anthropic': completeDirect, 'direct-gemini': completeGemini }
+// Meta's Model API (Muse models) speaks the OpenAI chat-completions format.
+const effort = () => { const e = process.env.META_REASONING_EFFORT ?? 'low'; return e === 'default' ? null : e }
+async function completeMeta(system, user) {
+  const base = process.env.META_BASE_URL || 'https://api.meta.ai/v1'
+  const res = await fetch(`${base}/chat/completions`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${process.env.META_API_KEY}` },
+    signal: AbortSignal.timeout(45_000),
+    body: JSON.stringify({
+      model: process.env.META_MODEL || META_MODEL,
+      // Muse thinks before it answers. "low" measured 8 s against 18 s by default on BTP, with the same valid JSON;
+      // "minimal" took 4 s. Set META_REASONING_EFFORT to change it, or to "default" to leave it to Meta.
+      ...(effort() && { reasoning_effort: effort() }),
+      messages: [{ role: 'system', content: system }, { role: 'user', content: redact(user) }]
+    })
+  })
+  if (!res.ok) throw Object.assign(new Error(`Meta HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`), { status: res.status })
+  const choice = (await res.json()).choices?.[0]
+  if (choice?.finish_reason === 'content_filter') throw new Error('The model declined this request')
+  const content = choice?.message?.content
+  return Array.isArray(content) ? content.map(p => p.text ?? '').join('') : content ?? ''
+}
 
-const parseJson = text => JSON.parse(text.trim().replace(/^```(?:json)?\s*|\s*```$/g, ''))
+const COMPLETE = { 'generative-ai-hub': completeHub, 'direct-anthropic': completeDirect, 'direct-gemini': completeGemini, 'direct-meta': completeMeta }
+
+// Models wrap JSON in fences or a sentence of their own, so read from the first { or [ to the matching last one.
+const parseJson = text => {
+  const t = text.trim().replace(/^```(?:json)?\s*|\s*```$/g, '')
+  try { return JSON.parse(t) } catch {
+    const start = t.search(/[{[]/), end = Math.max(t.lastIndexOf('}'), t.lastIndexOf(']'))
+    if (start < 0 || end <= start) throw new Error('No JSON in the answer')
+    return JSON.parse(t.slice(start, end + 1))
+  }
+}
 
 async function askJson({ system, user, validate, fallback }) {
   const active = provider()
@@ -88,6 +121,8 @@ async function askJson({ system, user, validate, fallback }) {
     try {
       const value = parseJson(await complete(system, user))
       if (validate(value)) return { value, degraded: false }
+      // Only the shape is logged, never the content: it can hold what the worker said.
+      console.error(`LLM answer had the wrong shape (${active}): top-level keys ${JSON.stringify(Object.keys(value ?? {}))}`)
     } catch (e) {
       console.error(`LLM call failed (${active}):`, e.message)
       if (e.status === 429) break // rate limited: retrying only burns the quota, so use the marked backup

@@ -39,6 +39,7 @@ Say this openly to the jury: only A and B use the LLM. The rest are code on purp
 |---|---|---|
 | `generative-ai-hub` | AI Core binding or `AICORE_SERVICE_KEY`, plus `LLM_MODEL` | SAP data masking |
 | `direct-anthropic` | `ANTHROPIC_API_KEY`. Uses `claude-opus-5-5` unless `LLM_MODEL` is set. Server-side refusal fallback is on. | Emails and phone numbers only, not names |
+| `direct-meta` | `META_API_KEY`, used when no Hub, Anthropic or Gemini key is set. Meta Model API (OpenAI chat format); set `META_MODEL` to the model ID in the Meta dashboard. | Emails and phone numbers only, not names |
 | `offline` | Nothing | Nothing leaves the app, and results are marked `degraded` |
 
 Keys go in `.env` locally (see `.env.example`) and `cf set-env` on BTP. Never commit them.

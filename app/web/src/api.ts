@@ -111,5 +111,6 @@ export const AI_ROUTE: Record<string, string> = {
   'generative-ai-hub': 'SAP Generative AI Hub',
   'direct-anthropic': 'Anthropic API (not SAP)',
   'direct-gemini': 'Google Gemini (not SAP)',
+  'direct-meta': 'Meta Muse (not SAP)',
   offline: 'Offline backup (no AI)'
 }

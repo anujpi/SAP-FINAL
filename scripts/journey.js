@@ -43,7 +43,7 @@ const step = name => console.log('ok  ', name)
   assert.equal(heard.stage, 'AWAITING_READBACK')
   assert.ok(heard.tasks.length > 0)
   const route = (await call('/worker/aiStatus()', { user: 'ravi' })).value
-  assert.ok(['generative-ai-hub', 'direct-anthropic', 'offline'].includes(route))
+  assert.ok(['generative-ai-hub', 'direct-anthropic', 'direct-gemini', 'direct-meta', 'offline'].includes(route))
   step(`Agent A returned tasks (LLM route: ${route}, degraded: ${heard.degraded})`)
 
   parsed(await send('readback_confirmed'))

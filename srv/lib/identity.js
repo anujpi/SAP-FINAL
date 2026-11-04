@@ -95,4 +95,4 @@ async function identify(req, res, next) {
   }
 }
 
-module.exports = { resolve, presenters, fixedLogins, identify, forget, PERSONAS, ALL_ROLES }
+module.exports = { resolve, presenters, fixedLogins, identify, forget, PERSONAS, ALL_ROLES, RAVI }

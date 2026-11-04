@@ -19,12 +19,15 @@
           <bpmn:flowNodeRef>T_Share</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>G_Share</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>End_No</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Offer</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_Decline</bpmn:flowNodeRef>
         </bpmn:lane>
         <bpmn:lane id="Lane_1" name="Frontline Shift on SAP BTP">
           <bpmn:flowNodeRef>T_AI</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>T_Skills</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>T_Cert</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>G_Both</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Move</bpmn:flowNodeRef>
         </bpmn:lane>
         <bpmn:lane id="Lane_2" name="Warehouse team">
           <bpmn:flowNodeRef>Start_D</bpmn:flowNodeRef>
@@ -36,6 +39,9 @@
           <bpmn:flowNodeRef>T_Review</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>G_Proof</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>T_Verify</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Resign</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>G_Release</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>Timer_Last</bpmn:flowNodeRef>
         </bpmn:lane>
         <bpmn:lane id="Lane_4" name="HR with SuccessFactors">
           <bpmn:flowNodeRef>T_SF</bpmn:flowNodeRef>
@@ -47,7 +53,9 @@
           <bpmn:flowNodeRef>T_Connect</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>T_See</bpmn:flowNodeRef>
           <bpmn:flowNodeRef>T_Invite</bpmn:flowNodeRef>
-          <bpmn:flowNodeRef>End_Hire</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Offer</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>T_Joined</bpmn:flowNodeRef>
+          <bpmn:flowNodeRef>End_Joined</bpmn:flowNodeRef>
         </bpmn:lane>
     </bpmn:laneSet>
       <bpmn:startEvent id="Start_W" name="Worker wants to move up"><bpmn:outgoing>Flow_Start_W_T_Consent</bpmn:outgoing></bpmn:startEvent>
@@ -80,8 +88,16 @@
       <bpmn:exclusiveGateway id="G_Share" name="Share?"><bpmn:incoming>Flow_T_Share_G_Share</bpmn:incoming><bpmn:outgoing>Flow_G_Share_End_No</bpmn:outgoing><bpmn:outgoing>Flow_G_Share_T_See</bpmn:outgoing></bpmn:exclusiveGateway>
       <bpmn:endEvent id="End_No" name="Company never learns who"><bpmn:incoming>Flow_G_Share_End_No</bpmn:incoming></bpmn:endEvent>
       <bpmn:userTask id="T_See" name="See name and chosen certificates"><bpmn:incoming>Flow_G_Share_T_See</bpmn:incoming><bpmn:outgoing>Flow_T_See_T_Invite</bpmn:outgoing></bpmn:userTask>
-      <bpmn:userTask id="T_Invite" name="Invite to interview"><bpmn:incoming>Flow_T_See_T_Invite</bpmn:incoming><bpmn:outgoing>Flow_T_Invite_End_Hire</bpmn:outgoing></bpmn:userTask>
-      <bpmn:endEvent id="End_Hire" name="Interview"><bpmn:incoming>Flow_T_Invite_End_Hire</bpmn:incoming></bpmn:endEvent>
+      <bpmn:userTask id="T_Invite" name="Invite to interview"><bpmn:incoming>Flow_T_See_T_Invite</bpmn:incoming><bpmn:outgoing>Flow_T_Invite_T_Offer</bpmn:outgoing></bpmn:userTask>
+      <bpmn:userTask id="T_Offer" name="Make an offer with a notice period"><bpmn:incoming>Flow_T_Invite_T_Offer</bpmn:incoming><bpmn:outgoing>Flow_T_Offer_G_Offer</bpmn:outgoing></bpmn:userTask>
+      <bpmn:exclusiveGateway id="G_Offer" name="Accept the offer?"><bpmn:incoming>Flow_T_Offer_G_Offer</bpmn:incoming><bpmn:outgoing>Flow_G_Offer_End_Decline</bpmn:outgoing><bpmn:outgoing>Flow_G_Offer_T_Resign</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:endEvent id="End_Decline" name="Stays in current job"><bpmn:incoming>Flow_G_Offer_End_Decline</bpmn:incoming></bpmn:endEvent>
+      <bpmn:userTask id="T_Resign" name="See resignation and last day, not where they go"><bpmn:incoming>Flow_G_Offer_T_Resign</bpmn:incoming><bpmn:outgoing>Flow_T_Resign_G_Release</bpmn:outgoing></bpmn:userTask>
+      <bpmn:exclusiveGateway id="G_Release" name="Release early?"><bpmn:incoming>Flow_T_Resign_G_Release</bpmn:incoming><bpmn:outgoing>Flow_G_Release_T_Move</bpmn:outgoing><bpmn:outgoing>Flow_G_Release_Timer_Last</bpmn:outgoing></bpmn:exclusiveGateway>
+      <bpmn:intermediateCatchEvent id="Timer_Last" name="Last day of notice"><bpmn:incoming>Flow_G_Release_Timer_Last</bpmn:incoming><bpmn:outgoing>Flow_Timer_Last_T_Move</bpmn:outgoing><bpmn:timerEventDefinition id="TimerDef_Last" /></bpmn:intermediateCatchEvent>
+      <bpmn:serviceTask id="T_Move" name="Move to new company: certificates go along, old records stay"><bpmn:incoming>Flow_G_Release_T_Move</bpmn:incoming><bpmn:incoming>Flow_Timer_Last_T_Move</bpmn:incoming><bpmn:outgoing>Flow_T_Move_T_Joined</bpmn:outgoing></bpmn:serviceTask>
+      <bpmn:userTask id="T_Joined" name="Welcome new employee with verified certificates"><bpmn:incoming>Flow_T_Move_T_Joined</bpmn:incoming><bpmn:outgoing>Flow_T_Joined_End_Joined</bpmn:outgoing></bpmn:userTask>
+      <bpmn:endEvent id="End_Joined" name="Joined new company"><bpmn:incoming>Flow_T_Joined_End_Joined</bpmn:incoming></bpmn:endEvent>
       <bpmn:sequenceFlow id="Flow_Start_W_T_Consent" sourceRef="Start_W" targetRef="T_Consent" />
       <bpmn:sequenceFlow id="Flow_T_Consent_T_Talk" sourceRef="T_Consent" targetRef="T_Talk" />
       <bpmn:sequenceFlow id="Flow_T_Talk_T_AI" sourceRef="T_Talk" targetRef="T_AI" />
@@ -113,17 +129,26 @@
       <bpmn:sequenceFlow id="Flow_G_Share_End_No" sourceRef="G_Share" targetRef="End_No" name="No" />
       <bpmn:sequenceFlow id="Flow_G_Share_T_See" sourceRef="G_Share" targetRef="T_See" name="Yes" />
       <bpmn:sequenceFlow id="Flow_T_See_T_Invite" sourceRef="T_See" targetRef="T_Invite" />
-      <bpmn:sequenceFlow id="Flow_T_Invite_End_Hire" sourceRef="T_Invite" targetRef="End_Hire" />
+      <bpmn:sequenceFlow id="Flow_T_Invite_T_Offer" sourceRef="T_Invite" targetRef="T_Offer" />
+      <bpmn:sequenceFlow id="Flow_T_Offer_G_Offer" sourceRef="T_Offer" targetRef="G_Offer" />
+      <bpmn:sequenceFlow id="Flow_G_Offer_End_Decline" sourceRef="G_Offer" targetRef="End_Decline" name="No" />
+      <bpmn:sequenceFlow id="Flow_G_Offer_T_Resign" sourceRef="G_Offer" targetRef="T_Resign" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_T_Resign_G_Release" sourceRef="T_Resign" targetRef="G_Release" />
+      <bpmn:sequenceFlow id="Flow_G_Release_T_Move" sourceRef="G_Release" targetRef="T_Move" name="Yes" />
+      <bpmn:sequenceFlow id="Flow_G_Release_Timer_Last" sourceRef="G_Release" targetRef="Timer_Last" name="No" />
+      <bpmn:sequenceFlow id="Flow_Timer_Last_T_Move" sourceRef="Timer_Last" targetRef="T_Move" />
+      <bpmn:sequenceFlow id="Flow_T_Move_T_Joined" sourceRef="T_Move" targetRef="T_Joined" />
+      <bpmn:sequenceFlow id="Flow_T_Joined_End_Joined" sourceRef="T_Joined" targetRef="End_Joined" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="Diagram_After">
     <bpmndi:BPMNPlane id="Plane_After" bpmnElement="Collaboration_After">
-      <bpmndi:BPMNShape id="Pool_di" bpmnElement="Pool" isHorizontal="true"><dc:Bounds x="90" y="40" width="2845" height="900" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_0_di" bpmnElement="Lane_0" isHorizontal="true"><dc:Bounds x="120" y="40" width="2815" height="150" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true"><dc:Bounds x="120" y="190" width="2815" height="150" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_2_di" bpmnElement="Lane_2" isHorizontal="true"><dc:Bounds x="120" y="340" width="2815" height="150" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_3_di" bpmnElement="Lane_3" isHorizontal="true"><dc:Bounds x="120" y="490" width="2815" height="150" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_4_di" bpmnElement="Lane_4" isHorizontal="true"><dc:Bounds x="120" y="640" width="2815" height="150" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_5_di" bpmnElement="Lane_5" isHorizontal="true"><dc:Bounds x="120" y="790" width="2815" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Pool_di" bpmnElement="Pool" isHorizontal="true"><dc:Bounds x="90" y="40" width="3850" height="900" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_0_di" bpmnElement="Lane_0" isHorizontal="true"><dc:Bounds x="120" y="40" width="3820" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1_di" bpmnElement="Lane_1" isHorizontal="true"><dc:Bounds x="120" y="190" width="3820" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_2_di" bpmnElement="Lane_2" isHorizontal="true"><dc:Bounds x="120" y="340" width="3820" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_3_di" bpmnElement="Lane_3" isHorizontal="true"><dc:Bounds x="120" y="490" width="3820" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_4_di" bpmnElement="Lane_4" isHorizontal="true"><dc:Bounds x="120" y="640" width="3820" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_5_di" bpmnElement="Lane_5" isHorizontal="true"><dc:Bounds x="120" y="790" width="3820" height="150" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Start_W_di" bpmnElement="Start_W"><dc:Bounds x="207" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="170" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="T_Consent_di" bpmnElement="T_Consent"><dc:Bounds x="345" y="80" width="130" height="70" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="T_Talk_di" bpmnElement="T_Talk"><dc:Bounds x="530" y="80" width="130" height="70" /></bpmndi:BPMNShape>
@@ -155,7 +180,15 @@
       <bpmndi:BPMNShape id="End_No_di" bpmnElement="End_No"><dc:Bounds x="2612" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2575" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="T_See_di" bpmnElement="T_See"><dc:Bounds x="2380" y="830" width="130" height="70" /></bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="T_Invite_di" bpmnElement="T_Invite"><dc:Bounds x="2565" y="830" width="130" height="70" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="End_Hire_di" bpmnElement="End_Hire"><dc:Bounds x="2797" y="847" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="2760" y="887" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Offer_di" bpmnElement="T_Offer"><dc:Bounds x="2750" y="830" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Offer_di" bpmnElement="G_Offer" isMarkerVisible="true"><dc:Bounds x="2960" y="90" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="2930" y="144" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Decline_di" bpmnElement="End_Decline"><dc:Bounds x="3087" y="97" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3050" y="137" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Resign_di" bpmnElement="T_Resign"><dc:Bounds x="2920" y="530" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="G_Release_di" bpmnElement="G_Release" isMarkerVisible="true"><dc:Bounds x="3130" y="540" width="50" height="50" /><bpmndi:BPMNLabel><dc:Bounds x="3100" y="594" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Timer_Last_di" bpmnElement="Timer_Last"><dc:Bounds x="3272" y="547" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3235" y="587" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Move_di" bpmnElement="T_Move"><dc:Bounds x="3425" y="230" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="T_Joined_di" bpmnElement="T_Joined"><dc:Bounds x="3610" y="830" width="130" height="70" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Joined_di" bpmnElement="End_Joined"><dc:Bounds x="3842" y="847" width="36" height="36" /><bpmndi:BPMNLabel><dc:Bounds x="3805" y="887" width="110" height="28" /></bpmndi:BPMNLabel></bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_Start_W_T_Consent_di" bpmnElement="Flow_Start_W_T_Consent"><di:waypoint x="243" y="115" /><di:waypoint x="345" y="115" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_T_Consent_T_Talk_di" bpmnElement="Flow_T_Consent_T_Talk"><di:waypoint x="475" y="115" /><di:waypoint x="530" y="115" /></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_T_Talk_T_AI_di" bpmnElement="Flow_T_Talk_T_AI"><di:waypoint x="595" y="150" /><di:waypoint x="595" y="230" /></bpmndi:BPMNEdge>
@@ -187,7 +220,16 @@
       <bpmndi:BPMNEdge id="Flow_G_Share_End_No_di" bpmnElement="Flow_G_Share_End_No"><di:waypoint x="2470" y="115" /><di:waypoint x="2612" y="115" /><bpmndi:BPMNLabel><dc:Bounds x="2476" y="95" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_G_Share_T_See_di" bpmnElement="Flow_G_Share_T_See"><di:waypoint x="2445" y="140" /><di:waypoint x="2445" y="830" /><bpmndi:BPMNLabel><dc:Bounds x="2451" y="120" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_T_See_T_Invite_di" bpmnElement="Flow_T_See_T_Invite"><di:waypoint x="2510" y="865" /><di:waypoint x="2565" y="865" /></bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_T_Invite_End_Hire_di" bpmnElement="Flow_T_Invite_End_Hire"><di:waypoint x="2695" y="865" /><di:waypoint x="2797" y="865" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Invite_T_Offer_di" bpmnElement="Flow_T_Invite_T_Offer"><di:waypoint x="2695" y="865" /><di:waypoint x="2750" y="865" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Offer_G_Offer_di" bpmnElement="Flow_T_Offer_G_Offer"><di:waypoint x="2880" y="865" /><di:waypoint x="2913" y="865" /><di:waypoint x="2913" y="115" /><di:waypoint x="2960" y="115" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Offer_End_Decline_di" bpmnElement="Flow_G_Offer_End_Decline"><di:waypoint x="3010" y="115" /><di:waypoint x="3087" y="115" /><bpmndi:BPMNLabel><dc:Bounds x="3016" y="95" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Offer_T_Resign_di" bpmnElement="Flow_G_Offer_T_Resign"><di:waypoint x="2985" y="140" /><di:waypoint x="2985" y="530" /><bpmndi:BPMNLabel><dc:Bounds x="2991" y="190" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Resign_G_Release_di" bpmnElement="Flow_T_Resign_G_Release"><di:waypoint x="3050" y="565" /><di:waypoint x="3130" y="565" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Release_T_Move_di" bpmnElement="Flow_G_Release_T_Move"><di:waypoint x="3155" y="540" /><di:waypoint x="3155" y="265" /><di:waypoint x="3425" y="265" /><bpmndi:BPMNLabel><dc:Bounds x="3161" y="515" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_G_Release_Timer_Last_di" bpmnElement="Flow_G_Release_Timer_Last"><di:waypoint x="3180" y="565" /><di:waypoint x="3272" y="565" /><bpmndi:BPMNLabel><dc:Bounds x="3186" y="545" width="34" height="14" /></bpmndi:BPMNLabel></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Timer_Last_T_Move_di" bpmnElement="Flow_Timer_Last_T_Move"><di:waypoint x="3308" y="565" /><di:waypoint x="3490" y="565" /><di:waypoint x="3490" y="300" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Move_T_Joined_di" bpmnElement="Flow_T_Move_T_Joined"><di:waypoint x="3555" y="265" /><di:waypoint x="3588" y="265" /><di:waypoint x="3588" y="865" /><di:waypoint x="3610" y="865" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_T_Joined_End_Joined_di" bpmnElement="Flow_T_Joined_End_Joined"><di:waypoint x="3740" y="865" /><di:waypoint x="3842" y="865" /></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>

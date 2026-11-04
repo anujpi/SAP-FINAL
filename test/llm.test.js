@@ -29,9 +29,9 @@ after(() => server.close())
 beforeEach(() => {
   received = []
   status = 200
-  for (const key of ['AICORE_SERVICE_KEY', 'VCAP_SERVICES', 'LLM_MODEL', 'GEMINI_API_KEY']) delete process.env[key]
+  for (const key of ['AICORE_SERVICE_KEY', 'VCAP_SERVICES', 'LLM_MODEL', 'GEMINI_API_KEY', 'META_API_KEY', 'META_MODEL', 'META_REASONING_EFFORT']) delete process.env[key]
   process.env.ANTHROPIC_API_KEY = 'test-key'
-  process.env.ANTHROPIC_BASE_URL = process.env.GEMINI_BASE_URL = `http://localhost:${server.address().port}`
+  process.env.ANTHROPIC_BASE_URL = process.env.GEMINI_BASE_URL = process.env.META_BASE_URL = `http://localhost:${server.address().port}`
 })
 
 const message = (text, stop_reason = 'end_turn') => ({
@@ -136,6 +136,41 @@ test('gemini: a rate limit goes straight to the marked fallback, with no retry',
 test('gemini: a blocked prompt ends in the marked fallback', async () => {
   useGemini()
   reply = () => ({ promptFeedback: { blockReason: 'SAFETY' } })
+  const { degraded } = await ask()
+  assert.equal(degraded, true)
+})
+
+// Meta's Model API: used only when no Hub, Anthropic or Gemini key.
+const meta = content => ({ id: 'chat_test', object: 'chat.completion', choices: [{ index: 0, message: { role: 'assistant', content }, finish_reason: 'stop' }] })
+const useMeta = () => { delete process.env.ANTHROPIC_API_KEY; process.env.META_API_KEY = 'meta-key' }
+
+test('provider: Meta comes after Gemini and before offline', () => {
+  useMeta()
+  process.env.GEMINI_API_KEY = 'gem-key'
+  assert.equal(provider(), 'direct-gemini')
+  delete process.env.GEMINI_API_KEY
+  assert.equal(provider(), 'direct-meta')
+})
+
+test('meta: returns parsed JSON, sends redacted text, the model and the bearer key', async () => {
+  useMeta()
+  process.env.META_MODEL = 'muse-test'
+  reply = () => meta('```json\n{"tasks":["count"]}\n```')
+  const { value, degraded } = await ask()
+  assert.deepEqual(value.tasks, ['count'])
+  assert.equal(degraded, false)
+  const { url, headers, body } = received[0]
+  assert.equal(url, '/chat/completions')
+  assert.equal(headers.authorization, 'Bearer meta-key')
+  assert.equal(body.model, 'muse-test')
+  assert.equal(body.messages[1].content, 'Call me on [phone] or [email]')
+  assert.equal(body.reasoning_effort, 'low', 'low effort by default, for speed on stage')
+})
+
+test('meta: a wrong key ends in the marked fallback', async () => {
+  useMeta()
+  status = 401
+  reply = () => ({ error: { message: 'invalid key' } })
   const { degraded } = await ask()
   assert.equal(degraded, true)
 })

@@ -62,6 +62,7 @@ const addDays = days => new Date(Date.now() + days * 86_400_000).toISOString().s
 async function joinNewCompany(worker, application) {
   const { Vacancies, Roles, Staff, Workers, Applications, VerificationRequests, HireInterests, SuccessFactorsSkills, ReviewDecisions, ProofClips, EvidenceItems } = db()
   const job = await SELECT.one.from(Vacancies).where({ ID: application.vacancy_ID })
+  if (!job) fail(409, 'This job is no longer open')
   const role = await SELECT.one.from(Roles).where({ ID: job.role_ID })
   const manager = (await SELECT.from(Staff).where({ company_ID: job.company_ID })).find(s => s.roles.split(',').includes('Manager'))
   const moved = {
@@ -83,7 +84,13 @@ async function joinNewCompany(worker, application) {
 // Moves everyone whose notice has ended. Runs when anyone loads the app, so no scheduler is needed.
 async function dueTransfers() {
   const due = await SELECT.from(db().Applications).where({ status: 'accepted', leavesOn: { '<=': today() } })
-  for (const a of due) await handle(a.worker_ID, 'transfer_done', { application: a.ID })
+  for (const a of due) {
+    // One move that can't complete (say the job was withdrawn) must never stop the app loading for everyone.
+    try { await handle(a.worker_ID, 'transfer_done', { application: a.ID }) } catch (e) {
+      console.error(`Move for application ${a.ID} failed, closing it:`, e.message)
+      await UPDATE(db().Applications, a.ID).with({ status: 'closed' })
+    }
+  }
 }
 
 // Re-run matching and the learning plan after anything that changes evidence.
@@ -184,7 +191,7 @@ const HANDLERS = {
     const tasks = await SELECT.from(TaskExperiences).where({ worker_ID: worker.ID, confirmed: false })
     if (!tasks.length) fail(409, 'There is nothing new to confirm')
     // HANA holds what this person actually did, so the skills get checked against it.
-    const records = await SELECT.from(db().EwmTaskRecords).where({ worker_ID: worker.ID })
+    const records = sinceJoining(await SELECT.from(db().EwmTaskRecords).where({ worker_ID: worker.ID }), () => worker.joinedOn)
     const { claims, unmatched, degraded } = await verify(tasks, await SELECT.from(Skills), ewmSupport(records))
     await UPDATE(TaskExperiences).set({ confirmed: true }).where({ worker_ID: worker.ID, confirmed: false })
     // Add to what they already have. A verified skill is never touched, and a skill they already had is updated.
